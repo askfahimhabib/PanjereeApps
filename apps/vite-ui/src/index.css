@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand Colors ─────────────────────────────────────── */
+  --color-primary:       #48c78e;
+  --color-primary-hover: #3ab07a;
+  --color-primary-light: #e8faf3;
+  --color-primary-dark:  #2d9e6e;
+
+  --color-secondary:     #3b82f6;
+  --color-secondary-hover: #2563eb;
+  --color-secondary-light: #eff6ff;
+
+  /* ── Semantic Colors ──────────────────────────────────── */
+  --color-success:       #10B981;
+  --color-warning:       #F59E0B;
+  --color-danger:        #EF4444;
+  --color-danger-hover:  #DC2626;
+  --color-danger-light:  #FEF2F2;
+
+  /* ── Surface Colors ───────────────────────────────────── */
+  --color-dark-bg:       #f4f6f9;
+  --color-card-bg:       #ffffff;
+  --color-sidebar-bg:    #ffffff;
+  --color-border:        #e5e7eb;
+  --color-border-light:  #f3f4f6;
+
+  /* ── Text Colors ──────────────────────────────────────── */
+  --color-text-primary:  #111827;
+  --color-text-secondary:#4B5563;
+  --color-text-muted:    #9CA3AF;
+
+  /* ── Fonts ────────────────────────────────────────────── */
+  --font-sans: 'Poppins', 'Hind Siliguri', system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-dark-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Hide scrollbars globally but keep functionality */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Focus visible for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ── Utility Classes ────────────────────────────────────── */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Page Transition ────────────────────────────────────── */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-fade-in 0.25s ease-out forwards;
+}
+
+/* ── Sidebar Active Indicator ───────────────────────────── */
+.nav-active-indicator {
+  position: relative;
+}
+.nav-active-indicator::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--color-primary);
+}

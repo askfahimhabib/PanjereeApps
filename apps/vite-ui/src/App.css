@@ -1,0 +1,24 @@
+/*
+ * App.css — LMS Global Styles
+ * Component-level overrides and print styles go here.
+ * Utility classes belong in index.css.
+ */
+
+/* ── Print Styles ───────────────────────────────────────── */
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
