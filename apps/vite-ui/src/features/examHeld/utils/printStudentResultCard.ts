@@ -2,23 +2,11 @@
  * printStudentResultCard
  * Opens a new window with a printable result card for a single student
  * showing all their results across all subjects in one exam.
- *
- * Layout (A5 portrait):
- *  ┌──────────────────────────────┐
- *  │  Institution name            │
- *  │  "Result Card"               │
- *  │  Student info (name/roll/class) │
- *  ├──────────┬────────┬──────────┤
- *  │ Subject  │  Marks │  Grade   │
- *  ├──────────┼────────┼──────────┤
- *  │  …       │   …    │   …      │
- *  ├──────────┴────────┴──────────┤
- *  │ Overall GPA  |  PASS / FAIL  │
- *  └──────────────────────────────┘
  */
 
 import type { ExamHeld, ExamResult } from '../types'
 import { EXAM_SCOPE_LABELS } from '../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   exam: ExamHeld
@@ -38,7 +26,11 @@ const GRADE_PRINT_COLOR: Record<string, string> = {
   'F':  '#fee2e2',
 }
 
+const tdStyle = 'border:1px solid #cbd5e1;padding:6px 10px;font-size:11px;'
+const tdCenter = 'border:1px solid #cbd5e1;padding:6px 10px;font-size:11px;text-align:center;'
+
 function buildStudentCardHTML({ exam, studentName, rollNumber, results }: Props): string {
+  const inst = getInstitutionInfo()
   const schedules = exam.exam_held_schedules ?? []
   const examTarget = exam.classes?.name ?? exam.batches?.name ?? ''
   const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -68,62 +60,61 @@ function buildStudentCardHTML({ exam, studentName, rollNumber, results }: Props)
       </tr>`
     }
 
-    const bg = r.grade ? GRADE_PRINT_COLOR[r.grade] ?? '#f8fafc' : '#f8fafc'
+    const bg = r.grade ? GRADE_PRINT_COLOR[r.grade] ?? 'white' : 'white'
     return `<tr>
       <td style="${tdStyle}">${subName}</td>
-      <td style="${tdCenter};font-weight:700">${r.marks_obtained ?? '—'}</td>
+      <td style="${tdCenter};font-weight:700">${r.marks_obtained}</td>
       <td style="${tdCenter}">${subTotal}</td>
       <td style="${tdCenter};background:${bg};font-weight:700">${r.grade ?? '—'}</td>
-      <td style="${tdCenter}">${r.gpa?.toFixed(2) ?? '—'}</td>
+      <td style="${tdCenter};font-family:monospace">${r.gpa?.toFixed(2) ?? '—'}</td>
     </tr>`
   }).join('')
 
-  // Overall stats
-  const presentResults = results.filter(r => !r.is_absent)
-  const avgGpa = presentResults.length
-    ? (presentResults.reduce((s, r) => s + (r.gpa ?? 0), 0) / presentResults.length).toFixed(2)
-    : '—'
-  const hasFail = presentResults.some(r => r.grade === 'F')
-  const isPass = !hasFail && presentResults.length > 0
-  const totalObtained = presentResults.reduce((s, r) => s + (r.marks_obtained ?? 0), 0)
-  const totalPossible = schedules.reduce((s, sch) => s + (sch.total_marks ?? exam.total_marks), 0)
+  const validScores = results.filter(r => !r.is_absent && r.marks_obtained !== null)
+  const totalObtained = validScores.reduce((sum, r) => sum + (r.marks_obtained ?? 0), 0)
+  const totalPossible = schedules.reduce((sum, s) => sum + (s.total_marks ?? exam.total_marks), 0)
+  const isPass = validScores.every(r => (r.gpa ?? 0) > 0) && validScores.length === schedules.length
+  const avgGpa = validScores.length > 0
+    ? (validScores.reduce((sum, r) => sum + (r.gpa ?? 0), 0) / schedules.length).toFixed(2)
+    : '0.00'
 
-  const thStyle = 'border:1px solid #cbd5e1;padding:7px 10px;background:#1e293b;color:#f1f5f9;font-size:11px;text-align:center;'
-  const thLeft  = 'border:1px solid #cbd5e1;padding:7px 10px;background:#1e293b;color:#f1f5f9;font-size:11px;text-align:left;'
+  const thStyle = 'border:1px solid #cbd5e1;padding:7px 10px;background:#1e293b;color:white;font-size:11px;text-align:center;'
+  const thLeft  = 'border:1px solid #cbd5e1;padding:7px 10px;background:#1e293b;color:white;font-size:11px;text-align:left;'
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Result Card — ${studentName}</title>
+  <title>${studentName} — ${exam.name} Result Card</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; background: white; padding: 32px; max-width: 680px; margin: 0 auto; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; background: white; padding: 24px; max-width: 600px; margin: 0 auto; }
     @media print {
-      body { padding: 16px; }
+      body { padding: 12px; }
       @page { size: A5 portrait; margin: 10mm; }
     }
     table { border-collapse: collapse; width: 100%; margin-top: 14px; }
-    .header { text-align: center; margin-bottom: 16px; }
-    .school-name { font-size: 18px; font-weight: 800; color: #1e293b; }
-    .card-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
-    .divider { border: none; border-top: 2px solid #334155; margin: 10px 0; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 4px; }
-    .info-row { display: flex; gap: 6px; font-size: 11px; }
-    .info-label { color: #64748b; min-width: 80px; }
-    .info-value { font-weight: 600; color: #1e293b; }
-    .result-banner { margin-top: 14px; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
-      background: ${isPass ? '#d1fae5' : '#fee2e2'}; border: 2px solid ${isPass ? '#34d399' : '#f87171'}; }
-    .result-label { font-size: 11px; color: ${isPass ? '#065f46' : '#991b1b'}; font-weight: 600; }
-    .result-value { font-size: 20px; font-weight: 900; color: ${isPass ? '#065f46' : '#991b1b'}; }
-    .sig { margin-top: 40px; display: flex; justify-content: space-between; font-size: 10px; }
+    .header { text-align: center; margin-bottom: 8px; }
+    .school-name { font-size: 16px; font-weight: 900; color: #1e1b4b; text-transform: uppercase; }
+    .card-title { font-size: 13px; font-weight: 700; color: #475569; margin-top: 2px; }
+    .divider { border: none; border-top: 2px solid #1e293b; margin: 10px 0; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; margin-top: 8px; }
+    .info-row { display: flex; gap: 6px; }
+    .info-label { color: #64748b; font-weight: 600; width: 65px; }
+    .info-value { color: #0f172a; font-weight: 700; }
+    .result-banner { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1.5px solid ${isPass ? '#059669' : '#e11d48'}; border-radius: 6px; padding: 10px 14px; margin-top: 14px; }
+    .result-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
+    .result-value { font-size: 16px; font-weight: 900; color: ${isPass ? '#059669' : '#e11d48'}; }
+    .sig { margin-top: 40px; display: flex; justify-content: space-between; font-size: 10px; color: #475569; }
     .sig-line { border-top: 1px solid #334155; width: 140px; padding-top: 4px; text-align: center; }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="school-name">Panjeree Apps LMS</div>
-    <div class="card-title">Student Result Card</div>
+    <div class="school-name">${inst.name.toUpperCase()}</div>
+    ${inst.nameBn ? `<div style="font-size:11px; color:#475569; font-weight:600;">${inst.nameBn}</div>` : ''}
+    <div style="font-size:9.5px; color:#64748b;">EIIN: ${inst.eiin} • ${inst.address}</div>
+    <div class="card-title">Individual Student Result Card (Session ${inst.session})</div>
   </div>
   <hr class="divider"/>
 
@@ -167,21 +158,16 @@ function buildStudentCardHTML({ exam, studentName, rollNumber, results }: Props)
       <div class="result-label">Overall Result</div>
       <div style="font-size:11px;color:${isPass ? '#065f46' : '#991b1b'};margin-top:2px">GPA: ${avgGpa} · ${totalObtained}/${totalPossible} marks</div>
     </div>
-    <div class="result-value">${isPass ? 'PASSED' : 'FAILED'}</div>
+    <div class="result-value">${isPass ? 'PASSED ✓' : 'FAILED ✗'}</div>
   </div>
 
   <div class="sig">
     <div class="sig-line">Class Teacher</div>
-    <div class="sig-line">Head Teacher / Principal</div>
+    <div class="sig-line">${inst.principalDesignation}</div>
   </div>
 </body>
 </html>`
 }
-
-// TypeScript needs these defined before the template literal but after the function
-
-const tdStyle = 'border:1px solid #cbd5e1;padding:6px 10px;font-size:11px;'
-const tdCenter = 'border:1px solid #cbd5e1;padding:6px 10px;font-size:11px;text-align:center;'
 
 export function printStudentResultCard(props: Props) {
   const html = buildStudentCardHTML(props)

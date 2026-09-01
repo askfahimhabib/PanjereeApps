@@ -1,10 +1,12 @@
 import type { PaymentRecord, ReceiptPrintMode } from '../types'
 import { PAYMENT_METHOD_LABELS, MONTH_NAMES, formatCurrency } from '../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 /**
  * Generates SMS / WhatsApp payment receipt confirmation text.
  */
 export function generateReceiptSmsText(record: PaymentRecord): string {
+  const inst = getInstitutionInfo()
   const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', {
     day: '2-digit',
     month: 'short',
@@ -12,16 +14,17 @@ export function generateReceiptSmsText(record: PaymentRecord): string {
   })
   const itemsSummary = record.items.map(it => it.label).join(', ')
 
-  return `Dear Parent, received ${formatCurrency(record.total_amount)} for ${record.student_name} (Roll: ${record.roll_number}, ${record.class_name || 'Class'}) on ${paidDate}. Purpose: ${itemsSummary}. Memo: ${record.invoice_number}. Thank you. - Panjeree LMS`
+  return `Dear Parent, received ${formatCurrency(record.total_amount)} for ${record.student_name} (Roll: ${record.roll_number}, ${record.class_name || 'Class'}) on ${paidDate}. Purpose: ${itemsSummary}. Invoice #${record.invoice_number}. Thank you. - ${inst.name}`
 }
 
 /**
  * Generates and opens a printable invoice for a PaymentRecord.
  * Supports DUAL_A4 (Student Copy + Office Copy) & POS_80MM (Thermal slip).
  */
-export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DUAL_A4'): void {
-  const institutionName = 'PANJEREE EDUCATION & COACHING'
-  const institutionAddress = 'Mirpur-10, Dhaka-1216 | Phone: +880 1711-000000'
+export function printInvoice(record: PaymentRecord, _mode: ReceiptPrintMode = 'DUAL_A4'): void {
+  const inst = getInstitutionInfo()
+  const institutionName = inst.name.toUpperCase()
+  const institutionAddress = `${inst.address} | Phone: ${inst.phone}`
   const printDate = new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
   const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -36,7 +39,7 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
             <div style="font-size: 10px; color: #64748b;">${item.fee_type}${periodLabel}</div>
           </td>
           <td style="padding: 6px 8px; text-align: right; font-weight: 700; font-family: monospace; border-bottom: 1px solid #f1f5f9;">
-            ৳ ${item.amount.toLocaleString('en-BD')}
+            ${inst.currencySymbol} ${item.amount.toLocaleString('en-BD')}
           </td>
         </tr>
       `
@@ -48,7 +51,7 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
           Special Waiver / Scholarship ${record.waiver_reason ? `(${record.waiver_reason})` : ''}
         </td>
         <td style="padding: 6px 8px; text-align: right; font-weight: 700; font-family: monospace;">
-          - ৳ ${record.discount_amount.toLocaleString('en-BD')}
+          - ${inst.currencySymbol} ${record.discount_amount.toLocaleString('en-BD')}
         </td>
       </tr>
     ` : ''
@@ -59,7 +62,9 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
         <div class="header">
           <div class="badge-copy">${copyTitle}</div>
           <h2>${institutionName}</h2>
+          ${inst.nameBn ? `<div style="font-size:11px; color:#475569; margin-top:-2px; margin-bottom:2px;">${inst.nameBn}</div>` : ''}
           <p class="subtitle">${institutionAddress}</p>
+          <div style="font-size: 10px; color: #64748b; margin-top: 2px;">EIIN: ${inst.eiin} • Affiliation: ${inst.board}</div>
           <div class="receipt-pill">
             <span>MONEY RECEIPT</span> • <strong>${record.invoice_number}</strong>
           </div>
@@ -110,7 +115,7 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
               <tr style="border-top: 2px solid #0f172a; font-size: 13px; font-weight: 800;">
                 <td style="padding: 8px 8px; color: #0f172a;">TOTAL COLLECTED</td>
                 <td style="padding: 8px 8px; text-align: right; color: #059669; font-family: monospace;">
-                  ৳ ${record.total_amount.toLocaleString('en-BD')}
+                  ${inst.currencySymbol} ${record.total_amount.toLocaleString('en-BD')}
                 </td>
               </tr>
             </tfoot>
@@ -118,6 +123,10 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
         </div>
 
         ${record.note ? `<div class="note-box">Memo: ${record.note}</div>` : ''}
+
+        <div style="font-size: 9.5px; color: #64748b; font-style: italic; margin-top: 6px; padding: 4px 6px; background: #f8fafc; border-radius: 4px;">
+          Note: ${inst.termsFooter}
+        </div>
 
         <!-- Signatures & Stamp -->
         <div class="footer-signatures">
@@ -133,223 +142,172 @@ export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DU
             <span>Authorized Officer</span>
           </div>
         </div>
-        <div class="print-meta">System generated on ${printDate} • Verified by LMS</div>
+        <div class="print-meta">System generated on ${printDate} • Verified by ${inst.name}</div>
       </div>
     `
   }
 
-  let bodyHtml = ''
-
-  if (mode === 'POS_80MM') {
-    bodyHtml = `
-      <div class="pos-wrapper">
-        ${renderVoucherBlock('OFFICE / CUSTOMER COPY')}
-      </div>
-    `
-  } else {
-    // DUAL A4: Side-by-Side or Stacked Dual Copies
-    bodyHtml = `
-      <div class="dual-wrapper">
-        ${renderVoucherBlock('STUDENT COPY')}
-        <div class="cut-line">
-          <span>✂ ----------------- CUT HERE (SEPARATION LINE) ----------------- ✂</span>
-        </div>
-        ${renderVoucherBlock('OFFICE / ACCOUNTS COPY')}
-      </div>
-    `
-  }
-
-  const html = `<!DOCTYPE html>
+  const dualA4Html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Receipt_${record.invoice_number}</title>
+  <title>Receipt — ${record.invoice_number}</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #0f172a;
       background: #f8fafc;
       padding: 12px;
+      font-size: 12px;
     }
+    @page { size: A4 portrait; margin: 8mm 10mm; }
     @media print {
-      body { background: #fff; padding: 0; }
-      .dual-wrapper { gap: 8px !important; }
-      @page { size: A4 portrait; margin: 10mm; }
+      body { background: white; padding: 0; }
+      .no-print { display: none !important; }
+      .page-container { border: none !important; box-shadow: none !important; }
     }
-
-    .dual-wrapper {
-      max-width: 820px;
+    .page-container {
+      max-width: 800px;
       margin: 0 auto;
+      background: white;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .grid-dual {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
-
-    .pos-wrapper {
-      max-width: 380px;
-      margin: 0 auto;
-    }
-
-    .voucher-box {
-      background: #fff;
-      border: 1.5px solid #0f172a;
-      border-radius: 12px;
-      padding: 16px 20px;
+    .divider-cut {
+      border: none;
+      border-top: 1.5px dashed #cbd5e1;
       position: relative;
-      overflow: hidden;
+      margin: 4px 0;
     }
-
+    .divider-cut::after {
+      content: '✂ TEAR HERE / CUT ALONG DOTTED LINE';
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 0 10px;
+      font-size: 8px;
+      color: #94a3b8;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .voucher-box {
+      border: 1.5px solid #0f172a;
+      border-radius: 6px;
+      padding: 14px 16px;
+      background: white;
+      position: relative;
+    }
     .badge-copy {
       position: absolute;
-      top: 12px;
-      right: 16px;
-      background: #0f172a;
-      color: #fff;
+      top: 10px;
+      right: 12px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 2px 8px;
       font-size: 9px;
       font-weight: 800;
-      letter-spacing: 0.8px;
-      padding: 3px 8px;
-      border-radius: 6px;
+      color: #475569;
+      border-radius: 4px;
       text-transform: uppercase;
-    }
-
-    .header {
-      text-align: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .header h2 {
-      font-size: 16px;
-      font-weight: 800;
       letter-spacing: 0.5px;
-      color: #0f172a;
     }
-    .header .subtitle {
-      font-size: 10px;
-      color: #64748b;
-      margin-top: 1px;
-    }
+    .header { text-align: center; margin-bottom: 12px; }
+    .header h2 { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; }
+    .header .subtitle { font-size: 10px; color: #64748b; margin-top: 1px; }
     .receipt-pill {
       display: inline-block;
       margin-top: 6px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
+      background: #0f172a;
+      color: white;
       padding: 2px 10px;
-      border-radius: 20px;
+      border-radius: 12px;
       font-size: 10px;
-      color: #334155;
+      letter-spacing: 0.5px;
     }
-
     .info-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
     }
-    .info-item .lbl {
-      display: block;
-      font-size: 9px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .info-item .val {
-      font-size: 12px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .status-paid {
-      color: #059669;
-    }
-
-    .table-container {
-      padding: 12px 0;
-    }
-
+    .info-item { display: flex; flex-direction: column; }
+    .info-item .lbl { font-size: 8.5px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; }
+    .info-item .val { font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 1px; }
+    .status-paid { color: #059669 !important; }
+    .table-container { border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
     .note-box {
       font-size: 10px;
-      font-style: italic;
-      color: #475569;
-      background: #f8fafc;
-      padding: 6px 10px;
-      border-radius: 6px;
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      color: #92400e;
+      padding: 4px 8px;
+      border-radius: 4px;
       margin-bottom: 10px;
     }
-
     .footer-signatures {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      padding-top: 16px;
-      margin-top: 4px;
+      margin-top: 14px;
+      padding-top: 8px;
     }
-    .sign-block {
-      text-align: center;
-      width: 140px;
-    }
-    .sign-block .line {
-      border-top: 1px dashed #475569;
-      margin-bottom: 4px;
-    }
-    .sign-block span {
-      font-size: 9px;
-      font-weight: 600;
-      color: #475569;
-      text-transform: uppercase;
-    }
-    .seal-block {
-      text-align: center;
-    }
-    .stamp-circle {
-      display: inline-flex;
+    .sign-block { width: 140px; text-align: center; }
+    .sign-block .line { border-top: 1px solid #64748b; margin-bottom: 4px; }
+    .sign-block span { font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .seal-block .stamp-circle {
+      width: 55px;
+      height: 55px;
+      border: 2px solid #059669;
+      color: #059669;
+      border-radius: 50%;
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 54px;
-      height: 54px;
-      border: 2px solid #059669;
-      border-radius: 50%;
-      color: #059669;
       font-weight: 900;
-      font-size: 10px;
+      font-size: 11px;
+      line-height: 1;
       transform: rotate(-10deg);
       opacity: 0.85;
     }
-
-    .cut-line {
-      text-align: center;
-      font-size: 10px;
-      color: #94a3b8;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin: 4px 0;
-    }
-
-    .print-meta {
-      text-align: right;
-      font-size: 8px;
-      color: #94a3b8;
-      margin-top: 6px;
-    }
+    .print-meta { font-size: 8px; color: #94a3b8; text-align: center; margin-top: 6px; }
   </style>
 </head>
 <body>
-  ${bodyHtml}
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
+  <div class="no-print" style="max-width: 800px; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <div><strong>${inst.name}</strong> — Print Preview (Dual A4)</div>
+    <button onclick="window.print()" style="background: #4f46e5; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px;">Print Now 🖨️</button>
+  </div>
+  <div class="page-container">
+    <div class="grid-dual">
+      ${renderVoucherBlock('Student Copy')}
+      <hr class="divider-cut" />
+      ${renderVoucherBlock('Office / Accounts Copy')}
+    </div>
+  </div>
 </body>
 </html>`
 
-  const printWindow = window.open('', '_blank', 'width=900,height=800')
-  if (printWindow) {
-    printWindow.document.write(html)
-    printWindow.document.close()
+  const win = window.open('', '_blank', 'width=880,height=920')
+  if (!win) {
+    alert('Please allow popups for this application to open the printable invoice.')
+    return
   }
+  win.document.open()
+  win.document.write(dualA4Html)
+  win.document.close()
 }

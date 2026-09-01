@@ -1,5 +1,6 @@
 import type { ExamHeld, StudentTabulationRow } from '../types'
 import { EXAM_SCOPE_LABELS } from '../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   exam: ExamHeld
@@ -17,6 +18,7 @@ const GRADE_PRINT_COLOR: Record<string, string> = {
 }
 
 export function printBulkReportCards({ exam, students }: Props) {
+  const inst = getInstitutionInfo()
   const schedules = exam.exam_held_schedules ?? []
   const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
   const examTarget = exam.classes?.name ?? exam.batches?.name ?? ''
@@ -80,10 +82,11 @@ export function printBulkReportCards({ exam, students }: Props) {
       <div class="report-card-sheet">
         <div class="card-inner">
           <div class="header">
-            <div class="school-name">PANJEREE ACADEMY & MODEL SCHOOL</div>
-            <div class="school-sub">Affiliated with Bangladesh Secondary & Higher Secondary Education Board</div>
+            <div class="school-name">${inst.name.toUpperCase()}</div>
+            ${inst.nameBn ? `<div style="font-size:12px; color:#475569; font-weight:600; margin-top:-2px;">${inst.nameBn}</div>` : ''}
+            <div class="school-sub">EIIN: ${inst.eiin} • Affiliated with ${inst.board}</div>
             <div class="card-badge">ACADEMIC TRANSCRIPT & PROGRESS REPORT</div>
-            <div class="exam-title">${exam.name} (${EXAM_SCOPE_LABELS[exam.scope]})</div>
+            <div class="exam-title">${exam.name} (${EXAM_SCOPE_LABELS[exam.scope]}) — Academic Session ${inst.session}</div>
           </div>
 
           <div class="student-info-box">
@@ -118,22 +121,22 @@ export function printBulkReportCards({ exam, students }: Props) {
                 <td style="padding:6px 8px;border:1px solid #cbd5e1;font-size:11px">TOTAL AGGREGATE</td>
                 <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:12px;color:#0f172a">${student.totalObtained}</td>
                 <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:11px">${student.totalPossible}</td>
-                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:11px">—</td>
-                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:11px">${student.grade}</td>
-                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:12px;color:#0f172a">${student.gpa.toFixed(2)}</td>
+                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:11px;color:#64748b">—</td>
+                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:12px;color:${isPass ? '#15803d' : '#b91c1c'}">${student.grade}</td>
+                <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-size:13px;font-family:monospace;color:${isPass ? '#15803d' : '#b91c1c'}">${student.gpa.toFixed(2)}</td>
               </tr>
             </tfoot>
           </table>
 
-          <div class="result-summary-grid">
-            <div class="summary-card ${isPass ? 'pass-card' : 'fail-card'}">
+          <div class="summary-and-scale">
+            <div class="result-summary-box" style="border-color:${isPass ? '#86efac' : '#fca5a5'};background:${isPass ? '#f0fdf4' : '#fff1f2'}">
               <div class="sum-title">FINAL RESULT</div>
-              <div class="sum-status">${isPass ? 'PASSED' : 'FAILED'}</div>
+              <div class="sum-status" style="color:${isPass ? '#15803d' : '#b91c1c'}">${isPass ? 'PASSED ✓' : 'FAILED ✗'}</div>
               <div class="sum-details">Percentage: <strong>${student.percentage}%</strong> · GPA: <strong>${student.gpa.toFixed(2)}</strong></div>
             </div>
             
             <div class="grade-scale-mini">
-              <div class="scale-title">Grading Scale</div>
+              <div class="scale-title">Grading Scale (NCTB Standard)</div>
               <div class="scale-chips">
                 <span>A+ (80-100 / 5.0)</span>
                 <span>A (70-79 / 4.0)</span>
@@ -160,8 +163,8 @@ export function printBulkReportCards({ exam, students }: Props) {
 
           <div class="signatures">
             <div class="sig-line">Class Teacher</div>
-            <div class="sig-line">Exam Controller</div>
-            <div class="sig-line">Headmaster / Principal</div>
+            <div class="sig-line">${inst.examinerTitle}</div>
+            ${inst.showPrincipalSign ? `<div class="sig-line">${inst.principalDesignation}</div>` : ''}
             <div class="sig-line">Guardian Signature</div>
           </div>
         </div>
@@ -188,124 +191,96 @@ export function printBulkReportCards({ exam, students }: Props) {
       max-width: 210mm;
       min-height: 275mm;
       margin: 20px auto;
-      padding: 16mm 14mm;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      break-after: page;
+      padding: 16px 20px;
       page-break-after: always;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-inner {
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
-    @media print {
-      body { background: white; }
-      .report-card-sheet {
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
-        min-height: auto;
-        page-break-after: always;
-        break-after: page;
-      }
-    }
-
-    .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; }
+    .header { text-align: center; margin-bottom: 12px; }
     .school-name { font-size: 18px; font-weight: 900; color: #1e1b4b; letter-spacing: 0.5px; }
-    .school-sub { font-size: 10px; color: #64748b; margin-top: 2px; }
-    .card-badge { display: inline-block; background: #312e81; color: white; font-size: 10px; font-weight: 800; padding: 3px 12px; border-radius: 999px; margin-top: 6px; letter-spacing: 1px; }
-    .exam-title { font-size: 13px; font-weight: 700; color: #334155; margin-top: 5px; }
+    .school-sub { font-size: 10px; color: #475569; margin-top: 2px; }
+    .card-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 14px;
+      background: #0f172a;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+    .exam-title { font-size: 12px; font-weight: 700; color: #334155; margin-top: 4px; }
 
     .student-info-box {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-bottom: 14px;
-      font-size: 11px;
-    }
-    .info-row { margin-bottom: 4px; display: flex; }
-    .info-row .lbl { color: #64748b; width: 100px; flex-shrink: 0; }
-    .info-row .val { color: #0f172a; }
-
-    .marks-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-    .marks-table th { background: #1e293b; color: #f8fafc; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 8px; border: 1px solid #94a3b8; }
-    .marks-table td { border: 1px solid #cbd5e1; }
-
-    .result-summary-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .summary-card {
-      padding: 10px 14px;
-      border-radius: 8px;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .pass-card { background: #f0fdf4; border: 1.5px solid #86efac; color: #166534; }
-    .fail-card { background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b; }
-    .sum-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-    .sum-status { font-size: 18px; font-weight: 900; letter-spacing: 0.5px; }
-    .sum-details { font-size: 11px; margin-top: 2px; }
-
-    .grade-scale-mini {
+      justify-content: space-between;
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 9px;
-      color: #64748b;
-    }
-    .scale-title { font-weight: 800; text-transform: uppercase; color: #475569; margin-bottom: 4px; }
-    .scale-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-    .scale-chips span { background: #e2e8f0; padding: 2px 5px; border-radius: 4px; }
-
-    .remarks-box {
-      border: 1px dashed #cbd5e1;
+      border: 1px solid #cbd5e1;
       border-radius: 6px;
-      padding: 8px 12px;
+      padding: 8px 14px;
+      margin-bottom: 10px;
       font-size: 11px;
-      color: #334155;
-      background: #fafafa;
-      margin-bottom: 30px;
     }
+    .info-col { display: flex; flex-direction: column; gap: 4px; }
+    .info-row { display: flex; gap: 6px; }
+    .lbl { color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; width: 85px; }
+    .val { color: #0f172a; font-size: 11px; }
 
-    .signatures {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-top: 20px;
-      font-size: 10px;
-      color: #475569;
-    }
-    .sig-line {
-      border-top: 1px solid #0f172a;
-      text-align: center;
-      padding-top: 4px;
-      font-weight: 600;
+    .marks-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .marks-table th { background: #1e293b; color: white; padding: 6px 8px; font-size: 10px; border: 1px solid #334155; text-transform: uppercase; }
+    .marks-table td { font-size: 11px; }
+
+    .summary-and-scale { display: flex; gap: 12px; margin-bottom: 8px; }
+    .result-summary-box { flex: 1; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; text-align: center; }
+    .sum-title { font-size: 9px; font-weight: 800; color: #64748b; letter-spacing: 1px; }
+    .sum-status { font-size: 16px; font-weight: 900; margin: 2px 0; }
+    .sum-details { font-size: 10px; color: #334155; }
+
+    .grade-scale-mini { flex: 1.5; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; background: #f8fafc; }
+    .scale-title { font-size: 9px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
+    .scale-chips { display: flex; flex-wrap: wrap; gap: 4px; font-size: 8.5px; color: #334155; }
+    .scale-chips span { background: white; border: 1px solid #cbd5e1; padding: 1px 4px; border-radius: 3px; }
+
+    .remarks-box { background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 6px 10px; font-size: 10.5px; color: #92400e; margin-bottom: 12px; }
+
+    .signatures { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 8px; }
+    .sig-line { border-top: 1px solid #334155; width: 130px; text-align: center; font-size: 9px; font-weight: 700; color: #475569; padding-top: 4px; text-transform: uppercase; }
+
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+      .report-card-sheet { box-shadow: none; margin: 0 auto; }
     }
   </style>
 </head>
 <body>
+  <div class="no-print" style="position:fixed;top:10px;right:10px;z-index:9999;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:10px;align-items:center;">
+    <span style="font-size:12px;font-weight:700;">Bulk Print: ${students.length} Student Report Cards</span>
+    <button onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">Print All (A4) 🖨️</button>
+  </div>
   ${cardsHtml}
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=950,height=950')
+  const win = window.open('', '_blank', 'width=900,height=950')
   if (!win) {
-    alert('Please allow popups in your browser to print the batch report cards.')
+    alert('Popup blocked! Please allow popups to print report cards.')
     return
   }
+  win.document.open()
   win.document.write(fullHtml)
   win.document.close()
-  win.focus()
-  setTimeout(() => {
-    win.print()
-  }, 700)
 }

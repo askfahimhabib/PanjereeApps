@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Printer, X, School, QrCode, Phone, ShieldCheck, Award } from 'lucide-react'
 import type { Teacher } from '../../types'
 import { DESIGNATION_LABELS } from '../../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   open: boolean
@@ -25,6 +26,8 @@ function getInitials(name: string) {
 }
 
 export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
+  const inst = getInstitutionInfo()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -79,8 +82,8 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
         <!-- Front Side -->
         <div class="card">
           <div class="front-header">
-            <h2>Estudy Model Academy</h2>
-            <p>Faculty & Staff Identity Card</p>
+            <h2>${inst.name}</h2>
+            <p>Faculty & Staff Identity Card • EIIN: ${inst.eiin}</p>
           </div>
           <div class="avatar-box">
             ${getInitials(teacher.fullName)}
@@ -97,22 +100,22 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
             <tr><td class="label">Contact:</td><td class="val">${phoneNo}</td></tr>
           </table>
           <div class="footer-front">
-            Official Faculty ID • Valid till 2027
+            Official Faculty ID • Session ${inst.session}
           </div>
         </div>
 
         <!-- Back Side -->
         <div class="card">
-          <div class="back-header">Faculty Identity Card</div>
+          <div class="back-header">Faculty Identity Verification</div>
           <div class="back-body">
-            <p>• This official identification card remains the property of Estudy International Model Academy.</p>
-            <p>• Unauthorized possession or duplicate reproduction is strictly prohibited by law.</p>
-            <div style="margin-top: 14px; padding: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <p><strong>Campus Helpline:</strong> +880 1700-000000</p>
-              <p><strong>Emergency Email:</strong> admin@estudy.edu.bd</p>
-              <p><strong>Campus Address:</strong> Sector 4, Uttara, Dhaka</p>
+            <p>1. This card is official institutional property of <strong>${inst.name}</strong>.</p>
+            <p>2. In case of loss or inquiry, please return to campus administrative office.</p>
+            <div style="margin-top: 16px; padding: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <p><strong>Campus:</strong> ${inst.address}</p>
+              <p><strong>Helpline:</strong> ${inst.phone}</p>
+              <p><strong>Email:</strong> ${inst.email}</p>
             </div>
-            <div style="text-align: center; margin-top: 25px;">
+            <div style="text-align: center; margin-top: 20px;">
               <div style="font-family: monospace; font-size: 14px; font-weight: 800; letter-spacing: 3px; background: #f1f5f9; padding: 6px; border-radius: 6px;">
                 *${teacher.teacherId}*
               </div>
@@ -124,7 +127,7 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
               </div>
               <div>
                 <div class="sig-line"></div>
-                Chairman / Principal
+                ${inst.principalDesignation}
               </div>
             </div>
           </div>
@@ -155,14 +158,14 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
         className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-gradient-to-r from-indigo-50 via-zinc-50 to-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-gradient-to-r from-blue-50 via-zinc-50 to-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
               <Award size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-zinc-900 text-sm">Faculty Identity Card</h3>
-              <p className="text-[11px] text-zinc-500">Official staff identity badge & credential</p>
+              <h3 className="font-bold text-zinc-900 text-sm">Faculty ID Card</h3>
+              <p className="text-[11px] text-zinc-500">Official printable faculty and staff badge</p>
             </div>
           </div>
 
@@ -171,7 +174,7 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer"
             >
-              <Printer size={14} /> Print Faculty ID Card
+              <Printer size={14} /> Print ID Card (Front & Back)
             </button>
             <button
               onClick={onClose}
@@ -188,12 +191,12 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
             {/* Front Card Preview */}
             <div className="w-[280px] h-[430px] rounded-3xl bg-white shadow-xl border border-zinc-200/80 overflow-hidden relative flex flex-col justify-between">
               <div>
-                <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-4 text-center text-white">
+                <div className="bg-gradient-to-r from-blue-900 to-indigo-900 p-4 text-center text-white">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <School size={16} />
-                    <h4 className="text-xs font-extrabold tracking-wide uppercase">Estudy Faculty</h4>
+                    <h4 className="text-xs font-extrabold tracking-wide uppercase">{inst.name}</h4>
                   </div>
-                  <p className="text-[9px] opacity-85">Uttara Model Town, Dhaka-1230</p>
+                  <p className="text-[9px] opacity-85">Faculty & Staff Identity Card</p>
                 </div>
 
                 <div className="p-4 text-center">
@@ -201,8 +204,8 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
                     {getInitials(teacher.fullName)}
                   </div>
                   <h3 className="font-extrabold text-zinc-900 text-sm mt-2.5 truncate px-2">{teacher.fullName}</h3>
-                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">
-                    {DESIGNATION_LABELS[teacher.designation]}
+                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                    {DESIGNATION_LABELS[teacher.designation] || 'Teacher'}
                   </span>
 
                   <div className="mt-3.5 space-y-1.5 text-left bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 text-[11px]">
@@ -212,14 +215,14 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-zinc-500">Department:</span>
-                      <span className="font-bold text-zinc-700">{deptName}</span>
+                      <span className="font-medium text-zinc-800">{deptName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-zinc-500">Blood Group:</span>
                       <span className="font-bold text-rose-600">{teacher.bloodGroup || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Phone:</span>
+                      <span className="text-zinc-500">Contact:</span>
                       <span className="font-mono text-zinc-700">{phoneNo}</span>
                     </div>
                   </div>
@@ -227,7 +230,7 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
               </div>
 
               <div className="bg-zinc-50 border-t border-zinc-100 p-2 text-center text-[9px] font-semibold text-zinc-500">
-                Official Faculty ID • Valid till 2027
+                Official Faculty ID • EIIN: {inst.eiin}
               </div>
             </div>
 
@@ -235,19 +238,19 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
             <div className="w-[280px] h-[430px] rounded-3xl bg-white shadow-xl border border-zinc-200/80 overflow-hidden relative flex flex-col justify-between">
               <div>
                 <div className="bg-zinc-900 p-3.5 text-center text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
-                  <ShieldCheck size={14} className="text-indigo-400" /> Faculty Credential
+                  <ShieldCheck size={14} className="text-blue-400" /> Faculty Verification
                 </div>
 
                 <div className="p-4 space-y-3 text-[10px] text-zinc-600 leading-relaxed">
-                  <p>• This identification card is strictly for institutional usage and campus access.</p>
-                  <p>• If misplaced, please return to administrative desk immediately.</p>
+                  <p>• This badge certifies that the bearer is an authorized faculty member of {inst.name}.</p>
+                  <p>• If misplaced, please return to campus administration.</p>
 
                   <div className="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 space-y-1">
                     <p className="font-bold text-zinc-800">Campus Contact:</p>
                     <p className="flex items-center gap-1 text-zinc-600">
-                      <Phone size={11} className="text-indigo-600" /> +880 1700-000000
+                      <Phone size={11} className="text-blue-600" /> {inst.phone}
                     </p>
-                    <p className="text-[9px] text-zinc-500 truncate">Uttara Sector 4, Dhaka-1230</p>
+                    <p className="text-[9px] text-zinc-500 truncate">{inst.address}</p>
                   </div>
 
                   <div className="text-center pt-2">
@@ -261,11 +264,11 @@ export function TeacherIdCardModal({ open, teacher, onClose }: Props) {
               <div className="p-3 border-t border-zinc-100 flex justify-between items-center text-[9px] text-zinc-500 text-center">
                 <div>
                   <div className="w-16 border-t border-zinc-300 mx-auto mb-0.5" />
-                  Cardholder Sign
+                  Holder Sign
                 </div>
                 <div>
                   <div className="w-16 border-t border-zinc-300 mx-auto mb-0.5" />
-                  Principal Sign
+                  {inst.principalDesignation}
                 </div>
               </div>
             </div>

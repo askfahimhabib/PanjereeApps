@@ -2,12 +2,14 @@ import type { ExamHeld } from '../types'
 import { EXAM_SCOPE_LABELS } from '../types'
 import { studentStore } from '@/data/stores'
 import { format, parseISO } from 'date-fns'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   exam: ExamHeld
 }
 
 export function printBatchAdmitCards({ exam }: Props) {
+  const inst = getInstitutionInfo()
   const schedules = exam.exam_held_schedules ?? []
   const examTarget = exam.classes?.name ?? exam.batches?.name ?? ''
   const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -54,10 +56,11 @@ export function printBatchAdmitCards({ exam }: Props) {
       <div class="admit-card-container">
         <div class="admit-card-inner">
           <div class="header">
-            <div class="school-title">PANJEREE ACADEMY & MODEL SCHOOL</div>
-            <div class="school-sub">Affiliated with Bangladesh Secondary & Higher Secondary Education Board</div>
+            <div class="school-title">${inst.name.toUpperCase()}</div>
+            ${inst.nameBn ? `<div style="font-size:11px; color:#475569; font-weight:600;">${inst.nameBn}</div>` : ''}
+            <div class="school-sub">EIIN: ${inst.eiin} • Affiliated with ${inst.board}</div>
             <div class="badge-tag">EXAMINATION ADMIT CARD / HALL TICKET</div>
-            <div class="exam-title">${exam.name} (${EXAM_SCOPE_LABELS[exam.scope]})</div>
+            <div class="exam-title">${exam.name} (${EXAM_SCOPE_LABELS[exam.scope]}) — Session ${inst.session}</div>
           </div>
 
           <div class="student-profile-bar">
@@ -99,10 +102,19 @@ export function printBatchAdmitCards({ exam }: Props) {
             3. Digital devices, mobile phones, or unauthorized notes are strictly prohibited in the exam hall.
           </div>
 
-          <div class="signature-row">
-            <div class="sig-box">Class Teacher</div>
-            <div class="sig-box">Controller of Examinations</div>
-            <div class="sig-box">Headmaster / Principal</div>
+          <div class="signatures-row">
+            <div class="sig-block">
+              <div class="line"></div>
+              <span>Candidate Signature</span>
+            </div>
+            <div class="sig-block">
+              <div class="line"></div>
+              <span>${inst.examinerTitle}</span>
+            </div>
+            <div class="sig-block">
+              <div class="line"></div>
+              <span>${inst.principalDesignation}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -113,7 +125,7 @@ export function printBatchAdmitCards({ exam }: Props) {
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>${exam.name} — Class Admit Cards</title>
+  <title>${exam.name} — Batch Admit Cards</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; color: #0f172a; background: #e2e8f0; }
@@ -125,34 +137,40 @@ export function printBatchAdmitCards({ exam }: Props) {
 
     .admit-card-container {
       background: white;
-      max-width: 200mm;
-      height: 132mm; /* Exactly 2 cards per A4 portrait page */
-      margin: 12px auto;
-      padding: 8mm 10mm;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      border: 1.5px dashed #64748b;
-      border-radius: 8px;
+      max-width: 210mm;
+      height: 138mm;
+      margin: 10px auto;
+      padding: 10px 12px;
+      page-break-inside: avoid;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admit-card-inner {
+      border: 1.5px solid #0f172a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      page-break-inside: avoid;
     }
 
-    @media print {
-      body { background: white; }
-      .admit-card-container {
-        box-shadow: none;
-        margin: 0 0 10mm 0;
-        padding: 6mm 8mm;
-        border: 1.5px dashed #475569;
-        page-break-inside: avoid;
-      }
+    .header { text-align: center; margin-bottom: 6px; }
+    .school-title { font-size: 15px; font-weight: 900; color: #1e1b4b; letter-spacing: 0.5px; }
+    .school-sub { font-size: 9px; color: #475569; margin-top: 1px; }
+    .badge-tag {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 2px 10px;
+      background: #0f172a;
+      color: white;
+      font-size: 9px;
+      font-weight: 800;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
     }
-
-    .header { text-align: center; border-bottom: 1.5px solid #1e293b; padding-bottom: 4px; margin-bottom: 6px; }
-    .school-title { font-size: 15px; font-weight: 900; color: #1e1b4b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .school-sub { font-size: 9px; color: #64748b; margin-top: 1px; }
-    .badge-tag { display: inline-block; background: #312e81; color: white; font-size: 9px; font-weight: 800; padding: 2px 10px; border-radius: 999px; margin-top: 3px; letter-spacing: 0.8px; }
     .exam-title { font-size: 11px; font-weight: 700; color: #334155; margin-top: 3px; }
 
     .student-profile-bar {
@@ -160,28 +178,26 @@ export function printBatchAdmitCards({ exam }: Props) {
       justify-content: space-between;
       align-items: center;
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
       padding: 6px 10px;
       margin-bottom: 6px;
     }
-
     .info-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 3px 14px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3px 12px;
       font-size: 10px;
       flex: 1;
     }
-    .info-item { display: flex; }
-    .info-item .lbl { color: #64748b; width: 85px; flex-shrink: 0; }
-    .info-item .val { color: #0f172a; }
+    .info-item { display: flex; gap: 4px; }
+    .lbl { color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 600; width: 75px; }
+    .val { color: #0f172a; font-size: 10px; }
 
     .photo-placeholder {
-      width: 50px;
-      height: 58px;
+      width: 48px;
+      height: 56px;
       border: 1px dashed #94a3b8;
-      background: #f1f5f9;
       border-radius: 4px;
       display: flex;
       align-items: center;
@@ -189,64 +205,58 @@ export function printBatchAdmitCards({ exam }: Props) {
       font-size: 8px;
       color: #94a3b8;
       font-weight: 700;
-      flex-shrink: 0;
-      margin-left: 12px;
+      background: white;
+      margin-left: 10px;
     }
 
-    .schedule-title {
-      font-size: 9px;
-      font-weight: 800;
-      color: #475569;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 3px;
-    }
-
+    .schedule-title { font-size: 9px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 2px; }
     .schedule-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-    .schedule-table th { background: #1e293b; color: #f8fafc; font-size: 9px; text-transform: uppercase; padding: 3px 6px; border: 1px solid #94a3b8; }
-    .schedule-table td { border: 1px solid #cbd5e1; }
+    .schedule-table th { background: #1e293b; color: white; padding: 4px 6px; font-size: 9px; border: 1px solid #334155; text-transform: uppercase; }
+    .schedule-table td { font-size: 9.5px; }
 
     .instructions-box {
-      border: 1px dashed #cbd5e1;
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
       border-radius: 4px;
       padding: 4px 8px;
       font-size: 8.5px;
-      color: #334155;
-      background: #fafafa;
+      color: #92400e;
       line-height: 1.3;
       margin-bottom: 6px;
     }
 
-    .signature-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      font-size: 9px;
-      color: #475569;
+    .signatures-row {
+      display: flex;
+      justify-content: space-between;
       margin-top: 4px;
     }
-    .sig-box {
-      border-top: 1px solid #0f172a;
-      text-align: center;
-      padding-top: 2px;
-      font-weight: 600;
+    .sig-block { width: 130px; text-align: center; }
+    .sig-block .line { border-top: 1px solid #334155; margin-bottom: 2px; }
+    .sig-block span { font-size: 8px; font-weight: 700; color: #475569; text-transform: uppercase; }
+
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+      .admit-card-container { box-shadow: none; margin: 0 auto; page-break-after: always; }
+      .admit-card-container:nth-child(2n) { page-break-after: always; }
     }
   </style>
 </head>
 <body>
+  <div class="no-print" style="position:fixed;top:10px;right:10px;z-index:9999;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:10px;align-items:center;">
+    <span style="font-size:12px;font-weight:700;">Print: ${enrolledStudents.length} Admit Cards</span>
+    <button onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;">Print Batch Admit Cards 🖨️</button>
+  </div>
   ${cardsHtml}
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=950,height=950')
+  const win = window.open('', '_blank', 'width=900,height=950')
   if (!win) {
-    alert('Please allow popups in your browser to print the admit cards.')
+    alert('Popup blocked! Please allow popups to print admit cards.')
     return
   }
+  win.document.open()
   win.document.write(fullHtml)
   win.document.close()
-  win.focus()
-  setTimeout(() => {
-    win.print()
-  }, 700)
 }

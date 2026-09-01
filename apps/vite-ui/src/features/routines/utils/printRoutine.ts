@@ -1,20 +1,24 @@
 import type { Routine } from '../types'
 import { DAY_LABELS, WEEKDAYS } from '../types'
 import { groupByDay } from '../hooks/useRoutine'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface PrintRoutineOptions {
   title: string               // e.g. "Class 10 - Academic Routine" or "SSC Model Test 2026 Routine"
   subtitle?: string           // e.g. "Academic Year 2026 • Day Shift"
   routines: Routine[]
-  institutionName?: string    // Default "Panjeree Model School & College"
+  institutionName?: string
 }
 
 export function printRoutine({
   title,
-  subtitle = 'Academic Year 2026 • Regular Schedule',
+  subtitle,
   routines,
-  institutionName = 'PANJEREE MODEL SCHOOL & COLLEGE',
+  institutionName,
 }: PrintRoutineOptions) {
+  const inst = getInstitutionInfo()
+  const finalInstName = institutionName || inst.name.toUpperCase()
+  const finalSubtitle = subtitle || `Academic Session ${inst.session} • Regular Schedule`
   const byDay = groupByDay(routines)
 
   const printWindow = window.open('', '_blank', 'width=1100,height=850')
@@ -28,7 +32,7 @@ export function printRoutine({
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${title} - ${institutionName}</title>
+  <title>${title} - ${finalInstName}</title>
   <style>
     @page {
       size: A4 landscape;
@@ -100,144 +104,127 @@ export function printRoutine({
       border-radius: 4px;
       padding: 4px 6px;
       margin-bottom: 4px;
-      font-size: 10px;
     }
-    .slot-item.ct {
+    .slot-item.break {
       border-left-color: #f59e0b;
       background: #fffbeb;
     }
-    .slot-item.off {
-      border-left-color: #ef4444;
-      background: #fef2f2;
-      text-align: center;
-      padding: 8px 4px;
-      color: #b91c1c;
-      font-weight: bold;
-    }
-    .subject {
+    .slot-subject {
       font-weight: 700;
-      color: #0f172a;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 10.5px;
+      color: #1e293b;
     }
-    .time {
-      color: #475569;
+    .slot-time {
       font-size: 9px;
-      font-family: monospace;
-      margin-top: 1px;
-    }
-    .teacher {
-      color: #334155;
-      font-size: 9px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .room {
       color: #64748b;
-      font-size: 8.5px;
+      font-weight: 600;
     }
-    .ct-badge {
-      display: inline-block;
-      font-size: 7.5px;
-      font-weight: 700;
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-      padding: 0 3px;
-      border-radius: 2px;
+    .slot-details {
+      font-size: 9px;
+      color: #475569;
       margin-top: 1px;
     }
     .footer {
+      margin-top: 24px;
       display: flex;
       justify-content: space-between;
-      margin-top: 20px;
-      padding-top: 10px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 9px;
-      color: #64748b;
+      align-items: flex-end;
+      padding-top: 12px;
     }
-    .sign-block {
+    .sign-box {
       text-align: center;
-      width: 140px;
-      border-top: 1px dashed #94a3b8;
-      padding-top: 4px;
-      margin-top: 20px;
-      color: #334155;
+      width: 160px;
+    }
+    .sign-line {
+      border-top: 1px solid #64748b;
+      margin-bottom: 4px;
+    }
+    .sign-label {
+      font-size: 9px;
       font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .print-date {
+      font-size: 8.5px;
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 8px;
     }
     @media print {
-      body { padding: 0; }
-      button { display: none; }
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="no-print" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px;">
+    <span style="font-weight: 600; font-size: 12px;">Timetable Preview</span>
+    <button onclick="window.print()" style="background: #4f46e5; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+      Print Routine 🖨️
+    </button>
+  </div>
+
   <div class="header">
-    <div class="institution">${institutionName}</div>
+    <div class="institution">${finalInstName}</div>
+    ${inst.nameBn ? `<div style="font-size:11px; color:#475569; font-weight:600; margin-top:-2px;">${inst.nameBn}</div>` : ''}
+    <div style="font-size:9.5px; color:#64748b; margin-top:2px;">EIIN: ${inst.eiin} • ${inst.address}</div>
     <div class="routine-title">${title}</div>
-    <div class="meta">${subtitle} • Printed on: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+    <div class="meta">${finalSubtitle}</div>
   </div>
 
   <table class="grid-table">
     <thead>
       <tr>
-        ${WEEKDAYS.map(day => `<th>${DAY_LABELS[day]}</th>`).join('')}
+        ${WEEKDAYS.map(d => `<th>${DAY_LABELS[d]}</th>`).join('')}
       </tr>
     </thead>
     <tbody>
       <tr>
         ${WEEKDAYS.map(day => {
-          const slots = (byDay[day] ?? []).sort((a, b) => a.start_time.localeCompare(b.start_time))
-          if (slots.length === 0) {
-            return `<td><div style="color: #94a3b8; text-align: center; margin-top: 25px; font-size: 9px; font-style: italic;">No Classes</div></td>`
-          }
-
-          const slotCards = slots.map(slot => {
-            if (slot.entry_type === 'OFF_DAY') {
-              return `<div class="slot-item off">🚫 Off Day</div>`
-            }
-            const isCT = slot.entry_type === 'CLASS_EXAM'
-            const subName = slot.subjects?.name_bn ?? slot.subjects?.name ?? 'Subject'
-            const teacherName = slot.teachers?.full_name ? `👨‍🏫 ${slot.teachers.full_name}` : ''
-            const roomName = slot.room ? `📍 ${slot.room}` : ''
-            const topicInfo = slot.topic ? `<div style="color:#b45309; font-size:8.5px; margin-top:1px;">📝 ${slot.topic}</div>` : ''
-
-            return `
-              <div class="slot-item ${isCT ? 'ct' : ''}">
-                <div class="subject">${subName}</div>
-                <div class="time">⏱️ ${slot.start_time} - ${slot.end_time}</div>
-                ${teacherName ? `<div class="teacher">${teacherName}</div>` : ''}
-                ${roomName ? `<div class="room">${roomName}</div>` : ''}
-                ${topicInfo}
-                ${isCT ? `<span class="ct-badge">Class Test${slot.total_marks ? ' (' + slot.total_marks + 'm)' : ''}</span>` : ''}
-              </div>
-            `
-          }).join('')
-
-          return `<td>${slotCards}</td>`
+          const daySlots = byDay[day] || []
+          return `
+            <td>
+              ${daySlots.length === 0 ? '<div style="color: #cbd5e1; text-align: center; padding-top: 24px; font-size: 10px;">— No Class —</div>' : ''}
+              ${daySlots.map(slot => `
+                <div class="slot-item ${slot.entry_type === 'OFF_DAY' ? 'break' : ''}">
+                  <div class="slot-subject">${slot.subjects?.name_bn || slot.subjects?.name || 'Class Session'}</div>
+                  <div class="slot-time">${slot.start_time} - ${slot.end_time}</div>
+                  <div class="slot-details">
+                    ${slot.teachers?.full_name ? '👨‍🏫 ' + slot.teachers.full_name : ''}
+                    ${slot.room ? ' • Room ' + slot.room : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </td>
+          `
         }).join('')}
       </tr>
     </tbody>
   </table>
 
   <div class="footer">
-    <div>Note: Students must arrive 10 minutes before the first period. Mobile phones are prohibited in classrooms.</div>
-    <div style="display: flex; gap: 40px;">
-      <div class="sign-block">Class Teacher</div>
-      <div class="sign-block">Headmaster / Principal</div>
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div class="sign-label">Routine Committee</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div class="sign-label">Academic Coordinator</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div class="sign-label">${inst.principalDesignation}</div>
     </div>
   </div>
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
+  <div class="print-date">
+    Generated on ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • Verified by ${inst.name}
+  </div>
 </body>
 </html>
-`
+  `
 
   printWindow.document.open()
   printWindow.document.write(printHtml)

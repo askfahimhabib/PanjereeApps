@@ -3,8 +3,10 @@ import { Printer, Receipt } from 'lucide-react'
 import type { Teacher } from '../../types'
 import { salaryStore, teacherSalarySettingStore } from '@/data/stores'
 import { formatCurrency, MONTH_NAMES } from '@/features/payments/types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
+  const inst = getInstitutionInfo()
   const currentYear = new Date().getFullYear()
 
   // Teacher Salary Setting
@@ -59,8 +61,9 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
       </head>
       <body>
         <div class="header">
-          <h1>Estudy International Model Academy</h1>
-          <p>Sector 4, Uttara Model Town, Dhaka-1230</p>
+          <h1>${inst.name}</h1>
+          ${inst.nameBn ? `<p style="font-size:12px; font-weight:600; color:#475569;">${inst.nameBn}</p>` : ''}
+          <p>${inst.address} • Phone: ${inst.phone} • EIIN: ${inst.eiin}</p>
           <div class="badge">Official Staff Salary Slip • ${monthName} ${year}</div>
         </div>
 
@@ -72,7 +75,7 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
           </div>
           <div style="text-align: right;">
             <p><strong>Disbursal Method:</strong> ${setting?.payment_method || 'BANK'}</p>
-            <p><strong>Account/Ref:</strong> ${setting?.account_number || 'DBBL-***921'}</p>
+            <p><strong>Account/Ref:</strong> ${setting?.account_number || inst.bankDetails.split('|')[1] || 'DBBL-***921'}</p>
             <p><strong>Pay Period:</strong> ${monthName} ${year}</p>
           </div>
         </div>
@@ -86,7 +89,7 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
             <tr><td>House & Medical Allowance</td><td style="text-align: right; font-family: monospace;">+ ${formatCurrency(totalAllowances)}</td></tr>
             <tr><td>Provident Fund & Tax Deduction</td><td style="text-align: right; font-family: monospace; color: #dc2626;">- ${formatCurrency(deductions)}</td></tr>
             <tr class="total-row">
-              <td><strong>Net Net Salary Paid:</strong></td>
+              <td><strong>Net Salary Paid:</strong></td>
               <td style="text-align: right; font-family: monospace; font-size: 14px; color: #047857;"><strong>${formatCurrency(paidAmount || netMonthlySalary)}</strong></td>
             </tr>
           </tbody>
@@ -95,11 +98,11 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
         <div class="sigs">
           <div>
             <div class="sig-line"></div>
-            Teacher / Signature
+            Teacher Signature
           </div>
           <div>
             <div class="sig-line"></div>
-            Accounts & Finance Officer
+            ${inst.principalDesignation}
           </div>
         </div>
 
@@ -119,99 +122,101 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* ── Salary Structure KPI Summary ───────────────────────── */}
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-5 text-white shadow-md">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
-              Salary Profile & Disbursal
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <h3 className="text-2xl font-black font-mono">{formatCurrency(netMonthlySalary)}</h3>
-              <span className="text-xs text-blue-200 font-semibold">/ month (Net)</span>
-            </div>
-            <p className="text-[11px] text-blue-200 mt-1">
-              Base: {formatCurrency(baseSalary)} • Allowances: +{formatCurrency(totalAllowances)} • Deductions: -{formatCurrency(deductions)}
-            </p>
+    <div className="space-y-6">
+      {/* Salary Overview Card */}
+      <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <span className="text-[10px] font-bold tracking-wider text-indigo-300 uppercase block">
+            Configured Compensation Package
+          </span>
+          <div className="flex flex-wrap items-baseline gap-4 mt-2">
+            <h3 className="text-3xl font-black font-mono tracking-tight">
+              {formatCurrency(netMonthlySalary)}
+            </h3>
+            <span className="text-xs text-zinc-400 font-medium">/ month (Net Payable)</span>
           </div>
 
-          <button
-            onClick={() => handlePrintSlip('August', currentYear, netMonthlySalary)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-indigo-900 text-xs font-bold hover:bg-indigo-50 transition-all shadow-sm cursor-pointer"
-          >
-            <Printer size={13} /> Current Pay Slip
-          </button>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10 text-xs">
+            <div>
+              <span className="text-zinc-400 text-[11px] block">Basic Salary</span>
+              <span className="font-bold font-mono text-zinc-100">{formatCurrency(baseSalary)}</span>
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[11px] block">Allowances</span>
+              <span className="font-bold font-mono text-emerald-400">+{formatCurrency(totalAllowances)}</span>
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[11px] block">Deductions (PF/Tax)</span>
+              <span className="font-bold font-mono text-rose-400">-{formatCurrency(deductions)}</span>
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[11px] block">Disbursal</span>
+              <span className="font-bold text-zinc-200">{setting?.payment_method || 'BANK'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Salary Disbursal History ───────────────────────────── */}
-      <div className="bg-white border border-zinc-200/80 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Receipt size={14} className="text-indigo-600" />
-            <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
-              Disbursal History ({salaryRecords.length})
-            </h4>
-          </div>
+      {/* Salary Disbursement History */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+            <Receipt size={15} className="text-indigo-600" />
+            Salary Payment History ({currentYear})
+          </h4>
+          <span className="text-xs text-zinc-400">{salaryRecords.length} recorded payments</span>
         </div>
 
         {salaryRecords.length === 0 ? (
-          <div className="py-12 text-center text-zinc-400">
-            <Receipt size={32} className="mx-auto mb-2 opacity-30 text-zinc-400" />
-            <p className="text-xs font-semibold text-zinc-600">No salary history recorded</p>
-            <p className="text-[11px] text-zinc-400 mt-0.5">Disburse salary from Finance & Payroll</p>
+          <div className="p-8 text-center bg-zinc-50 rounded-2xl border border-dashed border-zinc-200 text-zinc-400 text-xs">
+            No past salary disbursement history found for this teacher.
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
-            {salaryRecords.map((rec) => {
-              const isPaid = rec.status === 'PAID'
-              const monthName = MONTH_NAMES[rec.month - 1]
-
-              return (
-                <div
-                  key={rec.id}
-                  className="p-3.5 hover:bg-zinc-50/70 transition-colors flex items-center justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h5 className="font-bold text-zinc-900 text-xs">
-                        {monthName} {rec.year} Salary
-                      </h5>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                          isPaid
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                            : 'bg-amber-100 text-amber-800 border-amber-200'
-                        }`}
-                      >
-                        {rec.status}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      Base: {formatCurrency(rec.baseSalary)} • Paid Date: {rec.paidDate || 'Pending'}
-                      {rec.notes ? ` • Note: ${rec.notes}` : ''}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right font-mono">
-                      <p className="font-extrabold text-xs text-indigo-900">
-                        {formatCurrency(rec.paidAmount || rec.baseSalary)}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handlePrintSlip(monthName, rec.year, rec.paidAmount || rec.baseSalary)}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
-                      title="Print Pay Slip"
-                    >
-                      <Printer size={14} />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+          <div className="border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 uppercase text-[10px] font-bold">
+                <tr>
+                  <th className="px-4 py-2.5 text-left">Pay Period</th>
+                  <th className="px-4 py-2.5 text-left">Disbursal Date</th>
+                  <th className="px-4 py-2.5 text-left">Method</th>
+                  <th className="px-4 py-2.5 text-right">Amount Paid</th>
+                  <th className="px-4 py-2.5 text-center">Receipt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {salaryRecords.map((rec) => {
+                  const mName = MONTH_NAMES[rec.month - 1] || `Month ${rec.month}`
+                  return (
+                    <tr key={rec.id} className="hover:bg-zinc-50/50">
+                      <td className="px-4 py-3 font-bold text-zinc-900">
+                        {mName} {rec.year}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-500 font-mono">
+                        {rec.paidDate || `${rec.year}-0${rec.month}-05`}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 text-zinc-700 font-mono">
+                          {rec.paymentMethod || 'BANK'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono font-bold text-emerald-700">
+                        {formatCurrency(rec.paidAmount || netMonthlySalary)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => handlePrintSlip(mName, rec.year, rec.paidAmount || netMonthlySalary)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[11px] font-bold transition-all cursor-pointer"
+                        >
+                          <Printer size={12} />
+                          Slip
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

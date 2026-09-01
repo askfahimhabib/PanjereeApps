@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Printer, X, ArrowDownRight, ArrowUpRight, School } from 'lucide-react'
 import type { FinanceTransaction } from '../types'
-import { formatCurrency, MONTH_NAMES } from '@/features/payments/types'
+import { formatCurrency } from '@/features/payments/types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface TransactionVoucherModalProps {
   transaction: FinanceTransaction | null
@@ -13,6 +14,8 @@ export function TransactionVoucherModal({
   transaction: tx,
   onClose,
 }: TransactionVoucherModalProps) {
+  const inst = getInstitutionInfo()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -61,8 +64,9 @@ export function TransactionVoucherModal({
       </head>
       <body>
         <div class="header">
-          <h1>Estudy International Model Academy</h1>
-          <p>Uttara Model Town, Sector 4, Dhaka-1230 • Contact: +880 1700-000000</p>
+          <h1>${inst.name}</h1>
+          ${inst.nameBn ? `<p style="font-weight:600; color:#475569; font-size:11px;">${inst.nameBn}</p>` : ''}
+          <p>${inst.address} • Contact: ${inst.phone} • EIIN: ${inst.eiin}</p>
           <div class="badge">${isIncome ? 'Official Money Receipt' : 'Official Debit Voucher'}</div>
         </div>
 
@@ -90,7 +94,7 @@ export function TransactionVoucherModal({
           <thead>
             <tr>
               <th>Particulars & Purpose</th>
-              <th style="text-align: right;">Amount (BDT)</th>
+              <th style="text-align: right;">Amount (${inst.currencySymbol})</th>
             </tr>
           </thead>
           <tbody>
@@ -98,18 +102,18 @@ export function TransactionVoucherModal({
               <td>
                 <strong>${tx.title}</strong>
                 <div style="font-size: 10px; color: #64748b; margin-top: 3px;">
-                  Accounting Period: ${MONTH_NAMES[tx.month - 1]} ${tx.year}
-                  ${tx.notes ? ` • Note: ${tx.notes}` : ''}
+                  Category: ${tx.category.toUpperCase()} • Session: ${inst.session}
                 </div>
+                ${tx.notes ? `<div style="font-size: 11px; color: #475569; margin-top: 4px;">${tx.notes}</div>` : ''}
               </td>
               <td style="text-align: right; font-weight: 700; font-family: monospace; font-size: 13px;">
-                ${formatCurrency(tx.amount)}
+                ${inst.currencySymbol} ${tx.amount.toLocaleString()}
               </td>
             </tr>
             <tr class="total-row">
-              <td style="text-align: right; font-weight: 700;">Total Amount:</td>
-              <td style="text-align: right; font-weight: 800; font-family: monospace; font-size: 14px; color: ${isIncome ? '#047857' : '#0f172a'};">
-                ${formatCurrency(tx.amount)}
+              <td>Total Amount ${isIncome ? 'Received' : 'Disbursed'}</td>
+              <td style="text-align: right; color: ${isIncome ? '#059669' : '#dc2626'}; font-family: monospace; font-size: 14px;">
+                ${inst.currencySymbol} ${tx.amount.toLocaleString()}
               </td>
             </tr>
           </tbody>
@@ -118,11 +122,11 @@ export function TransactionVoucherModal({
         <div class="signatures">
           <div>
             <div class="sig-line"></div>
-            <p>Received / Prepared By</p>
+            <p>Prepared By / Cashier</p>
           </div>
           <div>
             <div class="sig-line"></div>
-            <p>Accounts Officer / Principal</p>
+            <p>${inst.principalDesignation}</p>
           </div>
         </div>
 
@@ -144,36 +148,38 @@ export function TransactionVoucherModal({
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150"
       >
-        {/* Modal Top Control Bar */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-zinc-100 bg-gradient-to-r from-zinc-50 via-white to-zinc-50 shrink-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                isIncome
-                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  : 'bg-rose-100 text-rose-800 border border-rose-200'
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
+                isIncome ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-600 shadow-rose-500/20'
               }`}
             >
-              {isIncome ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}
-              {isIncome ? 'Money Receipt (Credit)' : 'Payment Voucher (Debit)'}
-            </span>
-            <span className="text-xs font-mono font-semibold text-zinc-500 hidden sm:inline">
-              {tx.invoice_no ?? tx.id.slice(0, 10)}
-            </span>
+              {isIncome ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
+            </div>
+            <div>
+              <h3 className="font-bold text-zinc-900 text-sm">
+                {isIncome ? 'Official Money Receipt' : 'Official Debit Voucher'}
+              </h3>
+              <p className="text-[11px] text-zinc-500 font-mono">
+                {tx.invoice_no ?? `VCH-${tx.id.slice(0, 8).toUpperCase()}`}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-xs cursor-pointer"
             >
-              <Printer size={13} /> Print Memo
+              <Printer size={13} /> Print Voucher
             </button>
             <button
               onClick={onClose}
@@ -184,98 +190,84 @@ export function TransactionVoucherModal({
           </div>
         </div>
 
-        {/* ── Official Voucher Document Content (Scrollable) ── */}
-        <div className="p-5 sm:p-7 overflow-y-auto space-y-5 text-xs text-zinc-800">
-          {/* Institution Header */}
-          <div className="text-center pb-4 border-b-2 border-zinc-800">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-emerald-600 text-white mb-1.5 shadow-md">
-              <School size={20} />
+        {/* Voucher Preview Content */}
+        <div className="p-6 space-y-6">
+          {/* Institutional Header Box */}
+          <div className="text-center pb-4 border-b border-dashed border-zinc-200">
+            <div className="flex items-center justify-center gap-1.5 text-zinc-800 mb-0.5">
+              <School size={16} className="text-indigo-600" />
+              <h4 className="font-extrabold text-sm uppercase tracking-wide">{inst.name}</h4>
             </div>
-            <h1 className="text-lg font-black text-zinc-900 tracking-tight uppercase">
-              Estudy International Model Academy
-            </h1>
-            <p className="text-[11px] text-zinc-500">
-              Uttara Model Town, Sector 4, Dhaka-1230 • Contact: +880 1700-000000
-            </p>
-            <div className="inline-block mt-2 px-3.5 py-0.5 rounded-full border border-zinc-300 bg-zinc-50 text-[10px] font-extrabold uppercase tracking-widest text-zinc-800">
-              {isIncome ? 'Official Money Receipt' : 'Official Debit Voucher'}
-            </div>
+            <p className="text-[11px] text-zinc-500">{inst.address} • Phone: {inst.phone}</p>
           </div>
 
-          {/* Metadata Grid */}
-          <div className="grid grid-cols-2 gap-3.5 bg-zinc-50/80 p-3.5 rounded-2xl border border-zinc-100 text-xs">
+          {/* Key-Value Matrix */}
+          <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-2xl border border-zinc-100 text-xs">
             <div>
-              <p className="text-zinc-400 text-[10px] uppercase font-semibold">Voucher / Invoice No</p>
-              <p className="font-mono font-bold text-zinc-900 text-xs mt-0.5">
-                {tx.invoice_no ?? `VCH-${tx.id.slice(0, 8).toUpperCase()}`}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-zinc-400 text-[10px] uppercase font-semibold">Transaction Date</p>
-              <p className="font-bold text-zinc-900 text-xs mt-0.5">{tx.date}</p>
-            </div>
-
-            <div>
-              <p className="text-zinc-400 text-[10px] uppercase font-semibold">{isIncome ? 'Received From' : 'Paid To'}</p>
-              <p className="font-bold text-zinc-900 text-xs mt-0.5">{tx.party_name}</p>
-              {tx.party_role && <p className="text-[10px] text-zinc-500">{tx.party_role}</p>}
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                {isIncome ? 'Received From' : 'Paid To'}
+              </span>
+              <span className="font-bold text-zinc-900 text-sm mt-0.5 block">{tx.party_name}</span>
+              {tx.party_role && <span className="text-[11px] text-zinc-500">{tx.party_role}</span>}
             </div>
 
             <div className="text-right">
-              <p className="text-zinc-400 text-[10px] uppercase font-semibold">Payment Mode</p>
-              <span className="inline-block mt-0.5 px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-800 font-semibold font-mono text-[11px]">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                Transaction Date
+              </span>
+              <span className="font-semibold text-zinc-800 text-xs mt-0.5 block">{tx.date}</span>
+              <span className="inline-block mt-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-zinc-200/80 text-zinc-700">
                 {tx.payment_method}
               </span>
             </div>
           </div>
 
-          {/* Itemized Table */}
-          <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-            <table className="w-full text-xs">
-              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-semibold uppercase tracking-wider text-[9px]">
-                <tr>
-                  <th className="text-left px-4 py-2.5">Description / Purpose</th>
-                  <th className="text-right px-4 py-2.5">Amount (BDT)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                <tr>
-                  <td className="px-4 py-3">
-                    <p className="font-bold text-zinc-900">{tx.title}</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      Accounting Period: {MONTH_NAMES[tx.month - 1]} {tx.year}
-                      {tx.notes ? ` • Note: ${tx.notes}` : ''}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-xs text-zinc-900">
-                    {formatCurrency(tx.amount)}
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot className="bg-zinc-50/90 border-t-2 border-zinc-200 font-bold">
-                <tr>
-                  <td className="px-4 py-2.5 text-right text-zinc-600">Total Net Amount:</td>
-                  <td
-                    className={`px-4 py-2.5 text-right font-mono font-extrabold text-sm ${
-                      isIncome ? 'text-emerald-700' : 'text-zinc-900'
-                    }`}
-                  >
-                    {formatCurrency(tx.amount)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+          {/* Itemized Detail */}
+          <div className="border border-zinc-200 rounded-2xl overflow-hidden">
+            <div className="bg-zinc-50/80 px-4 py-2.5 border-b border-zinc-200 flex justify-between text-[11px] font-bold text-zinc-600 uppercase">
+              <span>Purpose & Particulars</span>
+              <span>Amount</span>
+            </div>
+            <div className="p-4 flex justify-between items-start">
+              <div>
+                <p className="font-bold text-zinc-900 text-xs">{tx.title}</p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  Category: <span className="font-medium text-zinc-700 capitalize">{tx.category}</span>
+                </p>
+                {tx.notes && (
+                  <p className="text-[11px] text-zinc-600 mt-2 bg-zinc-50 p-2 rounded-lg border border-zinc-100">
+                    {tx.notes}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <span className="font-mono font-bold text-sm text-zinc-900">
+                  {formatCurrency(tx.amount)}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-zinc-50/50 px-4 py-3 border-t border-zinc-200 flex justify-between items-center">
+              <span className="text-xs font-extrabold text-zinc-900">Total Net Amount</span>
+              <span
+                className={`text-base font-black font-mono ${
+                  isIncome ? 'text-emerald-700' : 'text-rose-700'
+                }`}
+              >
+                {formatCurrency(tx.amount)}
+              </span>
+            </div>
           </div>
 
-          {/* Signatures Area */}
-          <div className="pt-6 grid grid-cols-2 gap-6 text-center text-xs text-zinc-500">
+          {/* Voucher Signatures */}
+          <div className="grid grid-cols-2 gap-8 pt-4 text-center text-xs text-zinc-500">
             <div>
-              <div className="border-t border-dashed border-zinc-300 pt-1.5 w-32 mx-auto" />
-              <p className="font-semibold text-[10px]">Received / Prepared By</p>
+              <div className="w-32 border-t border-zinc-300 mx-auto mb-1" />
+              <span>Cashier / Accounts Officer</span>
             </div>
             <div>
-              <div className="border-t border-dashed border-zinc-300 pt-1.5 w-32 mx-auto" />
-              <p className="font-semibold text-[10px]">Accounts Officer / Principal</p>
+              <div className="w-32 border-t border-zinc-300 mx-auto mb-1" />
+              <span>{inst.principalDesignation}</span>
             </div>
           </div>
         </div>

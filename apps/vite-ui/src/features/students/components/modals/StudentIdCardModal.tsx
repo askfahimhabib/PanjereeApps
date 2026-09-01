@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Printer, X, School, QrCode, Phone, ShieldCheck, Sparkles } from 'lucide-react'
 import type { Student } from '../../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   open: boolean
@@ -25,6 +26,8 @@ function getInitials(name: string) {
 }
 
 export function StudentIdCardModal({ open, student, onClose }: Props) {
+  const inst = getInstitutionInfo()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -78,8 +81,8 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
         <!-- Front Side -->
         <div class="card">
           <div class="front-header">
-            <h2>Estudy Model Academy</h2>
-            <p>Uttara, Sector 4, Dhaka-1230</p>
+            <h2>${inst.name}</h2>
+            <p>${inst.address} • EIIN: ${inst.eiin}</p>
           </div>
           <div class="avatar-box">
             ${getInitials(student.fullNameEn)}
@@ -89,14 +92,25 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
             <span class="class-pill">${student.className || 'Class'} • Sec ${student.sectionName || 'A'}</span>
           </div>
           <table class="meta-table">
-            <tr><td class="label">Student ID:</td><td class="val">${student.studentId}</td></tr>
-            <tr><td class="label">Roll Number:</td><td class="val">${student.rollNumber}</td></tr>
-            <tr><td class="label">Academic Session:</td><td class="val">${student.session || '2024-2025'}</td></tr>
-            <tr><td class="label">Blood Group:</td><td class="val">${student.bloodGroup || 'N/A'}</td></tr>
-            <tr><td class="label">Emergency:</td><td class="val">${student.mobile || student.father?.mobile || 'N/A'}</td></tr>
+            <tr>
+              <td class="label">Student ID:</td>
+              <td class="val">${student.studentId}</td>
+            </tr>
+            <tr>
+              <td class="label">Roll Number:</td>
+              <td class="val">${student.rollNumber}</td>
+            </tr>
+            <tr>
+              <td class="label">Blood Group:</td>
+              <td class="val" style="color: #e11d48">${student.bloodGroup || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td class="label">Emergency:</td>
+              <td class="val">${student.mobile || student.father?.mobile || inst.phone}</td>
+            </tr>
           </table>
           <div class="footer-front">
-            Valid Academic Year: 2026-2027
+            Session: ${student.session || inst.session} • Valid Card
           </div>
         </div>
 
@@ -109,7 +123,7 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
             <div style="margin-top: 14px; padding: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
               <p><strong>Guardian:</strong> ${student.father?.name || student.mother?.name || 'Guardian'}</p>
               <p><strong>Address:</strong> ${student.presentAddress || 'Dhaka, Bangladesh'}</p>
-              <p><strong>Helpline:</strong> +880 1700-000000</p>
+              <p><strong>Helpline:</strong> ${inst.phone}</p>
             </div>
             <div class="barcode-box">
               <div style="font-family: monospace; font-size: 14px; font-weight: 800; letter-spacing: 3px; background: #f1f5f9; padding: 6px; border-radius: 6px;">
@@ -123,7 +137,7 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
               </div>
               <div>
                 <div class="sig-line"></div>
-                Principal Sign
+                ${inst.principalDesignation}
               </div>
             </div>
           </div>
@@ -190,9 +204,9 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
                 <div className="bg-gradient-to-r from-emerald-700 to-teal-700 p-4 text-center text-white">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <School size={16} />
-                    <h4 className="text-xs font-extrabold tracking-wide uppercase">Estudy Academy</h4>
+                    <h4 className="text-xs font-extrabold tracking-wide uppercase">{inst.name}</h4>
                   </div>
-                  <p className="text-[9px] opacity-85">Uttara Model Town, Dhaka-1230</p>
+                  <p className="text-[9px] opacity-85">{inst.address}</p>
                 </div>
 
                 <div className="p-4 text-center">
@@ -219,14 +233,14 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-zinc-500">Emergency:</span>
-                      <span className="font-mono text-zinc-700">{student.mobile || student.father?.mobile || 'N/A'}</span>
+                      <span className="font-mono text-zinc-700">{student.mobile || student.father?.mobile || inst.phone}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-zinc-50 border-t border-zinc-100 p-2 text-center text-[9px] font-semibold text-zinc-500">
-                Session: {student.session || '2024-2025'} • Valid till Dec 2026
+                Session: {student.session || inst.session} • EIIN: {inst.eiin}
               </div>
             </div>
 
@@ -264,7 +278,7 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
                 </div>
                 <div>
                   <div className="w-16 border-t border-zinc-300 mx-auto mb-0.5" />
-                  Principal Sign
+                  {inst.principalDesignation}
                 </div>
               </div>
             </div>

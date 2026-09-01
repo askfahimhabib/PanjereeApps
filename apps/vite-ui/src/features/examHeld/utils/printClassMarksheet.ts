@@ -6,6 +6,7 @@
 
 import type { ExamHeld, ExamResult, StudentTabulationRow, SubjectScore } from '../types'
 import { EXAM_SCOPE_LABELS, calculateGrade, calculateStudentOverallResult, assignMeritRanks } from '../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   exam: ExamHeld
@@ -24,6 +25,7 @@ const GRADE_PRINT_COLOR: Record<string, string> = {
 }
 
 export function printClassMarksheet({ exam, students: providedStudents, results }: Props) {
+  const inst = getInstitutionInfo()
   const schedules = exam.exam_held_schedules ?? []
   const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
   const examTarget = exam.classes?.name ?? exam.batches?.name ?? ''
@@ -70,7 +72,6 @@ export function printClassMarksheet({ exam, students: providedStudents, results 
     students = assignMeritRanks(rawList)
   }
 
-
   const subjects = schedules.map(s => ({
     id: s.subject_id,
     name: s.subjects?.name_bn ?? s.subjects?.name ?? s.subject_id,
@@ -99,22 +100,21 @@ export function printClassMarksheet({ exam, students: providedStudents, results 
       if (score.isAbsent) {
         return `<td style="border:1px solid #cbd5e1;padding:4px;text-align:center;font-size:10px;background:#fee2e2;color:#b91c1c;font-weight:700">ABS</td>`
       }
-      const bg = score.grade ? GRADE_PRINT_COLOR[score.grade] ?? '#f8fafc' : '#f8fafc'
-      const isFail = score.grade === 'F'
-      return `<td style="border:1px solid #cbd5e1;padding:4px;text-align:center;font-size:10px;background:${bg}">
-        <span style="font-weight:700;color:${isFail ? '#b91c1c' : '#0f172a'}">${score.marks}</span>
-        <span style="font-size:8px;color:#64748b;display:block">${score.grade ?? ''}</span>
+      const bg = score.grade ? GRADE_PRINT_COLOR[score.grade] ?? 'white' : 'white'
+      return `<td style="border:1px solid #cbd5e1;padding:4px;text-align:center;font-size:10px;background:${bg};font-weight:600">
+        ${score.marks}<br/>
+        <span style="font-size:8px;font-weight:700;color:#475569">${score.grade}</span>
       </td>`
     }).join('')
 
     return `
-      <tr style="${isPass ? '' : 'background:#fff1f2'}">
-        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-family:monospace">${stu.rollNumber}</td>
-        <td style="border:1px solid #cbd5e1;padding:4px 8px;font-size:10px;font-weight:600">${stu.studentName}</td>
-        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px">${stu.sectionName || 'A'}</td>
+      <tr style="background:${isPass ? 'white' : '#fff5f5'}">
+        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700;color:#0f172a">${stu.rollNumber}</td>
+        <td style="border:1px solid #cbd5e1;padding:4px 8px;font-size:10px;font-weight:600;color:#0f172a">${stu.studentName}</td>
+        <td style="border:1px solid #cbd5e1;padding:4px;text-align:center;font-size:9px;color:#64748b">${stu.sectionName ?? 'A'}</td>
         ${scoreCells}
-        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700">${stu.totalObtained}</td>
-        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700;background:${isPass ? '#d1fae5' : '#fee2e2'};color:${isPass ? '#065f46' : '#991b1b'}">
+        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700;color:#0f172a">${stu.totalObtained}</td>
+        <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700;color:${isPass ? '#065f46' : '#991b1b'}">
           ${stu.gpa.toFixed(2)} (${stu.grade})
         </td>
         <td style="border:1px solid #cbd5e1;padding:4px 6px;text-align:center;font-size:10px;font-weight:700;color:${isPass ? '#065f46' : '#991b1b'}">
@@ -152,8 +152,10 @@ export function printClassMarksheet({ exam, students: providedStudents, results 
 </head>
 <body>
   <div class="header">
-    <div class="school-name">PANJEREE ACADEMY & MODEL SCHOOL</div>
-    <div class="exam-title">${exam.name} — Tabulation Master Marksheet</div>
+    <div class="school-name">${inst.name.toUpperCase()}</div>
+    ${inst.nameBn ? `<div style="font-size:12px; color:#475569; font-weight:600;">${inst.nameBn}</div>` : ''}
+    <div style="font-size:10px; color:#64748b;">EIIN: ${inst.eiin} • Board: ${inst.board} • ${inst.address}</div>
+    <div class="exam-title">${exam.name} — Tabulation Master Marksheet (Session ${inst.session})</div>
     <div class="meta">
       <span>Class: <strong>${examTarget || '—'}</strong></span>
       <span>Scope: <strong>${EXAM_SCOPE_LABELS[exam.scope]}</strong></span>
@@ -183,28 +185,30 @@ export function printClassMarksheet({ exam, students: providedStudents, results 
     <div>Passed: <span style="color:#065f46">${passCount}</span></div>
     <div>Failed: <span style="color:#991b1b">${failCount}</span></div>
     <div>Pass Rate: <span>${passRate}%</span></div>
-    <div>Grading System: <span>BD Education Board (A+ to F)</span></div>
+    <div>Grading System: <span>${inst.board} Standard</span></div>
   </div>
 
   <div class="sig">
     <div class="sig-line">Prepared by (Tabulator)</div>
     <div class="sig-line">Class Teacher</div>
-    <div class="sig-line">Exam Controller</div>
-    <div class="sig-line">Principal / Headmaster</div>
+    <div class="sig-line">${inst.examinerTitle}</div>
+    ${inst.showPrincipalSign ? `<div class="sig-line">${inst.principalDesignation}</div>` : ''}
   </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 400);
+    };
+  </script>
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=1200,height=800')
+  const win = window.open('', '_blank', 'width=1100,height=800')
   if (!win) {
-    alert('Please allow popups to print the marksheet.')
+    alert('Popup blocked! Please allow popups to print marksheets.')
     return
   }
+  win.document.open()
   win.document.write(html)
   win.document.close()
-  win.focus()
-  setTimeout(() => {
-    win.print()
-  }, 600)
 }
-

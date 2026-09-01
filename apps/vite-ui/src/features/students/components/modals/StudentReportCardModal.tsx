@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Printer, X, Award } from 'lucide-react'
 import type { Student } from '../../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   open: boolean
@@ -20,6 +21,8 @@ const MOCK_TRANSCRIPT_SUBJECTS = [
 ]
 
 export function StudentReportCardModal({ open, student, onClose }: Props) {
+  const inst = getInstitutionInfo()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -74,8 +77,9 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
       </head>
       <body>
         <div class="crest">
-          <h1>Estudy International Model Academy</h1>
-          <p>Sector 4, Uttara Model Town, Dhaka-1230 • Academic Year: 2026</p>
+          <h1>${inst.name}</h1>
+          ${inst.nameBn ? `<p style="font-size:12px; font-weight:600; color:#475569;">${inst.nameBn}</p>` : ''}
+          <p>${inst.address} • EIIN: ${inst.eiin} • Academic Session: ${inst.session}</p>
           <div class="title-badge">Terminal Evaluation & Academic Transcript</div>
         </div>
 
@@ -87,8 +91,8 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
           </div>
           <div style="text-align: right;">
             <p><strong>Roll Number:</strong> ${student.rollNumber}</p>
-            <p><strong>Academic Session:</strong> ${student.session || '2024-2025'}</p>
-            <p><strong>Exam Name:</strong> Half-Yearly Examination 2026</p>
+            <p><strong>Academic Session:</strong> ${student.session || inst.session}</p>
+            <p><strong>Affiliation:</strong> ${inst.board}</p>
           </div>
         </div>
 
@@ -100,20 +104,22 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
               <th style="text-align: center;">Total Marks</th>
               <th style="text-align: center;">Marks Obtained</th>
               <th style="text-align: center;">Letter Grade</th>
-              <th style="text-align: right;">Grade Point</th>
+              <th style="text-align: right;">Grade Point (GP)</th>
             </tr>
           </thead>
           <tbody>
-            ${MOCK_TRANSCRIPT_SUBJECTS.map(s => `
+            ${MOCK_TRANSCRIPT_SUBJECTS.map(
+              (sub) => `
               <tr>
-                <td>${s.code}</td>
-                <td><strong>${s.name}</strong></td>
-                <td style="text-align: center;">${s.totalMarks}</td>
-                <td style="text-align: center; font-weight: 700;">${s.marksObtained}</td>
-                <td style="text-align: center; font-weight: 800; color: #047857;">${s.grade}</td>
-                <td style="text-align: right; font-weight: 700; font-family: monospace;">${s.gpa.toFixed(2)}</td>
+                <td style="font-family: monospace; color: #64748b;">${sub.code}</td>
+                <td><strong>${sub.name}</strong></td>
+                <td style="text-align: center; font-family: monospace;">${sub.totalMarks}</td>
+                <td style="text-align: center; font-weight: 800; font-family: monospace; color: #047857;">${sub.marksObtained}</td>
+                <td style="text-align: center;"><span style="background: #ecfdf5; color: #065f46; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${sub.grade}</span></td>
+                <td style="text-align: right; font-weight: 800; font-family: monospace;">${sub.gpa.toFixed(2)}</td>
               </tr>
-            `).join('')}
+            `
+            ).join('')}
           </tbody>
         </table>
 
@@ -127,27 +133,27 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
             <p class="val">${averagePercentage}%</p>
           </div>
           <div class="summary-card">
-            <p class="label">Result Status</p>
-            <p class="val" style="color: #047857;">PASSED</p>
+            <p class="label">GPA (Out of 5.00)</p>
+            <p class="val">${gpa.toFixed(2)}</p>
           </div>
           <div class="summary-card">
-            <p class="label">Grade Point Avg (GPA)</p>
-            <p class="val">${gpa.toFixed(2)}</p>
+            <p class="label">Final Result</p>
+            <p class="val" style="color: #059669;">PASSED ✓</p>
           </div>
         </div>
 
         <div class="signatures">
           <div>
             <div class="sig-line"></div>
-            Class Teacher
+            <p>Class Teacher</p>
           </div>
           <div>
             <div class="sig-line"></div>
-            Exam Controller
+            <p>${inst.examinerTitle}</p>
           </div>
           <div>
             <div class="sig-line"></div>
-            Headmaster / Principal
+            <p>${inst.principalDesignation}</p>
           </div>
         </div>
 
@@ -173,7 +179,7 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-gradient-to-r from-emerald-50 via-zinc-50 to-white">
@@ -182,8 +188,8 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
               <Award size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-zinc-900 text-sm">Academic Transcript & Marksheet</h3>
-              <p className="text-[11px] text-zinc-500">Official student evaluation result card</p>
+              <h3 className="font-bold text-zinc-900 text-sm">Academic Transcript & Progress Report</h3>
+              <p className="text-[11px] text-zinc-500">Official student performance card</p>
             </div>
           </div>
 
@@ -192,7 +198,7 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer"
             >
-              <Printer size={14} /> Print Marksheet
+              <Printer size={14} /> Print Report Card
             </button>
             <button
               onClick={onClose}
@@ -203,50 +209,50 @@ export function StudentReportCardModal({ open, student, onClose }: Props) {
           </div>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 bg-zinc-50/50 max-h-[75vh] overflow-y-auto space-y-4 text-xs">
-          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex justify-between items-center">
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[75vh] space-y-6">
+          <div className="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h4 className="font-bold text-zinc-900 text-sm">{student.fullNameEn}</h4>
-              <p className="text-zinc-500 text-[11px]">
-                {student.className} • Roll: {student.rollNumber} • ID: {student.studentId}
+              <p className="text-xs text-emerald-800 font-bold uppercase tracking-wider">{inst.name}</p>
+              <h4 className="text-base font-extrabold text-zinc-900 mt-0.5">{student.fullNameEn}</h4>
+              <p className="text-xs text-zinc-500 font-mono mt-0.5">
+                ID: {student.studentId} • Roll: {student.rollNumber} • {student.className}
               </p>
             </div>
             <div className="text-right">
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                GPA: {gpa.toFixed(2)} (A+)
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-sm inline-block">
+                GPA {gpa.toFixed(2)} / 5.00
               </span>
+              <p className="text-[11px] text-emerald-700 font-bold mt-1">Status: Passed (A Grade)</p>
             </div>
           </div>
 
-          {/* Subjects Table */}
-          <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 text-zinc-500 font-semibold border-b border-zinc-100 uppercase text-[9px] tracking-wider">
+          {/* Table Preview */}
+          <div className="border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 uppercase text-[10px] font-bold">
                 <tr>
-                  <th className="px-4 py-2.5">Subject</th>
+                  <th className="px-4 py-2.5 text-left">Code</th>
+                  <th className="px-4 py-2.5 text-left">Subject</th>
                   <th className="px-4 py-2.5 text-center">Marks</th>
                   <th className="px-4 py-2.5 text-center">Grade</th>
-                  <th className="px-4 py-2.5 text-right">Point</th>
+                  <th className="px-4 py-2.5 text-right">Grade Point</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {MOCK_TRANSCRIPT_SUBJECTS.map((sub) => (
-                  <tr key={sub.code} className="hover:bg-zinc-50/70">
-                    <td className="px-4 py-2.5 font-medium text-zinc-800">
-                      {sub.name} <span className="text-[10px] text-zinc-400 font-mono">({sub.code})</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700">
-                      {sub.marksObtained} <span className="text-[10px] text-zinc-400">/{sub.totalMarks}</span>
+                  <tr key={sub.code} className="hover:bg-zinc-50/50">
+                    <td className="px-4 py-2.5 font-mono text-zinc-400">{sub.code}</td>
+                    <td className="px-4 py-2.5 font-semibold text-zinc-800">{sub.name}</td>
+                    <td className="px-4 py-2.5 text-center font-bold text-zinc-900 font-mono">
+                      {sub.marksObtained} <span className="text-zinc-400 font-normal">/ {sub.totalMarks}</span>
                     </td>
                     <td className="px-4 py-2.5 text-center">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-100 text-emerald-800">
                         {sub.grade}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono font-bold text-zinc-900">
-                      {sub.gpa.toFixed(2)}
-                    </td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-zinc-800">{sub.gpa.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

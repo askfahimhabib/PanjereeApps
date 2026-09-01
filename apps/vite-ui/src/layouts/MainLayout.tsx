@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
+import { useSettingsStore } from '../store/settings'
 import { createStore } from '../lib/localStore'
 import type { Notice } from '../features/notices/types'
 import { formatDistanceToNow, parseISO } from 'date-fns'
@@ -80,6 +81,7 @@ function Divider() {
 // ── Main Layout ────────────────────────────────────────────────────────────────
 export function MainLayout() {
   const { user, logout } = useAuthStore()
+  const settings = useSettingsStore()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -173,8 +175,12 @@ export function MainLayout() {
             <BookOpen size={18} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-[15px] font-bold text-zinc-900 leading-none">Estudy</h1>
-            <p className="text-[10px] text-zinc-400 mt-0.5 truncate">School Management</p>
+            <h1 className="text-[14px] font-bold text-zinc-900 leading-tight truncate">
+              {settings.schoolName || 'Panjeree LMS'}
+            </h1>
+            <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
+              {settings.tagline || 'Institutional ERP'}
+            </p>
           </div>
         </div>
 

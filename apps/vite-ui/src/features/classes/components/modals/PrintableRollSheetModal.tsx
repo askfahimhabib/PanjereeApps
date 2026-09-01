@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { X, Printer, UserCircle } from 'lucide-react'
 import type { Section, SectionStudent } from '../../types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface PrintableRollSheetModalProps {
   isOpen: boolean
@@ -16,6 +17,7 @@ export function PrintableRollSheetModal({
   students,
 }: PrintableRollSheetModalProps) {
   const printAreaRef = useRef<HTMLDivElement>(null)
+  const inst = getInstitutionInfo()
 
   if (!isOpen) return null
 
@@ -58,10 +60,16 @@ export function PrintableRollSheetModal({
             {/* Institution Header */}
             <div className="text-center border-b-2 border-zinc-900 pb-4 mb-6">
               <h1 className="text-xl font-extrabold uppercase tracking-wide text-zinc-900">
-                Ideal Model School & College
+                {inst.name}
               </h1>
-              <p className="text-xs text-zinc-600 mt-0.5 font-medium">
-                Academic Session: {section.academicYear} · Section Master Roll Register
+              {inst.nameBn && (
+                <p className="text-xs text-zinc-600 font-bold mt-0.5">{inst.nameBn}</p>
+              )}
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                EIIN: ${inst.eiin} • ${inst.address}
+              </p>
+              <p className="text-xs text-zinc-700 mt-1 font-medium">
+                Academic Session: {section.academicYear || inst.session} · Section Master Roll Register
               </p>
               <div className="flex items-center justify-center gap-6 mt-3 text-xs font-semibold text-zinc-800 bg-zinc-50 py-1.5 px-4 rounded-lg border border-zinc-200">
                 <span>Class: <strong>{section.className}</strong></span>
@@ -90,36 +98,37 @@ export function PrintableRollSheetModal({
                     <th className="border border-zinc-300 px-3 py-2 text-center w-24 font-bold">Remarks</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {students.map((student, idx) => (
-                    <tr key={student.id} className={idx % 2 === 1 ? 'bg-zinc-50/50' : 'bg-white'}>
-                      <td className="border border-zinc-300 px-2 py-1.5 text-center font-bold font-mono text-zinc-900">
-                        {String(student.roll).padStart(2, '0')}
+                <tbody className="divide-y divide-zinc-200">
+                  {students.map((student) => (
+                    <tr key={student.id} className="hover:bg-zinc-50">
+                      <td className="border border-zinc-300 px-2 py-2 text-center font-bold font-mono text-zinc-900">
+                        {student.roll}
                       </td>
                       <td className="border border-zinc-300 px-2 py-1 text-center">
-                        <div className="w-7 h-7 rounded-full bg-zinc-100 mx-auto overflow-hidden flex items-center justify-center border border-zinc-200">
+                        <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 mx-auto flex items-center justify-center text-zinc-400 overflow-hidden">
                           {student.profilePhoto ? (
                             <img src={student.profilePhoto} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <UserCircle size={18} className="text-zinc-400" />
+                            <UserCircle size={20} />
                           )}
                         </div>
                       </td>
-                      <td className="border border-zinc-300 px-3 py-1.5 font-medium text-zinc-900">
-                        <div className="font-semibold">{student.fullNameEn}</div>
+                      <td className="border border-zinc-300 px-3 py-2">
+                        <div className="font-semibold text-zinc-900">{student.fullNameEn}</div>
                         <div className="text-[10px] text-zinc-500 font-mono">{student.studentId}</div>
                       </td>
-                      <td className="border border-zinc-300 px-3 py-1.5 text-zinc-700 hidden sm:table-cell">
-                        {student.fullNameBn || '—'}
+                      <td className="border border-zinc-300 px-3 py-2 hidden sm:table-cell text-zinc-700">
+                        {student.fullNameBn ?? '—'}
                       </td>
-                      <td className="border border-zinc-300 px-2 py-1.5 text-center text-zinc-700 capitalize">
-                        {student.gender.toLowerCase()}
+                      <td className="border border-zinc-300 px-2 py-2 text-center text-zinc-600 capitalize">
+                        {student.gender?.toLowerCase() ?? '—'}
                       </td>
-                      <td className="border border-zinc-300 px-3 py-1.5 font-mono text-zinc-800">
-                        {student.guardianPhone || student.mobile || '—'}
+                      <td className="border border-zinc-300 px-3 py-2 text-zinc-700">
+                        <div className="font-medium">Guardian</div>
+                        <div className="text-[10px] text-zinc-500 font-mono">{student.guardianPhone || student.mobile || '—'}</div>
                       </td>
-                      <td className="border border-zinc-300 px-3 py-1.5 text-center text-zinc-400 text-[10px]">
-                        {student.status === 'ACTIVE' ? 'Regular' : student.status}
+                      <td className="border border-zinc-300 px-3 py-2 text-center text-zinc-400 text-[10px]">
+                        _______________
                       </td>
                     </tr>
                   ))}
@@ -127,19 +136,18 @@ export function PrintableRollSheetModal({
               </table>
             </div>
 
-            {/* Official Signatures */}
-            <div className="mt-12 pt-6 flex items-center justify-between text-xs font-semibold text-zinc-800">
-              <div className="text-center">
-                <div className="w-40 border-t border-zinc-900 mb-1" />
-                <p>Class Teacher Signature</p>
-                <p className="text-[10px] text-zinc-500 font-normal">{section.classTeacherName ?? 'Name'}</p>
+            {/* Print Footer / Verification */}
+            <div className="mt-14 pt-4 flex justify-between items-center text-xs font-bold text-zinc-700">
+              <div className="text-center w-48 border-t border-zinc-400 pt-1.5">
+                <span>Class Teacher's Signature</span>
               </div>
+              <div className="text-center w-48 border-t border-zinc-400 pt-1.5">
+                <span>{inst.principalDesignation}</span>
+              </div>
+            </div>
 
-              <div className="text-center">
-                <div className="w-40 border-t border-zinc-900 mb-1" />
-                <p>Headmaster / Principal</p>
-                <p className="text-[10px] text-zinc-500 font-normal">Seal & Date</p>
-              </div>
+            <div className="text-center mt-6 text-[10px] text-zinc-400">
+              Printed on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • Verified by {inst.name}
             </div>
           </div>
         </div>
