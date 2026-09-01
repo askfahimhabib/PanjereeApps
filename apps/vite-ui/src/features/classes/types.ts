@@ -7,6 +7,7 @@ import type { Gender } from '../students/types'
 export type ShiftType = 'MORNING' | 'DAY' | 'EVENING'
 export type SectionStatus = 'ACTIVE' | 'INACTIVE'
 export type ClassGroupType = 'SCIENCE' | 'ARTS' | 'COMMERCE'
+export type GroupName = ClassGroupType
 
 export interface ClassItem {
   id: string
@@ -33,7 +34,11 @@ export interface ClassGroup {
   name: ClassGroupType
   totalStudents: number
   totalSections: number
+  totalSubjects?: number
+  classTeacher?: string
 }
+
+export type GroupRecord = ClassGroup
 
 export interface Section {
   id: string
@@ -70,4 +75,13 @@ export interface SectionStudent {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   sectionId?: string
   sectionName?: string
+  groupId?: string
+  mobile?: string
+  guardianPhone?: string
+  admissionDate?: string
+  latestGpa?: number
+  latestGrade?: string
 }
+
+export type RollAssignStrategy = 'EXAM_MERIT' | 'ALPHABETICAL' | 'ADMISSION_DATE' | 'MANUAL_SWAP'
+

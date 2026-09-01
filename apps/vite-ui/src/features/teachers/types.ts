@@ -286,124 +286,64 @@ export interface AssignmentForm {
   isClassTeacher: boolean
 }
 
-// ── Wizard Form Data (6-step) ──────────────────────────────
+// ── Streamlined 2-Step Form Data ───────────────────────────
 export interface TeacherFormData {
-  // Step 1 — Basic Info
-  profilePhoto: string
-  employeeId: string
-  firstName: string
-  lastName: string
+  // Track Category
+  teacherCategory: TeacherCategory
+
+  // Step 1 — Personal Identity & Contact
   fullName: string
   nameBangla: string
   gender: Gender | ''
+  phone: string
+  email: string
   dateOfBirth: string
   bloodGroup: BloodGroup | ''
-  nationality: string
-  nidNumber: string
-  birthCertificateNumber: string
-  maritalStatus: MaritalStatus | ''
-  religion: Religion | ''
-  signatureUrl: string
-
-  // Step 2 — Contact & Address
-  phone: string
-  alternativePhone: string
-  email: string
-  whatsapp: string
   presentAddress: string
-  permanentAddress: string
-  sameAddress: boolean
-  division: Division | ''
-  district: string
-  upazila: string
-  area: string
-  postalCode: string
+  permanentAddress?: string
+  nidNumber?: string
+  profilePhoto?: string
 
-  // Step 3 — Employment
-  teacherCategory: TeacherCategory
-  joiningDate: string
-  employmentType: EmploymentType | ''
-  employmentStatus: EmploymentStatus
+  // Step 2 — Employment, Designation & Subject
   designation: Designation | ''
   department: Department | ''
-  resignationDate: string
-  terminationDate: string
-  terminationReason: string
+  employmentType: EmploymentType | ''
+  employmentStatus: EmploymentStatus
+  joiningDate: string
+  baseSalary: number
+  highestDegree: string
 
-  // Step 4 — Academic & Professional
-  qualifications: QualificationForm[]
-  certifications: CertificationForm[]
-  specialization: string
-  teachingSubjects: string[]
-  teachingLevels: TeachingLevel[]
-  previousExperience: ExperienceForm[]
-
-  // Step 5 — Teaching Assignments
-  assignments: AssignmentForm[]
-
-  // Step 6 — Account Setup
-  username: string
-  loginEmail: string
-  loginPhone: string
-  password: string
-  confirmPassword: string
-  role: TeacherRole
-  accountStatus: AccountStatus
+  // Class Teacher Role (Optional)
+  isClassTeacher: boolean
+  classTeacherClassId?: string
+  classTeacherSectionId?: string
 }
 
-const currentYear = new Date().getFullYear()
-
 export const initialFormData: TeacherFormData = {
-  profilePhoto: '',
-  employeeId: '',
-  firstName: '',
-  lastName: '',
+  teacherCategory: 'REGULAR',
   fullName: '',
   nameBangla: '',
-  gender: '',
+  gender: 'MALE',
+  phone: '',
+  email: '',
   dateOfBirth: '',
   bloodGroup: '',
-  nationality: 'Bangladeshi',
-  nidNumber: '',
-  birthCertificateNumber: '',
-  maritalStatus: '',
-  religion: 'ISLAM',
-  signatureUrl: '',
-  phone: '',
-  alternativePhone: '',
-  email: '',
-  whatsapp: '',
   presentAddress: '',
   permanentAddress: '',
-  sameAddress: false,
-  division: '',
-  district: '',
-  upazila: '',
-  area: '',
-  postalCode: '',
-  teacherCategory: 'REGULAR',
-  joiningDate: new Date().toISOString().split('T')[0],
-  employmentType: '',
+  nidNumber: '',
+  profilePhoto: '',
+
+  designation: 'ASSISTANT_TEACHER',
+  department: 'MATHEMATICS',
+  employmentType: 'FULL_TIME',
   employmentStatus: 'ACTIVE',
-  designation: '',
-  department: '',
-  resignationDate: '',
-  terminationDate: '',
-  terminationReason: '',
-  qualifications: [{ degree: '', subject: '', institution: '', university: '', result: '', passingYear: '' }],
-  certifications: [],
-  specialization: '',
-  teachingSubjects: [],
-  teachingLevels: [],
-  previousExperience: [],
-  assignments: [{ academicYear: String(currentYear), classId: '', sectionId: '', subjectId: '', assignmentType: '', isClassTeacher: false }],
-  username: '',
-  loginEmail: '',
-  loginPhone: '',
-  password: '',
-  confirmPassword: '',
-  role: 'ASSISTANT_TEACHER',
-  accountStatus: 'ACTIVE',
+  joiningDate: new Date().toISOString().split('T')[0],
+  baseSalary: 25000,
+  highestDegree: '',
+
+  isClassTeacher: false,
+  classTeacherClassId: '',
+  classTeacherSectionId: '',
 }
 
 // ── Filters ────────────────────────────────────────────
@@ -423,8 +363,8 @@ export const TEACHER_CATEGORY_LABELS: Record<TeacherCategory, string> = {
 }
 
 export const TEACHER_CATEGORY_COLORS: Record<TeacherCategory, string> = {
-  REGULAR: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  GUEST:   'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  REGULAR: 'bg-blue-50 text-blue-700 border-blue-200',
+  GUEST:   'bg-purple-50 text-purple-700 border-purple-200',
 }
 
 export const STATUS_LABELS: Record<EmploymentStatus, string> = {
@@ -436,11 +376,11 @@ export const STATUS_LABELS: Record<EmploymentStatus, string> = {
 }
 
 export const STATUS_COLORS: Record<EmploymentStatus, string> = {
-  ACTIVE:      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  INACTIVE:    'bg-zinc-500/10 text-zinc-600 border-zinc-100/20',
-  ON_LEAVE:    'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  RESIGNED:    'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  TERMINATED:  'bg-red-500/10 text-red-400 border-red-500/20',
+  ACTIVE:      'bg-emerald-50 text-emerald-700 border-emerald-200',
+  INACTIVE:    'bg-zinc-100 text-zinc-600 border-zinc-200',
+  ON_LEAVE:    'bg-amber-50 text-amber-700 border-amber-200',
+  RESIGNED:    'bg-orange-50 text-orange-700 border-orange-200',
+  TERMINATED:  'bg-red-50 text-red-700 border-red-200',
 }
 
 export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {

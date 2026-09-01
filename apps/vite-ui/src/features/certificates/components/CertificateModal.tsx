@@ -10,12 +10,10 @@ import {
   User,
   Building,
   FileCheck,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
 import type { Student } from '@/features/students/types'
 import { studentStore } from '@/data/stores'
-import type { CertificateData, CertificateType, CertificateTheme } from '../types'
+import type { CertificateData } from '../types'
 import { CERTIFICATE_TYPES, CERTIFICATE_THEMES } from '../types'
 import { CertificatePreview } from './CertificatePreview'
 import { printCertificate } from '../utils/printCertificate'

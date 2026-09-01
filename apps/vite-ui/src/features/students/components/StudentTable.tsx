@@ -1,24 +1,9 @@
-import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, CheckCircle2, Clock, XCircle, ExternalLink, Award } from 'lucide-react'
+import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, CheckCircle2, Clock, XCircle, ExternalLink, Award, Copy, Check } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Student } from '../types'
 import { STATUS_LABELS, STATUS_COLORS } from '../types'
-import { paymentStore } from '@/data/stores'
-
-const NOW = new Date()
-const THIS_MONTH = NOW.getMonth() + 1
-const THIS_YEAR  = NOW.getFullYear()
-
-function getFeeStatus(studentId: string): 'PAID' | 'PARTIAL' | 'DUE' | null {
-  const records = paymentStore.getWhere(
-    p => p.student_id === studentId &&
-         p.status !== 'REFUNDED' &&
-         p.items.some(i => i.fee_type === 'TUITION' && i.month === THIS_MONTH && i.year === THIS_YEAR)
-  )
-  if (records.length === 0) return 'DUE'
-  const total = records.reduce((s, p) => s + p.total_amount, 0)
-  // If any record exists, consider PAID (PARTIAL would need fee structure data)
-  return total > 0 ? 'PAID' : 'DUE'
-}
+import { deriveStudentFeeStatus } from '@/features/payments/utils/feeStatus'
 
 interface Props {
   students: Student[]
@@ -37,176 +22,273 @@ function getInitials(name: string) {
 
 function getAvatarColor(id: string) {
   const colors = [
-    'bg-blue-600', 'bg-purple-600', 'bg-emerald-600',
-    'bg-amber-600', 'bg-pink-600', 'bg-cyan-600',
-    'bg-indigo-600', 'bg-rose-600',
+    'bg-indigo-600', 'bg-purple-600', 'bg-emerald-600',
+    'bg-blue-600', 'bg-rose-600', 'bg-amber-600',
+    'bg-teal-600', 'bg-cyan-600',
   ]
   const index = id.charCodeAt(id.length - 1) % colors.length
   return colors[index]
 }
 
-function getAcademicLabel(student: Student) {
-  if (student.type === 'REGULAR') {
-    const parts = [student.className, student.sectionName].filter(Boolean).join(' - ')
-    const group = student.groupId ? ` (${student.groupId.charAt(0) + student.groupId.slice(1).toLowerCase()})` : ''
-    return parts + group
-  }
-  return student.batchName || '—'
-}
-
 export function StudentTable({
-  students, currentPage, totalPages, totalResults, onPageChange, onView, onDelete, onCertificate,
+  students,
+  currentPage,
+  totalPages,
+  totalResults,
+  onPageChange,
+  onView,
+  onDelete,
+  onCertificate,
 }: Props) {
   const navigate = useNavigate()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  function copyToClipboard(text: string, id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1500)
+  }
 
   if (students.length === 0) {
     return (
-      <div className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl">
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <p className="text-zinc-800 font-medium mb-1">No students found</p>
-          <p className="text-zinc-600 text-sm">Try adjusting your filters or add a new student</p>
+      <div className="bg-white border border-zinc-200 rounded-2xl p-12 text-center shadow-2xs">
+        <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-zinc-400">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
         </div>
+        <h3 className="text-sm font-bold text-zinc-800 mb-1">No students found</h3>
+        <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+          No student matches the current filter criteria. Try resetting filters or enroll a new student.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-zinc-200/90 rounded-2xl shadow-2xs overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-white border-b border-zinc-100">
+        <table className="w-full text-xs text-left">
+          <thead className="bg-zinc-50/80 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
             <tr>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">#</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Student</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Type</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Class / Batch</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Roll</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Mobile</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Status</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium">Fee</th>
-              <th className="px-4 py-3.5 text-zinc-600 font-medium text-right">Actions</th>
+              <th className="px-4 py-3.5 w-12 text-center">#</th>
+              <th className="px-4 py-3.5">Student Identity</th>
+              <th className="px-4 py-3.5">Academic Track</th>
+              <th className="px-4 py-3.5 text-center">Roll</th>
+              <th className="px-4 py-3.5">Guardian & Phone</th>
+              <th className="px-4 py-3.5 text-center">Status</th>
+              <th className="px-4 py-3.5 text-center">Fee Status</th>
+              <th className="px-4 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-zinc-100 text-zinc-700">
             {students.map((student, idx) => {
-              const rowNum = ((currentPage - 1) * 10) + idx + 1
+              const rowNum = (currentPage - 1) * 10 + idx + 1
+              const feeStatus = deriveStudentFeeStatus(student.id)
+
               return (
                 <tr
                   key={student.id}
-                  className="hover:bg-zinc-50 transition-colors group cursor-pointer"
                   onClick={() => onView(student)}
+                  className="hover:bg-zinc-50/80 transition-colors group cursor-pointer"
                 >
                   {/* # */}
-                  <td className="px-4 py-3.5 text-zinc-600 text-xs">{rowNum}</td>
+                  <td className="px-4 py-3 text-center text-zinc-400 font-mono font-medium">
+                    {rowNum}
+                  </td>
 
-                  {/* Student name + ID */}
-                  <td className="px-4 py-3.5">
+                  {/* Student Identity */}
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full ${getAvatarColor(student.id)} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                        {getInitials(student.fullNameEn)}
+                      <div
+                        className={`w-9 h-9 rounded-xl ${getAvatarColor(student.id)} flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs`}
+                      >
+                        {student.profilePhoto ? (
+                          <img
+                            src={student.profilePhoto}
+                            alt={student.fullNameEn}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          getInitials(student.fullNameEn)
+                        )}
                       </div>
-                      <div className="min-w-0 flex items-center justify-between flex-1 gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={e => { e.stopPropagation(); navigate(`/students/${student.id}`) }}
-                              className="font-medium text-zinc-800 hover:text-indigo-400 transition-colors flex items-center gap-1 truncate group"
-                              title="View Full Profile"
-                            >
-                              {student.fullNameEn}
-                              <ExternalLink size={11} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
-                            </button>
-                            <a
-                              href={`tel:${student.mobile}`}
-                              onClick={e => e.stopPropagation()}
-                              className="p-1 text-zinc-600 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-full transition-colors"
-                              title={`Call ${student.mobile}`}
-                            >
-                              <Phone size={14} />
-                            </a>
+                      <div className="min-w-0">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            navigate(`/students/${student.id}`)
+                          }}
+                          className="font-bold text-zinc-900 hover:text-indigo-600 transition-colors truncate flex items-center gap-1 group/link text-xs max-w-[180px]"
+                          title="View Full Profile"
+                        >
+                          {student.fullNameEn}
+                          <ExternalLink size={11} className="opacity-0 group-hover/link:opacity-70 transition-opacity" />
+                        </button>
+                        {student.fullNameBn && (
+                          <div className="text-[10px] text-zinc-500 font-medium truncate max-w-[180px] leading-tight mt-0.5">
+                            {student.fullNameBn}
                           </div>
-                          <p className="text-xs text-zinc-600">{student.studentId}</p>
+                        )}
+
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-zinc-400 font-mono flex items-center gap-1">
+                            {student.studentId}
+                          </span>
+                          <button
+                            onClick={e => copyToClipboard(student.studentId, student.id, e)}
+                            className="p-0.5 text-zinc-300 hover:text-zinc-600 rounded transition-colors cursor-pointer"
+                            title="Copy Student ID"
+                          >
+                            {copiedId === student.id ? (
+                              <Check size={10} className="text-emerald-600" />
+                            ) : (
+                              <Copy size={10} />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
                   </td>
 
-                  {/* Type badge */}
-                  <td className="px-4 py-3.5">
+                  {/* Academic Track */}
+                  <td className="px-4 py-3">
                     {student.type === 'REGULAR' ? (
-                      <span className="px-2 py-0.5 text-[10px] whitespace-nowrap font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        Regular
-                      </span>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-zinc-900">
+                            {student.className || 'Class —'}
+                          </span>
+                          {student.sectionName && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-zinc-100 text-zinc-700">
+                              Sec {student.sectionName}
+                            </span>
+                          )}
+                          {student.groupId && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                              {student.groupId}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-zinc-400">
+                          {student.shift ? `${student.shift} Shift` : 'Day Shift'} · {student.session}
+                        </div>
+                      </div>
                     ) : (
-                      <span className="px-2 py-0.5 text-[10px] whitespace-nowrap font-medium rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                        Exam Batch
-                      </span>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200/60 text-[11px]">
+                            {student.batchName || 'Exam Batch'}
+                          </span>
+                          {student.targetExam && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-zinc-100 text-zinc-700">
+                              {student.targetExam}
+                            </span>
+                          )}
+                        </div>
+                        {student.schoolName && (
+                          <div className="text-[11px] text-zinc-500 truncate max-w-[200px]" title={student.schoolName}>
+                            🏫 {student.schoolName}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </td>
 
-                  {/* Class / Batch */}
-                  <td className="px-4 py-3.5 text-zinc-600 text-xs">
-                    {getAcademicLabel(student)}
+                  {/* Roll No */}
+                  <td className="px-4 py-3 text-center">
+                    <span className="font-mono font-bold text-xs bg-zinc-100 text-zinc-800 px-2 py-1 rounded-lg border border-zinc-200">
+                      {student.rollNumber || '—'}
+                    </span>
                   </td>
 
-                  {/* Roll */}
-                  <td className="px-4 py-3.5 text-zinc-600 font-mono text-xs">
-                    {student.rollNumber}
+                  {/* Guardian & Phone */}
+                  <td className="px-4 py-3">
+                    <div className="space-y-0.5">
+                      <div className="font-medium text-zinc-800 truncate max-w-[160px]">
+                        {student.guardian?.name || student.father?.name || student.mother?.name || '—'}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-500">
+                        <a
+                          href={`tel:${student.mobile}`}
+                          onClick={e => e.stopPropagation()}
+                          className="hover:text-indigo-600 transition-colors font-mono text-[11px] flex items-center gap-1"
+                        >
+                          <Phone size={11} className="text-zinc-400" />
+                          {student.mobile}
+                        </a>
+                      </div>
+                    </div>
                   </td>
 
-                  {/* Mobile */}
-                  <td className="px-4 py-3.5 text-zinc-600 text-xs">{student.mobile}</td>
-
-                  {/* Status */}
-                  <td className="px-4 py-3.5">
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${STATUS_COLORS[student.status]}`}>
-                      {STATUS_LABELS[student.status]}
+                  {/* Student Status */}
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+                        STATUS_COLORS[student.status] || 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                      }`}
+                    >
+                      {STATUS_LABELS[student.status] || student.status}
                     </span>
                   </td>
 
                   {/* Fee Status */}
-                  <td className="px-4 py-3.5">
-                    {student.status === 'ACTIVE' ? (() => {
-                      const fs = getFeeStatus(student.id)
-                      if (fs === 'PAID')    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle2 size={10}/>Paid</span>
-                      if (fs === 'PARTIAL') return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20"><Clock size={10}/>Partial</span>
-                      return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/10 text-red-400 border border-red-500/20"><XCircle size={10}/>Due</span>
-                    })() : <span className="text-zinc-800 text-xs">—</span>}
+                  <td className="px-4 py-3 text-center">
+                    {student.status === 'ACTIVE' ? (
+                      feeStatus === 'PAID' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 size={11} /> Paid
+                        </span>
+                      ) : feeStatus === 'PARTIAL' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock size={11} /> Partial
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-red-50 text-red-700 border border-red-200">
+                          <XCircle size={11} /> Due
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-zinc-400 text-xs">—</span>
+                    )}
                   </td>
 
                   {/* Actions */}
-                  <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1 transition-opacity">
+                  <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
                       {onCertificate && (
                         <button
+                          type="button"
                           onClick={() => onCertificate(student)}
-                          className="p-1.5 text-zinc-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                          className="p-1.5 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
                           title="Generate Certificate"
                         >
-                          <Award size={15} />
+                          <Award size={14} />
                         </button>
                       )}
+
                       <button
+                        type="button"
                         onClick={() => onView(student)}
-                        className="p-1.5 text-zinc-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"
-                        title="View details"
+                        className="p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                        title="View Profile"
                       >
-                        <Eye size={15} />
+                        <Eye size={14} />
                       </button>
+
                       <button
+                        type="button"
                         onClick={() => {
-                          if (confirm(`Delete ${student.fullNameEn}?`)) onDelete(student.id)
+                          if (confirm(`Are you sure you want to delete ${student.fullNameEn}?`)) {
+                            onDelete(student.id)
+                          }
                         }}
-                        className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
-                        title="Delete student"
+                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Student"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -217,17 +299,17 @@ export function StudentTable({
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* ── Pagination ────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100">
-          <p className="text-xs text-zinc-600">
-            Page {currentPage} of {totalPages} · {totalResults} students
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
+          <p className="text-xs text-zinc-500 font-medium">
+            Page <strong className="text-zinc-800 font-bold">{currentPage}</strong> of <strong className="text-zinc-800 font-bold">{totalPages}</strong> · <span className="font-mono">{totalResults}</span> total students
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-1.5 text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 rounded-md transition-colors"
+              className="p-1.5 text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200/60 rounded-lg transition-colors cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
@@ -235,10 +317,10 @@ export function StudentTable({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-7 h-7 text-xs rounded-md transition-colors ${
+                className={`w-7 h-7 text-xs rounded-lg font-bold transition-all cursor-pointer ${
                   page === currentPage
-                    ? 'bg-[var(--color-primary)] text-white font-medium'
-                    : 'text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
                 }`}
               >
                 {page}
@@ -247,7 +329,7 @@ export function StudentTable({
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="p-1.5 text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 rounded-md transition-colors"
+              className="p-1.5 text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200/60 rounded-lg transition-colors cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>

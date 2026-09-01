@@ -69,7 +69,7 @@ export interface CustomField {
 
 // ── Main Student Entity ────────────────────────────────────────
 export interface Student {
-  // 14. System Info
+  // System Info
   id: string
   createdAt: string
   updatedAt: string
@@ -78,18 +78,18 @@ export interface Student {
   updatedBy: string
   isArchived: boolean
 
-  // 1. Basic Info
-  studentId: string           // Auto-generated: STU-2024-001
+  // 1. Basic Identity
+  studentId: string           // Auto-generated: STU-2026-001
   rollNumber: string
   registrationNumber: string
   fullNameEn: string
-  fullNameBn: string
+  fullNameBn?: string
   profilePhoto?: string
   gender: Gender
   dateOfBirth: string
   bloodGroup?: BloodGroup
-  religion: string
-  nationality: string
+  religion?: string
+  nationality?: string
 
   // 2. Academic Info
   type: StudentType
@@ -103,12 +103,16 @@ export interface Student {
   // ─ Exam Batch fields
   batchId?: string
   batchName?: string
-  targetExam?: TargetExam
+  batchSectionId?: string
+  batchSectionName?: string
+  targetExam?: TargetExam | 'ADMISSION'
+  schoolName?: string         // Original school/college for batch students
+  
   // ─ Common academic
   version: StudentVersion
   session: string
   admissionDate: string
-  admissionNumber: string
+  admissionNumber?: string
   previousSchool?: string
   status: StudentStatus
 
@@ -125,52 +129,58 @@ export interface Student {
   guardian?: GuardianInfo
   emergencyContact?: string
 
-  // 5. Auth Info (password hash never stored on frontend)
-  username: string
+  // 5. Auth Info (auto-generated in background)
+  username?: string
   loginStatus: LoginStatus
 
-  // 11. Documents
+  // 6. Documents & Custom
   documents?: StudentDocuments
-
-  // 15. Custom Fields
   customFields?: CustomField[]
 }
 
-// ── Wizard Form Data (step-by-step) ──────────────────────────
+// ── Streamlined Form Data (2-Step Fast Flow) ──────────────────
 export interface StudentFormData {
-  // Step 1 — Basic + Academic
+  // Track Type
+  type: StudentType
+
+  // Step 1 — Basic & Academic Info
   fullNameEn: string
   fullNameBn: string
   gender: Gender | ''
   dateOfBirth: string
   bloodGroup: BloodGroup | ''
-  religion: string
-  nationality: string
-  type: StudentType | ''
+  mobile: string
+  email: string
+  profilePhoto?: string
+
+  // Regular Track
   classId: string
+  className?: string
   sectionId: string
+  sectionName?: string
+  rollNumber: string
   groupId: StudentGroup | ''
   shift: StudentShift | ''
+
+  // Exam Batch Track
   batchId: string
-  targetExam: TargetExam | ''
+  batchName?: string
+  batchSectionId?: string
+  batchSectionName?: string
+  targetExam: TargetExam | 'ADMISSION' | ''
+  schoolName: string
+
+  // Common Academic
   version: StudentVersion | ''
   session: string
   admissionDate: string
   admissionNumber: string
-  previousSchool: string
   status: StudentStatus
 
-  // Step 2 — Contact + Parent
-  mobile: string
-  whatsapp: string
-  email: string
-  presentAddress: string
-  permanentAddress: string
-  sameAddress: boolean
+  // Step 2 — Parent & Address
   fatherName: string
   fatherMobile: string
   fatherOccupation: string
-  fatherNid: string
   motherName: string
   motherMobile: string
   motherOccupation: string
@@ -178,50 +188,46 @@ export interface StudentFormData {
   guardianName: string
   guardianRelation: string
   guardianMobile: string
-  guardianAddress: string
-  emergencyContact: string
-
-  // Step 3 — Auth
-  username: string
-  password: string
-  confirmPassword: string
-  loginStatus: LoginStatus
-
-  // Step 4 — Documents + Custom Fields
-  customFields: CustomField[]
+  presentAddress: string
+  permanentAddress: string
+  sameAddress: boolean
 }
 
 export const initialFormData: StudentFormData = {
+  type: 'REGULAR',
   fullNameEn: '',
   fullNameBn: '',
-  gender: '',
+  gender: 'MALE',
   dateOfBirth: '',
   bloodGroup: '',
-  religion: 'Islam',
-  nationality: 'Bangladeshi',
-  type: '',
+  mobile: '',
+  email: '',
+  profilePhoto: '',
+
   classId: '',
+  className: '',
   sectionId: '',
+  sectionName: '',
+  rollNumber: '',
   groupId: '',
-  shift: '',
+  shift: 'DAY',
+
   batchId: '',
-  targetExam: '',
-  version: '',
+  batchName: '',
+  batchSectionId: '',
+  batchSectionName: '',
+  targetExam: 'SSC',
+  schoolName: '',
+
+  version: 'BANGLA',
   session: new Date().getFullYear().toString(),
   admissionDate: new Date().toISOString().split('T')[0],
   admissionNumber: '',
-  previousSchool: '',
   status: 'ACTIVE',
-  mobile: '',
-  whatsapp: '',
-  email: '',
-  presentAddress: '',
-  permanentAddress: '',
-  sameAddress: false,
+
   fatherName: '',
   fatherMobile: '',
   fatherOccupation: '',
-  fatherNid: '',
   motherName: '',
   motherMobile: '',
   motherOccupation: '',
@@ -229,13 +235,9 @@ export const initialFormData: StudentFormData = {
   guardianName: '',
   guardianRelation: '',
   guardianMobile: '',
-  guardianAddress: '',
-  emergencyContact: '',
-  username: '',
-  password: '',
-  confirmPassword: '',
-  loginStatus: 'ACTIVE',
-  customFields: [],
+  presentAddress: '',
+  permanentAddress: '',
+  sameAddress: true,
 }
 
 // ── Display Helpers ────────────────────────────────────────────
@@ -248,11 +250,11 @@ export const STATUS_LABELS: Record<StudentStatus, string> = {
 }
 
 export const STATUS_COLORS: Record<StudentStatus, string> = {
-  ACTIVE:    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  INACTIVE:  'bg-zinc-500/10 text-zinc-600 border-zinc-100/20',
-  PASSED:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  LEFT:      'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  SUSPENDED: 'bg-red-500/10 text-red-400 border-red-500/20',
+  ACTIVE:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+  INACTIVE:  'bg-zinc-100 text-zinc-600 border-zinc-200',
+  PASSED:    'bg-blue-50 text-blue-700 border-blue-200',
+  LEFT:      'bg-amber-50 text-amber-700 border-amber-200',
+  SUSPENDED: 'bg-red-50 text-red-700 border-red-200',
 }
 
 export const GROUP_LABELS: Record<StudentGroup, string> = {

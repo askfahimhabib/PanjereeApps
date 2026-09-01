@@ -54,13 +54,13 @@ export function ProfileTab({ student }: { student: Student }) {
 
       {/* Parent Info */}
       <Section title="Parent / Guardian" icon={Users}>
-        <InfoRow label="Father's Name"   value={student.father.name} />
-        <InfoRow label="Father's Mobile" value={student.father.mobile} />
-        <InfoRow label="Occupation"      value={student.father.occupation} />
+        <InfoRow label="Father's Name"   value={student.father?.name} />
+        <InfoRow label="Father's Mobile" value={student.father?.mobile} />
+        <InfoRow label="Occupation"      value={student.father?.occupation} />
         <div className="col-span-2 border-t border-zinc-100 pt-3 mt-1">
           <div className="grid grid-cols-2 gap-3">
-            <InfoRow label="Mother's Name"   value={student.mother.name} />
-            <InfoRow label="Mother's Mobile" value={student.mother.mobile} />
+            <InfoRow label="Mother's Name"   value={student.mother?.name} />
+            <InfoRow label="Mother's Mobile" value={student.mother?.mobile} />
           </div>
         </div>
         {student.guardian && (

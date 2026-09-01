@@ -35,7 +35,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
   // Filter subjects by the exam's class — falls back to all subjects if class_id not set or no match
   const classSubjects = useMemo(() => {
     if (!exam?.class_id) return MOCK_SUBJECTS
-    const filtered = MOCK_SUBJECTS.filter((s) => s.classes.includes(exam.class_id!))
+    const filtered = MOCK_SUBJECTS.filter((s) => s.classId === exam.class_id!)
     return filtered.length > 0 ? filtered : MOCK_SUBJECTS
   }, [exam?.class_id])
 
@@ -75,39 +75,43 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
   if (!open || !exam) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white border border-zinc-100 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-100 flex-shrink-0">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-zinc-100 bg-zinc-50/50 flex-shrink-0">
           <div>
             <h3 className="text-lg font-bold text-zinc-900">{exam.name}</h3>
-            <p className="text-xs text-zinc-600 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Set subject-wise exam dates and times.
               After saving, they will automatically be added to the routine.
             </p>
           </div>
-          <button onClick={onClose} className="text-zinc-600 hover:text-white ml-4">
-            <X size={20} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors ml-4 cursor-pointer"
+          >
+            <X size={18} />
           </button>
         </div>
 
         {/* Sync notice */}
-        <div className="mx-5 mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs flex-shrink-0">
-          <RefreshCw size={12} className="flex-shrink-0" />
-          Saving will automatically add entries as <strong className="font-semibold">FORMAL_EXAM</strong> in the Routine.
+        <div className="mx-6 mt-4 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs flex-shrink-0 font-medium">
+          <RefreshCw size={13} className="flex-shrink-0 text-indigo-600" />
+          <span>Saving will automatically synchronize entries into the official Routine schedule.</span>
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-3">
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_130px_80px_80px_70px_70px_60px_36px] gap-2 text-[10px] font-semibold text-zinc-600 uppercase tracking-wider px-1">
+            <div className="grid grid-cols-[1fr_130px_80px_80px_70px_70px_60px_36px] gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
               <span>Subject</span>
               <span>Date</span>
               <span>Start</span>
               <span>End</span>
-              <span>Marks</span>
-              <span>Pass</span>
+              <span className="text-center">Marks</span>
+              <span className="text-center">Pass</span>
               <span>Room</span>
               <span />
             </div>
@@ -121,7 +125,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                 <select
                   value={row.subject_id}
                   onChange={(e) => updateRow(row._key, { subject_id: e.target.value })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 focus:outline-none focus:border-purple-500 w-full"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-2.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full cursor-pointer"
                 >
                   <option value="">— Subject —</option>
                   {classSubjects.map((s) => (
@@ -134,7 +138,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   type="date"
                   value={row.date}
                   onChange={(e) => updateRow(row._key, { date: e.target.value })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 focus:outline-none focus:border-purple-500 w-full"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-2.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full"
                 />
 
                 {/* Start Time */}
@@ -142,7 +146,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   type="time"
                   value={row.start_time}
                   onChange={(e) => updateRow(row._key, { start_time: e.target.value })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 focus:outline-none focus:border-purple-500 w-full"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-2 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full text-center"
                 />
 
                 {/* End Time */}
@@ -150,7 +154,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   type="time"
                   value={row.end_time}
                   onChange={(e) => updateRow(row._key, { end_time: e.target.value })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 focus:outline-none focus:border-purple-500 w-full"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-2 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full text-center"
                 />
 
                 {/* Total Marks */}
@@ -160,7 +164,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   placeholder={String(exam.total_marks)}
                   value={row.total_marks ?? ''}
                   onChange={(e) => updateRow(row._key, { total_marks: e.target.value === '' ? null : Number(e.target.value) })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 placeholder-slate-600 focus:outline-none focus:border-purple-500 w-full text-center"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-1.5 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full text-center font-mono font-bold"
                 />
 
                 {/* Pass Marks */}
@@ -170,7 +174,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   placeholder={exam.pass_marks ? String(exam.pass_marks) : '33%'}
                   value={row.pass_marks ?? ''}
                   onChange={(e) => updateRow(row._key, { pass_marks: e.target.value === '' ? null : Number(e.target.value) })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 placeholder-slate-600 focus:outline-none focus:border-purple-500 w-full text-center"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-1.5 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full text-center font-mono"
                 />
 
                 {/* Room */}
@@ -179,7 +183,7 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   placeholder="Room"
                   value={row.room ?? ''}
                   onChange={(e) => updateRow(row._key, { room: e.target.value })}
-                  className="bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg px-2 py-2 text-xs text-zinc-800 placeholder-slate-600 focus:outline-none focus:border-purple-500 w-full"
+                  className="bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl px-2 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all w-full"
                 />
 
                 {/* Remove */}
@@ -187,7 +191,8 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
                   type="button"
                   onClick={() => removeRow(row._key)}
                   disabled={rows.length === 1}
-                  className="text-zinc-800 hover:text-red-400 transition-colors disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="text-zinc-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                  title="Remove subject"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -199,32 +204,34 @@ export function SubjectSchedulePicker({ open, exam, onClose, onSave, isSaving }:
           <button
             type="button"
             onClick={addRow}
-            className="mt-4 flex items-center gap-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+            className="mt-4 flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 px-3 py-2 rounded-xl hover:bg-indigo-50 border border-dashed border-indigo-200 transition-all cursor-pointer"
           >
             <Plus size={14} />
-            Add Another Subject
+            <span>Add Another Subject</span>
           </button>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-zinc-100 flex-shrink-0">
-          <p className="text-xs text-zinc-600">
-            {rows.filter((r) => r.subject_id && r.date).length} / {rows.length} subjects filled
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50 flex-shrink-0">
+          <p className="text-xs text-zinc-500 font-medium">
+            {rows.filter((r) => r.subject_id && r.date).length} of {rows.length} subjects configured
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm text-zinc-600 hover:text-white border border-zinc-100 hover:border-zinc-100 transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-200/70 border border-zinc-200 transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-semibold transition-all"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
             >
-              <Save size={15} />
-              {isSaving ? 'Saving...' : 'Save + Add to Routine'}
+              <Save size={14} />
+              {isSaving ? 'Saving...' : 'Save & Sync Routine'}
             </button>
           </div>
         </div>

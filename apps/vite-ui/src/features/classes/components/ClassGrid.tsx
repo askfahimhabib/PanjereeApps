@@ -1,6 +1,18 @@
-import { Users, ChevronRight, FlaskConical, Palette, Calculator, LayoutGrid, TrendingUp, PowerOff, Power } from 'lucide-react'
+import { useMemo } from 'react'
+import {
+  Users,
+  ChevronRight,
+  FlaskConical,
+  Palette,
+  Calculator,
+  LayoutGrid,
+  PowerOff,
+  Power,
+  ArrowRight,
+} from 'lucide-react'
 import type { ClassItem } from '../types'
 import { Link } from 'react-router-dom'
+import { sectionStore } from '@/data/stores'
 
 interface ClassGridProps {
   classes: ClassItem[]
@@ -8,161 +20,196 @@ interface ClassGridProps {
 }
 
 export function ClassGrid({ classes, onToggleActive }: ClassGridProps) {
+  const allSections = useMemo(() => sectionStore.getAll(), [])
+
   if (classes.length === 0) {
     return (
-      <div className="text-center py-16 text-zinc-600 border border-dashed border-zinc-100 rounded-xl">
-        No classes found.
+      <div className="text-center py-16 text-zinc-500 border-2 border-dashed border-zinc-200 rounded-3xl bg-white p-8">
+        <LayoutGrid size={36} className="mx-auto mb-2 text-zinc-400 opacity-40" />
+        <p className="text-sm font-bold text-zinc-700">No classes found.</p>
+        <p className="text-xs text-zinc-400 mt-1">Create a new class to get started.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {classes.map((cls) => {
         const attendance = cls.attendanceRate ?? 0
         const feeCollection = cls.feeCollectionRate ?? 0
         const inactive = !cls.isActive
+        const classSections = allSections.filter(s => s.classId === cls.id)
 
         return (
           <div
             key={cls.id}
-            className={`group relative overflow-hidden rounded-xl border transition-all duration-300 ${
+            className={`group relative overflow-hidden rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
               inactive
-                ? 'border-zinc-100 bg-white opacity-50 grayscale-[30%]'
-                : 'border-zinc-100 bg-zinc-50 hover:bg-zinc-50 hover:border-zinc-100 hover:shadow-lg hover:shadow-blue-900/20'
+                ? 'border-zinc-200 bg-zinc-100/70 opacity-60'
+                : 'border-zinc-200/80 bg-white hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/5'
             }`}
           >
-            {/* Inactive overlay label */}
-            {inactive && (
-              <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-zinc-100 text-[10px] font-semibold text-zinc-600">
-                <PowerOff size={9} />
-                Disabled
-              </div>
-            )}
-
-            <div className="p-5">
+            {/* Top Card Area */}
+            <div className="p-5 pb-4">
               {/* Header */}
-              <div className="flex justify-between items-start mb-3">
-                <div className={inactive ? 'mt-5' : ''}>
-                  <h3 className="text-lg font-bold text-zinc-900">{cls.name}</h3>
-                  <span className="text-xs text-zinc-600">{cls.academicYear} · {cls.shift}</span>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-extrabold text-zinc-900 tracking-tight">{cls.name}</h3>
+                    <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+                      {cls.shift} Shift
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Session: <strong className="text-zinc-700">{cls.academicYear}</strong>
+                  </p>
                 </div>
+
                 <div className="flex items-center gap-1.5">
-                  {cls.hasGroups && !inactive && (
-                    <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 border border-blue-500/20">
-                      <FlaskConical className="w-3 h-3" /> Groups
-                    </div>
-                  )}
-                  {/* Toggle active button */}
+                  {/* Toggle Active Button */}
                   {onToggleActive && (
                     <button
-                      onClick={(e) => { e.preventDefault(); onToggleActive(cls.id) }}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        onToggleActive(cls.id)
+                      }}
                       title={inactive ? 'Enable class' : 'Disable class'}
-                      className={`p-1.5 rounded-lg border transition-all ${
+                      className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
                         inactive
-                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                          : 'border-zinc-100 bg-white text-zinc-600 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          : 'border-zinc-200 bg-zinc-50 text-zinc-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50'
                       }`}
                     >
-                      {inactive ? <Power size={13} /> : <PowerOff size={13} />}
+                      {inactive ? <Power size={14} /> : <PowerOff size={14} />}
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Stats row */}
-              <div className="flex gap-3 mb-3">
-                <div className="flex items-center gap-1 text-xs text-zinc-600">
-                  <Users className="w-3.5 h-3.5 text-zinc-600" />
-                  {cls.totalStudents}
+              {/* Quick Metrics Pills */}
+              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-zinc-50 border border-zinc-100 mb-4">
+                <div className="text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Students</span>
+                  <span className="text-sm font-extrabold text-zinc-900 flex items-center justify-center gap-1 mt-0.5">
+                    <Users size={12} className="text-indigo-600" />
+                    {cls.totalStudents}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-zinc-600">
-                  <LayoutGrid className="w-3.5 h-3.5 text-zinc-600" />
-                  {cls.totalSections} sections
+                <div className="text-center border-x border-zinc-200">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Sections</span>
+                  <span className="text-sm font-extrabold text-zinc-900 flex items-center justify-center gap-1 mt-0.5">
+                    <LayoutGrid size={12} className="text-purple-600" />
+                    {cls.totalSections}
+                  </span>
                 </div>
-                {cls.feeMonthly && (
-                  <div className="ml-auto text-xs text-amber-400 font-medium">
-                    ৳{cls.feeMonthly}/mo
+                <div className="text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Monthly Fee</span>
+                  <span className="text-sm font-extrabold text-amber-700 mt-0.5 block">
+                    {cls.feeMonthly ? `৳${cls.feeMonthly}` : '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Interactive Section Pills (Clickable direct links to section) */}
+              {classSections.length > 0 && !inactive && (
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">
+                    Direct Section Hubs:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {classSections.map(sec => (
+                      <Link
+                        key={sec.id}
+                        to={`/admin/classes/${cls.id}/sections/${sec.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-zinc-100 hover:bg-indigo-600 text-zinc-700 hover:text-white transition-all shadow-2xs"
+                      >
+                        <span>Sec {sec.name}</span>
+                        <ArrowRight size={10} />
+                      </Link>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Mini attendance bar */}
-              <div className="mb-1.5">
-                <div className="flex justify-between items-center text-[11px] text-zinc-600 mb-1">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp size={10} />
-                    Attendance
+              {/* Attendance & Fee Mini Meters */}
+              <div className="space-y-2 pt-2 border-t border-zinc-100">
+                {/* Attendance */}
+                <div>
+                  <div className="flex justify-between items-center text-[11px] mb-1">
+                    <span className="font-semibold text-zinc-600">Attendance Rate</span>
+                    <span
+                      className={`font-bold font-mono ${
+                        attendance >= 85 ? 'text-emerald-700' : attendance >= 75 ? 'text-amber-700' : 'text-rose-700'
+                      }`}
+                    >
+                      {attendance}%
+                    </span>
                   </div>
-                  <span className={`font-medium ${
-                    attendance >= 85 ? 'text-emerald-400' :
-                    attendance >= 75 ? 'text-amber-400' : 'text-red-400'
-                  }`}>{attendance}%</span>
+                  <div className="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        attendance >= 85 ? 'bg-emerald-500' : attendance >= 75 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${attendance}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-zinc-100 rounded-full h-1">
-                  <div
-                    className={`h-1 rounded-full transition-all ${
-                      attendance >= 85 ? 'bg-emerald-500' :
-                      attendance >= 75 ? 'bg-amber-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${attendance}%` }}
-                  />
+
+                {/* Fee Collection */}
+                <div>
+                  <div className="flex justify-between items-center text-[11px] mb-1">
+                    <span className="font-semibold text-zinc-600">Fee Collection</span>
+                    <span className="font-bold font-mono text-indigo-700">{feeCollection}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-indigo-600 transition-all"
+                      style={{ width: `${feeCollection}%` }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Fee collection bar */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center text-[11px] text-zinc-600 mb-1">
-                  <span>Fee collected</span>
-                  <span className={`font-medium ${
-                    feeCollection >= 85 ? 'text-emerald-400' : 'text-amber-400'
-                  }`}>{feeCollection}%</span>
-                </div>
-                <div className="w-full bg-zinc-100 rounded-full h-1">
-                  <div
-                    className={`h-1 rounded-full transition-all ${
-                      feeCollection >= 85 ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`}
-                    style={{ width: `${feeCollection}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Groups */}
+              {/* Group Badges */}
               {cls.hasGroups && cls.groups && cls.groups.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-4 pt-3 border-t border-zinc-100">
+                <div className="flex flex-wrap gap-1 mt-3.5 pt-2.5 border-t border-zinc-100">
                   {cls.groups.map(g => {
-                    if (g.name === 'SCIENCE') return (
-                      <span key={g.id} className="inline-flex items-center text-[11px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
-                        <FlaskConical className="w-2.5 h-2.5 mr-1" /> Science
-                      </span>
-                    )
-                    if (g.name === 'ARTS') return (
-                      <span key={g.id} className="inline-flex items-center text-[11px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">
-                        <Palette className="w-2.5 h-2.5 mr-1" /> Arts
-                      </span>
-                    )
-                    if (g.name === 'COMMERCE') return (
-                      <span key={g.id} className="inline-flex items-center text-[11px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
-                        <Calculator className="w-2.5 h-2.5 mr-1" /> Commerce
-                      </span>
-                    )
+                    if (g.name === 'SCIENCE')
+                      return (
+                        <span key={g.id} className="inline-flex items-center text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <FlaskConical className="w-2.5 h-2.5 mr-1" /> Science
+                        </span>
+                      )
+                    if (g.name === 'ARTS')
+                      return (
+                        <span key={g.id} className="inline-flex items-center text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
+                          <Palette className="w-2.5 h-2.5 mr-1" /> Arts
+                        </span>
+                      )
+                    if (g.name === 'COMMERCE')
+                      return (
+                        <span key={g.id} className="inline-flex items-center text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">
+                          <Calculator className="w-2.5 h-2.5 mr-1" /> Commerce
+                        </span>
+                      )
                     return null
                   })}
                 </div>
               )}
+            </div>
 
+            {/* Bottom Action Footer */}
+            <div className="p-3 bg-zinc-50/80 border-t border-zinc-100">
               <Link
                 to={`/admin/classes/${cls.id}`}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center justify-between w-full px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs ${
                   inactive
-                    ? 'bg-zinc-50 text-zinc-800 pointer-events-none'
-                    : 'bg-zinc-100 hover:bg-blue-600 text-zinc-800 hover:text-white group-hover:bg-blue-600 group-hover:text-white'
+                    ? 'bg-zinc-200 text-zinc-500 pointer-events-none'
+                    : 'bg-white hover:bg-indigo-600 border border-zinc-200 hover:border-indigo-600 text-zinc-800 hover:text-white'
                 }`}
-                onClick={inactive ? (e) => e.preventDefault() : undefined}
                 tabIndex={inactive ? -1 : undefined}
               >
-                {inactive ? 'Class Disabled' : 'View Details'}
+                <span>{inactive ? 'Class Disabled' : 'Open Class Dashboard'}</span>
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -172,4 +219,3 @@ export function ClassGrid({ classes, onToggleActive }: ClassGridProps) {
     </div>
   )
 }
-

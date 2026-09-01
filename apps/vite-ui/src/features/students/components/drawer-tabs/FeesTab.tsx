@@ -1,22 +1,40 @@
 import { useState } from 'react'
-import { Wallet, Receipt, CreditCard, Printer, Plus, AlertTriangle, Trash2 } from 'lucide-react'
+import { Wallet, Receipt, Printer, Trash2, Zap } from 'lucide-react'
 import type { Student } from '../../types'
-import { useStudentPayments, useStudentManualDues, useDeletePayment, paymentKeys } from '@/features/payments/hooks/usePayments'
-import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_ICONS, PAYMENT_STATUS_CONFIG, MONTH_NAMES, formatCurrency } from '@/features/payments/types'
+import {
+  useStudentPayments,
+  useStudentManualDues,
+  useDeletePayment,
+  paymentKeys,
+} from '@/features/payments/hooks/usePayments'
+import {
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_STATUS_CONFIG,
+  MONTH_NAMES_SHORT,
+  formatCurrency,
+} from '@/features/payments/types'
 import { InvoicePrintModal } from '@/features/payments/components/InvoicePrintModal'
-import { CollectFeeModal } from '@/features/payments/components/CollectFeeModal'
+import { QuickCollectModal } from '@/features/payments/components/QuickCollectModal'
 import type { PaymentRecord } from '@/features/payments/types'
 import { useQueryClient } from '@tanstack/react-query'
+import { calculateStudentFeeLedger } from '@/features/payments/hooks/useBillingAndWaivers'
+import { printInvoice } from '@/features/payments/utils/printInvoice'
 
 export function FeesTab({ student }: { student: Student }) {
-  const { data: payments = [], isLoading: paymentsLoading } = useStudentPayments(student.id)
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+
+  const { data: payments = [] } = useStudentPayments(student.id)
   const { data: manualDues = [] } = useStudentManualDues(student.id)
 
   const [viewRecord, setViewRecord] = useState<PaymentRecord | null>(null)
-  const [collectOpen, setCollectOpen] = useState(false)
+  const [quickCollectOpen, setQuickCollectOpen] = useState(false)
 
   const qc = useQueryClient()
   const deletePayment = useDeletePayment()
+
+  const studentLedger = calculateStudentFeeLedger(student.id, currentYear)
 
   const handleDelete = (payment: PaymentRecord) => {
     if (window.confirm(`Delete payment ${payment.invoice_number}? This cannot be undone.`)) {
@@ -38,140 +56,159 @@ export function FeesTab({ student }: { student: Student }) {
 
   return (
     <div className="space-y-5">
-
-      {/* Financial Overview */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-zinc-100 p-4 rounded-xl flex flex-col gap-1">
-          <span className="text-xs text-zinc-600 font-medium">Total Billed</span>
-          <span className="text-xl font-bold text-zinc-800">{formatCurrency(totalBilled)}</span>
+      {/* ── Financial KPI Strip ─────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="bg-white border border-zinc-200/80 p-3.5 rounded-2xl flex flex-col gap-1 shadow-xs">
+          <span className="text-[11px] text-zinc-500 font-medium">Total Billed</span>
+          <span className="text-base font-extrabold text-zinc-900 font-mono">{formatCurrency(totalBilled)}</span>
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col gap-1">
-          <span className="text-xs text-emerald-500/70 font-medium">Total Paid</span>
-          <span className="text-xl font-bold text-emerald-400">{formatCurrency(totalPaid)}</span>
+        <div className="bg-emerald-50/60 border border-emerald-200/80 p-3.5 rounded-2xl flex flex-col gap-1 shadow-xs">
+          <span className="text-[11px] text-emerald-700 font-bold">Total Paid</span>
+          <span className="text-base font-extrabold text-emerald-800 font-mono">{formatCurrency(totalPaid)}</span>
         </div>
-        <div className={`p-4 rounded-xl flex flex-col gap-1 ${
-          totalDue > 0
-            ? 'bg-red-500/10 border border-red-500/20'
-            : 'bg-white border border-zinc-100'
-        }`}>
-          <span className={`text-xs font-medium ${totalDue > 0 ? 'text-red-500/70' : 'text-zinc-600'}`}>Total Due</span>
-          <span className={`text-xl font-bold ${totalDue > 0 ? 'text-red-400' : 'text-zinc-600'}`}>
+        <div
+          className={`p-3.5 rounded-2xl flex flex-col gap-1 shadow-xs border ${
+            totalDue > 0
+              ? 'bg-rose-50/80 border-rose-200 text-rose-800'
+              : 'bg-zinc-50 border-zinc-200/80 text-zinc-700'
+          }`}
+        >
+          <span className={`text-[11px] font-bold ${totalDue > 0 ? 'text-rose-700' : 'text-zinc-500'}`}>
+            Total Due
+          </span>
+          <span className="text-base font-extrabold font-mono">
             {formatCurrency(totalDue)}
           </span>
         </div>
       </div>
 
-      {/* Manual Dues Alert */}
-      {unpaidDues.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-          <AlertTriangle size={15} className="text-amber-400 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-amber-300">Outstanding Dues</p>
-            {unpaidDues.map(due => {
-              const period = due.month ? `${MONTH_NAMES[due.month - 1]}${due.year ? ` ${due.year}` : ''}` : ''
-              return (
-                <p key={due.id} className="text-xs text-amber-400/70 mt-0.5">
-                  • {due.label}{period ? ` (${period})` : ''} — {formatCurrency(due.amount)}
-                </p>
-              )
-            })}
-          </div>
-          <button
-            onClick={() => setCollectOpen(true)}
-            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 whitespace-nowrap transition-colors"
-          >
-            Collect Now
-          </button>
+      {/* ── Quick Action Trigger ──────────────────────────────── */}
+      <div className="p-4 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl text-white flex items-center justify-between shadow-md shadow-emerald-600/20">
+        <div>
+          <h4 className="font-bold text-sm">Instant Fee Collection Desk</h4>
+          <p className="text-[11px] text-emerald-100 mt-0.5">
+            {totalDue > 0
+              ? `Outstanding due of ${formatCurrency(totalDue)} pending`
+              : 'All dues cleared for current billing cycle'}
+          </p>
         </div>
-      )}
+        <button
+          onClick={() => setQuickCollectOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-emerald-800 text-xs font-bold hover:bg-emerald-50 transition-all shadow-sm cursor-pointer"
+        >
+          <Zap size={14} /> Quick Collect
+        </button>
+      </div>
 
-      {/* Payment History */}
-      <div className="border border-zinc-100 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-zinc-100">
-          <div className="flex items-center gap-2">
-            <Receipt size={14} className="text-zinc-600" />
-            <h4 className="text-xs font-semibold text-zinc-800 uppercase tracking-wider">Payment History</h4>
-          </div>
-          <button
-            onClick={() => setCollectOpen(true)}
-            className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
-          >
-            <Plus size={12} /> Collect Fee
-          </button>
+      {/* ── 12-Month Annual Payment Matrix ─────────────────────── */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-bold text-zinc-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <Wallet size={14} className="text-emerald-600" />
+            {currentYear} Monthly Payment Ledger
+          </h4>
+          <span className="text-[10px] text-zinc-400 font-medium">12-Month Matrix</span>
         </div>
 
-        {paymentsLoading ? (
-          <div className="divide-y divide-zinc-100">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-4 animate-pulse flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-zinc-100" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-zinc-100 rounded w-32" />
-                  <div className="h-2.5 bg-zinc-50 rounded w-24" />
-                </div>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {studentLedger?.months.map((m) => {
+            const isCurrent = m.month === currentMonth
+            const monthName = MONTH_NAMES_SHORT[m.month - 1]
+            let badgeBg = 'bg-zinc-100 text-zinc-500 border-zinc-200'
+            if (m.status === 'PAID') badgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold'
+            else if (m.status === 'DUE') badgeBg = 'bg-rose-50 text-rose-700 border-rose-200 font-bold'
+            else if (m.status === 'PARTIAL') badgeBg = 'bg-amber-50 text-amber-700 border-amber-200 font-bold'
+
+            return (
+              <div
+                key={m.month}
+                className={`p-2 rounded-xl border text-center relative transition-all ${
+                  isCurrent ? 'ring-2 ring-emerald-500/40 bg-emerald-50/20' : 'bg-white border-zinc-100'
+                }`}
+              >
+                <p className="text-[10px] font-bold text-zinc-600">{monthName}</p>
+                <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] border ${badgeBg}`}>
+                  {m.status}
+                </span>
+                {m.paid_amount > 0 && (
+                  <p className="text-[9px] font-mono text-zinc-700 mt-1 font-bold">
+                    ৳{m.paid_amount}
+                  </p>
+                )}
               </div>
-            ))}
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Payment Invoices List ──────────────────────────────── */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl overflow-hidden shadow-xs">
+        <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 border-b border-zinc-100">
+          <div className="flex items-center gap-2">
+            <Receipt size={14} className="text-zinc-500" />
+            <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+              Payment Records ({payments.length})
+            </h4>
           </div>
-        ) : payments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-zinc-800">
-            <Wallet size={28} className="mb-2 opacity-30" />
-            <p className="text-xs">No payment records yet</p>
+        </div>
+
+        {payments.length === 0 ? (
+          <div className="py-12 text-center text-zinc-400">
+            <Receipt size={32} className="mx-auto mb-2 opacity-30 text-zinc-400" />
+            <p className="text-xs font-semibold text-zinc-600">No payment receipts found</p>
+            <p className="text-[11px] text-zinc-400 mt-0.5">Collect fee to generate first receipt</p>
           </div>
         ) : (
           <div className="divide-y divide-zinc-100">
-            {payments.map(payment => {
-              const statusCfg = PAYMENT_STATUS_CONFIG[payment.status]
-              const paidDate = new Date(payment.paid_at).toLocaleDateString('en-BD', {
-                day: '2-digit', month: 'short', year: 'numeric',
+            {payments.map((p) => {
+              const statusCfg = PAYMENT_STATUS_CONFIG[p.status]
+              const dateStr = new Date(p.paid_at).toLocaleDateString('en-BD', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
               })
-              const itemSummary = payment.items.map(it => {
-                const period = it.month ? ` (${MONTH_NAMES[it.month - 1]})` : ''
-                return it.label + period
-              }).join(', ')
 
               return (
-                <div key={payment.id} className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm">{PAYMENT_METHOD_ICONS[payment.payment_method]}</span>
+                <div key={p.id} className="p-3.5 hover:bg-zinc-50/70 transition-colors flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                        {p.invoice_number}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border}`}>
+                        {statusCfg.label}
+                      </span>
+                      <span className="text-[11px] text-zinc-400">{dateStr}</span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-zinc-800 truncate max-w-[160px]" title={itemSummary}>
-                        {itemSummary}
-                      </p>
-                      <p className="text-xs text-zinc-600">
-                        {paidDate} · {PAYMENT_METHOD_LABELS[payment.payment_method]}
-                        {payment.transaction_id && ` · ${payment.transaction_id}`}
-                      </p>
-                    </div>
+                    <p className="text-[11px] text-zinc-600 mt-1 truncate">
+                      {p.items.map((it) => it.label).join(', ')} • Mode: {PAYMENT_METHOD_LABELS[p.payment_method]}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className={`text-sm font-bold ${statusCfg.color}`}>
-                        {payment.status === 'REFUNDED' ? '- ' : '+ '}{formatCurrency(payment.total_amount)}
-                      </p>
-                      <div className="flex items-center gap-1.5 justify-end mt-0.5">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border}`}>
-                          {statusCfg.label}
-                        </span>
-                        <span className="text-[10px] text-zinc-600 font-mono">{payment.invoice_number}</span>
-                      </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right font-mono">
+                      <p className="font-extrabold text-xs text-emerald-700">{formatCurrency(p.total_amount)}</p>
+                      {p.discount_amount > 0 && (
+                        <p className="text-[9px] text-rose-500">- {formatCurrency(p.discount_amount)}</p>
+                      )}
                     </div>
-                    <button
-                      onClick={() => setViewRecord(payment)}
-                      className="p-1.5 rounded-lg text-zinc-800 hover:text-zinc-800 hover:bg-zinc-50 transition-all"
-                      title="View/Print Invoice"
-                    >
-                      <Printer size={13} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(payment)}
-                      disabled={deletePayment.isPending}
-                      className="p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-40"
-                      title="Delete Payment"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => printInvoice(p, 'DUAL_A4')}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                        title="Print Receipt"
+                      >
+                        <Printer size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete Receipt"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -180,16 +217,17 @@ export function FeesTab({ student }: { student: Student }) {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Quick POS Modal */}
+      <QuickCollectModal
+        open={quickCollectOpen}
+        preselectedStudent={student}
+        onClose={() => setQuickCollectOpen(false)}
+      />
+
       <InvoicePrintModal
         open={!!viewRecord}
         record={viewRecord}
         onClose={() => setViewRecord(null)}
-      />
-      <CollectFeeModal
-        open={collectOpen}
-        preselectedStudent={student}
-        onClose={() => setCollectOpen(false)}
       />
     </div>
   )

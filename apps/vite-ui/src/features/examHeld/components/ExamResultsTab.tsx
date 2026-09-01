@@ -4,22 +4,22 @@ import {
   CheckCircle2, Clock, AlertCircle, Trophy,
 } from 'lucide-react'
 import type { ExamHeld } from '../types'
-import { EXAM_SCOPE_LABELS, EXAM_STATUS_CONFIG } from '../types'
+import { EXAM_SCOPE_LABELS } from '../types'
 import { useExamHelds } from '../hooks/useExamHeld'
 import { ResultSummaryModal } from './ResultSummaryModal'
 
 // ─── Stat Mini Card ───────────────────────────────────────────────────────────
 function MiniStat({
-  label, value, color, icon: Icon,
-}: { label: string; value: number | string; color: string; icon: React.ElementType }) {
+  label, value, color, bg, icon: Icon,
+}: { label: string; value: number | string; color: string; bg: string; icon: React.ElementType }) {
   return (
-    <div className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg bg-current/10 ${color}`}>
-        <Icon size={16} className="opacity-80" />
+    <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 flex items-center gap-3 shadow-xs">
+      <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
+        <Icon size={18} />
       </div>
       <div>
-        <p className={`text-xl font-bold leading-none ${color}`}>{value}</p>
-        <p className="text-[10px] text-zinc-600 mt-0.5 uppercase tracking-wider">{label}</p>
+        <p className="text-xl font-black font-mono leading-none text-zinc-900">{value}</p>
+        <p className="text-[11px] font-semibold text-zinc-500 mt-1 uppercase tracking-wider">{label}</p>
       </div>
     </div>
   )
@@ -30,12 +30,12 @@ function MiniGradeBar({ counts, total }: { counts: Record<string, number>; total
   const grades = ['A+', 'A', 'A-', 'B', 'C', 'D', 'F']
   const colorMap: Record<string, string> = {
     'A+': 'bg-emerald-500', 'A': 'bg-green-500', 'A-': 'bg-teal-500',
-    'B': 'bg-blue-500', 'C': 'bg-amber-500', 'D': 'bg-orange-500', 'F': 'bg-red-500',
+    'B': 'bg-blue-500', 'C': 'bg-amber-500', 'D': 'bg-orange-500', 'F': 'bg-rose-500',
   }
-  if (total === 0) return <span className="text-xs text-zinc-800">No results</span>
+  if (total === 0) return <span className="text-xs text-zinc-400 font-medium">No results</span>
 
   return (
-    <div className="flex items-center gap-0.5 h-2 w-full rounded-full overflow-hidden">
+    <div className="flex items-center gap-0.5 h-2 w-full rounded-full overflow-hidden bg-zinc-100">
       {grades.map(g => {
         const count = counts[g] ?? 0
         const pct = Math.round((count / total) * 100)
@@ -85,7 +85,7 @@ export function ExamResultsTab() {
     return (
       <div className="space-y-3 animate-pulse">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-20 rounded-2xl bg-zinc-50" />
+          <div key={i} className="h-20 rounded-2xl bg-zinc-100" />
         ))}
       </div>
     )
@@ -93,11 +93,11 @@ export function ExamResultsTab() {
 
   if (completedExams.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-zinc-800">
-        <BarChart3 size={48} className="mb-4 opacity-20" />
-        <p className="text-sm font-medium">No completed exams yet</p>
-        <p className="text-xs text-zinc-800 mt-1">
-          Mark an exam as "Completed" from the Exams tab to see results here
+      <div className="flex flex-col items-center justify-center py-20 text-zinc-500 bg-white border border-zinc-200/80 rounded-3xl p-8">
+        <BarChart3 size={48} className="mb-4 opacity-30 text-zinc-400" />
+        <p className="text-sm font-semibold text-zinc-800">No completed exams yet</p>
+        <p className="text-xs text-zinc-500 mt-1">
+          Mark an exam as &ldquo;Completed&rdquo; from the Exams tab to see results here
         </p>
       </div>
     )
@@ -109,23 +109,23 @@ export function ExamResultsTab() {
 
         {/* ── Overview Stats ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <MiniStat icon={ClipboardCheck} label="Completed Exams" value={completedExams.length} color="text-purple-400" />
-          <MiniStat icon={CheckCircle2} label="Results Published" value={totalPublished} color="text-emerald-400" />
-          <MiniStat icon={Clock} label="Awaiting Publish" value={totalUnpublished} color="text-amber-400" />
-          <MiniStat icon={Trophy} label="Unique Subjects" value={[...new Set(completedExams.flatMap(e => e.exam_held_schedules?.map(s => s.subject_id) ?? []))].length} color="text-blue-400" />
+          <MiniStat icon={ClipboardCheck} label="Completed Exams" value={completedExams.length} color="text-indigo-700" bg="bg-indigo-100" />
+          <MiniStat icon={CheckCircle2} label="Results Published" value={totalPublished} color="text-emerald-700" bg="bg-emerald-100" />
+          <MiniStat icon={Clock} label="Awaiting Publish" value={totalUnpublished} color="text-amber-700" bg="bg-amber-100" />
+          <MiniStat icon={Trophy} label="Unique Subjects" value={[...new Set(completedExams.flatMap(e => e.exam_held_schedules?.map(s => s.subject_id) ?? []))].length} color="text-blue-700" bg="bg-blue-100" />
         </div>
 
         {/* ── Scope Filter ───────────────────────────────────────────────── */}
         {scopeOptions.length > 2 && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {scopeOptions.map(scope => (
               <button
                 key={scope}
                 onClick={() => setScopeFilter(scope)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   scopeFilter === scope
-                    ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-                    : 'border-zinc-100 text-zinc-600 hover:border-zinc-100 hover:text-zinc-600'
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                    : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                 }`}
               >
                 {scope === 'ALL' ? `All (${completedExams.length})` : EXAM_SCOPE_LABELS[scope as keyof typeof EXAM_SCOPE_LABELS]}
@@ -135,18 +135,18 @@ export function ExamResultsTab() {
         )}
 
         {/* ── Exams Table ────────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-zinc-100 overflow-hidden">
+        <div className="rounded-2xl border border-zinc-200/80 bg-white overflow-hidden shadow-xs">
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_100px_100px_120px_140px] gap-3 items-center px-5 py-3 bg-zinc-50 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">Exam Name</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 text-center">Scope</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 text-center">Subjects</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 text-center">Grade Dist.</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 text-right">Actions</span>
+          <div className="grid grid-cols-[1fr_100px_100px_120px_140px] gap-3 items-center px-5 py-3 bg-zinc-50 border-b border-zinc-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Exam Name</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">Scope</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">Subjects</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">Grade Dist.</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Actions</span>
           </div>
 
           {/* Table Rows */}
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-zinc-100">
             {filtered.map(exam => {
               const scheduleCount = exam.exam_held_schedules?.length ?? 0
               const isPublished = exam.result_published
@@ -162,15 +162,15 @@ export function ExamResultsTab() {
                   {/* Name */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-zinc-800 truncate">{exam.name}</p>
+                      <p className="text-sm font-semibold text-zinc-900 truncate">{exam.name}</p>
                       {isPublished && (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
-                          <CheckCircle2 size={8} />
+                        <span className="flex-shrink-0 flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 size={9} />
                           Published
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-600 mt-0.5 truncate">
+                    <p className="text-xs text-zinc-500 mt-0.5 truncate">
                       {exam.target_type === 'CLASS'
                         ? `Class: ${exam.classes?.name ?? exam.class_id ?? '—'}`
                         : `Batch: ${exam.batches?.name ?? exam.batch_id ?? '—'}`
@@ -181,15 +181,15 @@ export function ExamResultsTab() {
 
                   {/* Scope */}
                   <div className="text-center">
-                    <span className="text-[10px] font-semibold text-zinc-600 bg-white border border-zinc-100 px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-md">
                       {EXAM_SCOPE_LABELS[exam.scope]}
                     </span>
                   </div>
 
                   {/* Subjects count */}
                   <div className="text-center">
-                    <span className="text-sm font-bold text-zinc-800">{scheduleCount}</span>
-                    <span className="text-xs text-zinc-800 ml-0.5">subj.</span>
+                    <span className="text-sm font-bold text-zinc-900 font-mono">{scheduleCount}</span>
+                    <span className="text-xs text-zinc-500 ml-0.5">subj.</span>
                   </div>
 
                   {/* Grade distribution bar (placeholder until results modal loads) */}
@@ -197,17 +197,17 @@ export function ExamResultsTab() {
                     {scheduleCount > 0 ? (
                       <MiniGradeBar counts={gradePlaceholder} total={0} />
                     ) : (
-                      <span className="text-xs text-zinc-800 italic">No schedule</span>
+                      <span className="text-xs text-zinc-400 italic">No schedule</span>
                     )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 justify-end">
                     {/* Publish status badge */}
-                    <span className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border transition-all ${
+                    <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
                       isPublished
-                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                        : 'text-zinc-600 bg-zinc-50 border-zinc-100'
+                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                        : 'text-zinc-500 bg-zinc-100 border-zinc-200'
                     }`}>
                       {isPublished ? <Eye size={10} /> : <EyeOff size={10} />}
                       {isPublished ? 'Live' : 'Draft'}
@@ -215,11 +215,12 @@ export function ExamResultsTab() {
 
                     {/* View Summary */}
                     <button
+                      type="button"
                       onClick={() => setSummaryExam(exam)}
                       title="View Result Summary"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/15 border border-purple-500/30 text-purple-400 hover:bg-purple-600/25 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all cursor-pointer"
                     >
-                      <BarChart3 size={12} />
+                      <BarChart3 size={13} />
                       Results
                     </button>
                   </div>
@@ -231,19 +232,19 @@ export function ExamResultsTab() {
 
         {/* No results for filter */}
         {filtered.length === 0 && completedExams.length > 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-zinc-800">
-            <AlertCircle size={32} className="mb-3 opacity-30" />
-            <p className="text-sm">No exams found for selected scope</p>
+          <div className="flex flex-col items-center justify-center py-12 text-zinc-500 bg-white border border-zinc-200/80 rounded-2xl p-6">
+            <AlertCircle size={32} className="mb-3 opacity-40 text-zinc-400" />
+            <p className="text-sm font-semibold">No exams found for selected scope</p>
           </div>
         )}
 
         {/* Info note for non-completed exams */}
         {exams.length > completedExams.length && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-100">
-            <ClipboardList size={14} className="text-zinc-600 flex-shrink-0" />
-            <p className="text-xs text-zinc-600">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white border border-zinc-200/80 shadow-xs">
+            <ClipboardList size={16} className="text-zinc-400 flex-shrink-0" />
+            <p className="text-xs text-zinc-500">
               {exams.length - completedExams.length} exam{exams.length - completedExams.length !== 1 ? 's' : ''} not shown (not yet completed). 
-              Mark exams as <strong className="text-zinc-600">Completed</strong> from the Exams tab to see results here.
+              Mark exams as <strong className="text-zinc-700">Completed</strong> from the Exams tab to see results here.
             </p>
           </div>
         )}

@@ -1,49 +1,86 @@
-import type { StudentFormData, StudentGroup, StudentShift, StudentVersion, StudentStatus } from '../../types'
+import { useMemo } from 'react'
+import type { StudentFormData, StudentGroup, StudentShift, StudentVersion, Gender, BloodGroup, TargetExam } from '../../types'
 import { classStore, sectionStore, batchStore } from '@/data/stores'
-
-const MOCK_CLASSES   = classStore.getAll()
-const MOCK_SECTIONS  = sectionStore.getAll().map(s => ({ id: s.id, name: s.name }))
-const MOCK_BATCHES   = batchStore.getAll().map(b => ({ id: b.id, name: b.name, targetExam: b.examName }))
-const GROUP_CLASSES  = ['cls-9', 'cls-10', 'cls-11', 'cls-12']
+import { GraduationCap, BookOpen } from 'lucide-react'
 
 interface Props {
   data: StudentFormData
   onChange: (partial: Partial<StudentFormData>) => void
 }
 
-const inputCls = 'w-full bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg py-2 px-3 text-sm text-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 transition-colors'
-const labelCls = 'block text-xs font-medium text-zinc-600 mb-1.5'
-const sectionCls = 'bg-white border border-zinc-100 rounded-xl p-5 space-y-4'
-const sectionTitleCls = 'text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-4'
-
-// Generate session years dynamically from 10 years ago to 20 years in the future
-const currentYear = new Date().getFullYear()
-const SESSION_YEARS = Array.from({ length: 31 }, (_, i) => (currentYear - 10 + i).toString()).reverse()
+const inputCls = 'w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2 px-3 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-colors'
+const labelCls = 'block text-xs font-bold text-zinc-700 mb-1'
 
 export function Step1_BasicAcademic({ data, onChange }: Props) {
-  const needsGroup = GROUP_CLASSES.includes(data.classId)
+  const classes = useMemo(() => classStore.getAll().filter(c => c.isActive ?? true), [])
+  const batches = useMemo(() => batchStore.getAll().filter(b => b.status === 'ONGOING' || !b.status), [])
+
+  const selectedClass = useMemo(() => classes.find(c => c.id === data.classId), [classes, data.classId])
+  const classSections = useMemo(() => {
+    if (!data.classId) return []
+    return sectionStore.getWhere(s => s.classId === data.classId)
+  }, [data.classId])
+
+  const needsGroup = selectedClass ? selectedClass.numericName >= 9 || selectedClass.hasGroups : false
 
   return (
     <div className="space-y-5">
-      {/* ── Basic Information ─────────────────────────── */}
-      <div className={sectionCls}>
-        <h3 className={sectionTitleCls}>
-          <span className="w-5 h-5 bg-blue-600/30 text-blue-400 rounded text-xs flex items-center justify-center font-bold">1</span>
-          Basic Information
+      {/* ── Track Switcher (Regular vs Exam Batch) ────────────────────────── */}
+      <div>
+        <label className="block text-xs font-bold text-zinc-700 mb-1.5">
+          Admission Track <span className="text-red-500">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ type: 'REGULAR', batchId: '', schoolName: '' })}
+            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+              data.type === 'REGULAR'
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-800 shadow-xs ring-2 ring-indigo-500/20'
+                : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+            }`}
+          >
+            <GraduationCap size={16} className={data.type === 'REGULAR' ? 'text-indigo-600' : 'text-zinc-400'} />
+            <span>🎒 Regular School Student</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChange({ type: 'EXAM_BATCH', classId: '', sectionId: '', groupId: '' })}
+            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+              data.type === 'EXAM_BATCH'
+                ? 'bg-purple-50 border-purple-300 text-purple-800 shadow-xs ring-2 ring-purple-500/20'
+                : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+            }`}
+          >
+            <BookOpen size={16} className={data.type === 'EXAM_BATCH' ? 'text-purple-600' : 'text-zinc-400'} />
+            <span>📚 Coaching / Exam Batch</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── 1. Core Identity ────────────────────────────────────────────── */}
+      <div className="bg-zinc-50/70 border border-zinc-200/80 rounded-2xl p-4 space-y-3">
+        <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+          Student Identity
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>Full Name (English) <span className="text-red-400">*</span></label>
+            <label className={labelCls}>Full Name (English) <span className="text-red-500">*</span></label>
             <input
               type="text"
               placeholder="e.g. Rahim Uddin"
               value={data.fullNameEn}
               onChange={e => onChange({ fullNameEn: e.target.value })}
               className={inputCls}
+              required
             />
           </div>
+
           <div>
-            <label className={labelCls}>Full Name (Bangla)</label>
+            <label className={labelCls}>Full Name (বাংলা)</label>
             <input
               type="text"
               placeholder="যেমন: রহিম উদ্দিন"
@@ -52,17 +89,34 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
               className={inputCls}
             />
           </div>
+
           <div>
-            <label className={labelCls}>Gender <span className="text-red-400">*</span></label>
-            <select value={data.gender} onChange={e => onChange({ gender: e.target.value as StudentFormData['gender'] })} className={inputCls}>
-              <option value="">Select Gender</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
+            <label className={labelCls}>Gender <span className="text-red-500">*</span></label>
+            <select
+              value={data.gender}
+              onChange={e => onChange({ gender: e.target.value as Gender })}
+              className={inputCls}
+            >
+              <option value="MALE">Male (ছাত্র)</option>
+              <option value="FEMALE">Female (ছাত্রী)</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
+
           <div>
-            <label className={labelCls}>Date of Birth <span className="text-red-400">*</span></label>
+            <label className={labelCls}>Mobile Number <span className="text-red-500">*</span></label>
+            <input
+              type="tel"
+              placeholder="017XX-XXXXXX"
+              value={data.mobile}
+              onChange={e => onChange({ mobile: e.target.value })}
+              className={inputCls}
+              required
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>Date of Birth</label>
             <input
               type="date"
               value={data.dateOfBirth}
@@ -70,161 +124,229 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
               className={inputCls}
             />
           </div>
+
           <div>
             <label className={labelCls}>Blood Group</label>
-            <select value={data.bloodGroup} onChange={e => onChange({ bloodGroup: e.target.value as StudentFormData['bloodGroup'] })} className={inputCls}>
+            <select
+              value={data.bloodGroup}
+              onChange={e => onChange({ bloodGroup: e.target.value as BloodGroup })}
+              className={inputCls}
+            >
               <option value="">Select Blood Group</option>
-              {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+              {(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as BloodGroup[]).map(bg => (
                 <option key={bg} value={bg}>{bg}</option>
               ))}
             </select>
           </div>
-          <div>
-            <label className={labelCls}>Religion <span className="text-red-400">*</span></label>
-            <select value={data.religion} onChange={e => onChange({ religion: e.target.value })} className={inputCls}>
-              <option value="Islam">Islam</option>
-              <option value="Hinduism">Hinduism</option>
-              <option value="Christianity">Christianity</option>
-              <option value="Buddhism">Buddhism</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Nationality <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              value={data.nationality}
-              onChange={e => onChange({ nationality: e.target.value })}
-              className={inputCls}
-            />
-          </div>
         </div>
       </div>
 
-      {/* ── Academic Information ──────────────────────── */}
-      <div className={sectionCls}>
-        <h3 className={sectionTitleCls}>
-          <span className="w-5 h-5 bg-purple-600/30 text-purple-400 rounded text-xs flex items-center justify-center font-bold">2</span>
-          Academic Information
+      {/* ── 2. Academic Placement ────────────────────────────────────────── */}
+      <div className="bg-zinc-50/70 border border-zinc-200/80 rounded-2xl p-4 space-y-3">
+        <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+          Academic Allocation ({data.type === 'REGULAR' ? 'Regular Class' : 'Exam Batch'})
         </h3>
 
-        {/* Student Type toggle */}
-        <div>
-          <label className={labelCls}>Student Type <span className="text-red-400">*</span></label>
-          <div className="flex gap-3">
-            {[
-              { value: 'REGULAR', label: '🎒 Regular Student' },
-              { value: 'EXAM_BATCH', label: '📚 Exam Batch' },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ type: opt.value as StudentFormData['type'], classId: '', sectionId: '', groupId: '', batchId: '' })}
-                className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all ${
-                  data.type === opt.value
-                    ? 'bg-blue-600/20 border-blue-500/60 text-blue-300'
-                    : 'bg-white border-zinc-100 text-zinc-600 hover:border-zinc-100'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Regular Student fields */}
+        {/* Regular Fields */}
         {data.type === 'REGULAR' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className={labelCls}>Class <span className="text-red-400">*</span></label>
+              <label className={labelCls}>Class <span className="text-red-500">*</span></label>
               <select
                 value={data.classId}
-                onChange={e => onChange({ classId: e.target.value, groupId: '', sectionId: '' })}
+                onChange={e => {
+                  const cId = e.target.value
+                  const c = classes.find(item => item.id === cId)
+                  onChange({
+                    classId: cId,
+                    className: c?.name || '',
+                    sectionId: '',
+                    groupId: '',
+                  })
+                }}
                 className={inputCls}
+                required
               >
                 <option value="">Select Class</option>
-                {MOCK_CLASSES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
+
             <div>
-              <label className={labelCls}>Section <span className="text-red-400">*</span></label>
-              <select value={data.sectionId} onChange={e => onChange({ sectionId: e.target.value })} className={inputCls}>
-                <option value="">Select Section</option>
-                {MOCK_SECTIONS.map(s => <option key={s.id} value={s.id}>Section {s.name}</option>)}
+              <label className={labelCls}>
+                Section {classSections.length > 0 ? (
+                  <span className="text-red-500">*</span>
+                ) : (
+                  <span className="text-zinc-400 font-normal">(No Section)</span>
+                )}
+              </label>
+              <select
+                value={data.sectionId}
+                onChange={e => {
+                  const sId = e.target.value
+                  const s = classSections.find(sec => sec.id === sId)
+                  onChange({
+                    sectionId: sId,
+                    sectionName: s?.name || '',
+                  })
+                }}
+                className={inputCls}
+                disabled={!data.classId}
+              >
+                <option value="">
+                  {classSections.length > 0 ? 'Select Section' : 'No Section / Default'}
+                </option>
+                {classSections.map(s => (
+                  <option key={s.id} value={s.id}>
+                    Section {s.name} {s.groupName ? `(${s.groupName})` : ''}
+                  </option>
+                ))}
               </select>
             </div>
+
+            <div>
+              <label className={labelCls}>Roll Number</label>
+              <input
+                type="text"
+                placeholder="Auto-generated if empty"
+                value={data.rollNumber}
+                onChange={e => onChange({ rollNumber: e.target.value })}
+                className={inputCls}
+              />
+            </div>
+
             {needsGroup && (
               <div>
-                <label className={labelCls}>Group <span className="text-red-400">*</span></label>
-                <select value={data.groupId} onChange={e => onChange({ groupId: e.target.value as StudentGroup })} className={inputCls}>
+                <label className={labelCls}>Academic Group <span className="text-red-500">*</span></label>
+                <select
+                  value={data.groupId}
+                  onChange={e => onChange({ groupId: e.target.value as StudentGroup })}
+                  className={inputCls}
+                  required
+                >
                   <option value="">Select Group</option>
-                  <option value="SCIENCE">Science</option>
-                  <option value="ARTS">Arts</option>
-                  <option value="COMMERCE">Commerce</option>
+                  <option value="SCIENCE">Science (বিজ্ঞান)</option>
+                  <option value="ARTS">Humanities / Arts (মানবিক)</option>
+                  <option value="COMMERCE">Business / Commerce (ব্যবসায়)</option>
                 </select>
               </div>
             )}
+
             <div>
-              <label className={labelCls}>Shift <span className="text-red-400">*</span></label>
-              <select value={data.shift} onChange={e => onChange({ shift: e.target.value as StudentShift })} className={inputCls}>
-                <option value="">Select Shift</option>
-                <option value="MORNING">Morning</option>
-                <option value="DAY">Day</option>
+              <label className={labelCls}>Shift</label>
+              <select
+                value={data.shift}
+                onChange={e => onChange({ shift: e.target.value as StudentShift })}
+                className={inputCls}
+              >
+                <option value="DAY">Day Shift (দিবা)</option>
+                <option value="MORNING">Morning Shift (প্রভাতি)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelCls}>Medium / Version</label>
+              <select
+                value={data.version}
+                onChange={e => onChange({ version: e.target.value as StudentVersion })}
+                className={inputCls}
+              >
+                <option value="BANGLA">Bangla Medium</option>
+                <option value="ENGLISH">English Version</option>
               </select>
             </div>
           </div>
         )}
 
-        {/* Exam Batch fields */}
+        {/* Exam Batch Fields */}
         {data.type === 'EXAM_BATCH' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Batch <span className="text-red-400">*</span></label>
-              <select value={data.batchId} onChange={e => onChange({ batchId: e.target.value })} className={inputCls}>
-                <option value="">Select Batch</option>
-                {MOCK_BATCHES.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              <label className={labelCls}>Exam Batch <span className="text-red-500">*</span></label>
+              <select
+                value={data.batchId}
+                onChange={e => {
+                  const bId = e.target.value
+                  const b = batches.find(item => item.id === bId)
+                  onChange({
+                    batchId: bId,
+                    batchName: b?.name || '',
+                    targetExam: (b?.examName as TargetExam) || 'SSC',
+                  })
+                }}
+                className={inputCls}
+                required
+              >
+                <option value="">Select Exam Batch</option>
+                {batches.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.examName} {b.examYear})
+                  </option>
+                ))}
               </select>
+            </div>
+
+            <div>
+              <label className={labelCls}>Target Exam</label>
+              <select
+                value={data.targetExam}
+                onChange={e => onChange({ targetExam: e.target.value as TargetExam })}
+                className={inputCls}
+              >
+                <option value="SSC">SSC Candidate</option>
+                <option value="HSC">HSC Candidate</option>
+                <option value="ADMISSION">University / Medical Admission</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelCls}>Original School / College Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Dhaka Residential Model College"
+                value={data.schoolName}
+                onChange={e => onChange({ schoolName: e.target.value })}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>Batch Roll / Serial</label>
+              <input
+                type="text"
+                placeholder="Auto-generated if empty"
+                value={data.rollNumber}
+                onChange={e => onChange({ rollNumber: e.target.value })}
+                className={inputCls}
+              />
             </div>
           </div>
         )}
 
-        {/* Common fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Academic Session */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-zinc-200/50">
           <div>
-            <label className={labelCls}>Version <span className="text-red-400">*</span></label>
-            <select value={data.version} onChange={e => onChange({ version: e.target.value as StudentVersion })} className={inputCls}>
-              <option value="">Select Version</option>
-              <option value="BANGLA">Bangla Medium</option>
-              <option value="ENGLISH">English Medium</option>
-            </select>
+            <label className={labelCls}>Academic Session</label>
+            <input
+              type="text"
+              placeholder="e.g. 2026"
+              value={data.session}
+              onChange={e => onChange({ session: e.target.value })}
+              className={inputCls}
+            />
           </div>
+
           <div>
-            <label className={labelCls}>Academic Session <span className="text-red-400">*</span></label>
-            <select value={data.session} onChange={e => onChange({ session: e.target.value })} className={inputCls}>
-              <option value="">Select Session</option>
-              {SESSION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Admission Date <span className="text-red-400">*</span></label>
-            <input type="date" value={data.admissionDate} onChange={e => onChange({ admissionDate: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Admission Number</label>
-            <input type="text" placeholder="ADM-2024-001" value={data.admissionNumber} onChange={e => onChange({ admissionNumber: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Previous School</label>
-            <input type="text" placeholder="School name" value={data.previousSchool} onChange={e => onChange({ previousSchool: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Status <span className="text-red-400">*</span></label>
-            <select value={data.status} onChange={e => onChange({ status: e.target.value as StudentStatus })} className={inputCls}>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="LEFT">Left</option>
-              <option value="SUSPENDED">Suspended</option>
-            </select>
+            <label className={labelCls}>Admission Date</label>
+            <input
+              type="date"
+              value={data.admissionDate}
+              onChange={e => onChange({ admissionDate: e.target.value })}
+              className={inputCls}
+            />
           </div>
         </div>
       </div>

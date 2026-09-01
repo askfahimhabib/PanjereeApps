@@ -20,7 +20,7 @@ export function useBatchStudents(batch: Batch) {
     students.filter(s =>
       !search ||
       s.fullNameEn.toLowerCase().includes(search.toLowerCase()) ||
-      s.fullNameBn.includes(search) ||
+      (s.fullNameBn ?? '').includes(search) ||
       s.studentId.toLowerCase().includes(search.toLowerCase()) ||
       (s.mobile ?? '').includes(search)
     ), [students, search])

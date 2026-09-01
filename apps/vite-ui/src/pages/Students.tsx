@@ -1,22 +1,22 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import { useStudents }          from '../features/students/useStudents'
 import { StatsCards }           from '../features/students/components/StatsCards'
 import { StudentFilters }       from '../features/students/components/StudentFilters'
 import { StudentTable }         from '../features/students/components/StudentTable'
-import { StudentDetailDrawer }  from '../features/students/components/StudentDetailDrawer'
 import { AddStudentModal }      from '../features/students/components/AddStudentModal'
 import { PromoteStudentsModal } from '../features/students/components/PromoteStudentsModal'
 import { CertificateModal }     from '../features/certificates/components/CertificateModal'
 import type { Student }         from '../features/students/types'
-import { useState } from 'react'
 
 export function Students() {
+  const navigate = useNavigate()
   const {
     stats, filteredStudents, paginatedStudents,
     filters, updateFilter, resetFilters,
     currentPage, setCurrentPage, totalPages,
-    selectedStudent, isDrawerOpen, openDrawer, closeDrawer,
-    isModalOpen, openModal, openEditModal, closeModal,
+    isModalOpen, openModal, closeModal,
     editingStudentId,
     formData, updateFormData, currentStep, nextStep, prevStep, submitStudent,
     deleteStudent, promoteStudents, students,
@@ -40,19 +40,19 @@ export function Students() {
             <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Students</h1>
             <p className="text-sm text-zinc-600 mt-1">Manage student records, enrollment, and profiles</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsPromoteModalOpen(true)}
-              className="flex items-center gap-2 bg-zinc-50 hover:bg-zinc-50 text-zinc-800 border border-zinc-100 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              className="btn-secondary cursor-pointer"
             >
               Promote
             </button>
             <button
               id="add-student-btn"
-              onClick={openModal}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-blue-900/30"
+              onClick={() => openModal()}
+              className="btn-primary cursor-pointer"
             >
-              <UserPlus size={17} />
+              <UserPlus size={16} />
               Add Student
             </button>
           </div>
@@ -67,31 +67,27 @@ export function Students() {
           updateFilter={updateFilter}
           resetFilters={resetFilters}
           totalResults={filteredStudents.length}
+          stats={{
+            total: stats.total,
+            regular: stats.regular,
+            examBatch: stats.examBatch,
+          }}
         />
 
-        {/* ── Table ──────────────────────────────────── */}
+        {/* ── Table (Clicks navigate directly to Main Profile) ── */}
         <StudentTable
           students={paginatedStudents}
           currentPage={currentPage}
           totalPages={totalPages}
           totalResults={filteredStudents.length}
           onPageChange={setCurrentPage}
-          onView={openDrawer}
+          onView={(student) => navigate(`/students/${student.id}`)}
           onDelete={deleteStudent}
           onCertificate={(student) => handleOpenCertificateModal(student)}
         />
       </div>
 
-      {/* ── Detail Drawer ─────────────────────────────── */}
-      <StudentDetailDrawer
-        student={selectedStudent}
-        isOpen={isDrawerOpen}
-        onClose={closeDrawer}
-        onEdit={openEditModal}
-        onDelete={deleteStudent}
-        onCertificate={(student) => handleOpenCertificateModal(student)}
-      />
-
+      {/* Add / Edit Student Modal */}
       <AddStudentModal
         isOpen={isModalOpen}
         isEdit={!!editingStudentId}
@@ -104,7 +100,7 @@ export function Students() {
         onSubmit={submitStudent}
       />
 
-      {/* ── Promote Students Modal ──────────────────────── */}
+      {/* Promote Students Modal */}
       <PromoteStudentsModal
         isOpen={isPromoteModalOpen}
         onClose={() => setIsPromoteModalOpen(false)}
@@ -112,7 +108,7 @@ export function Students() {
         onPromote={promoteStudents}
       />
 
-      {/* ── Certificate Generator Modal ───────────────── */}
+      {/* Certificate Generator Modal */}
       <CertificateModal
         isOpen={isCertModalOpen}
         onClose={() => setIsCertModalOpen(false)}

@@ -1,152 +1,138 @@
-import type { TeacherFormData, Gender, BloodGroup, Religion, MaritalStatus } from '../../types'
+import type { TeacherFormData, Gender, BloodGroup } from '../../types'
 
 interface Props {
   data: TeacherFormData
   onChange: (partial: Partial<TeacherFormData>) => void
 }
 
-const inputCls    = 'w-full bg-zinc-50 border border-zinc-100 hover:border-zinc-100 rounded-lg py-2 px-3 text-sm text-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 transition-colors'
-const labelCls    = 'block text-xs font-medium text-zinc-600 mb-1.5'
-const sectionCls  = 'bg-white border border-zinc-100 rounded-xl p-5 space-y-4'
-const sectionTitleCls = 'text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-4'
-
-// Sync firstName + lastName → fullName
-function syncFullName(
-  first: string, last: string,
-  onChange: (p: Partial<TeacherFormData>) => void,
-  key: 'firstName' | 'lastName',
-  value: string,
-) {
-  const updated = key === 'firstName'
-    ? { firstName: value, fullName: `${value} ${last}`.trim() }
-    : { lastName: value, fullName: `${first} ${value}`.trim() }
-  onChange(updated)
-}
+const inputCls = 'w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2 px-3 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-colors'
+const labelCls = 'block text-xs font-bold text-zinc-700 mb-1'
 
 export function Step1_BasicInfo({ data, onChange }: Props) {
   return (
     <div className="space-y-5">
-      {/* ── Basic Information ──────────────────────────────── */}
-      <div className={sectionCls}>
-        <h3 className={sectionTitleCls}>
-          <span className="w-5 h-5 bg-blue-600/30 text-blue-400 rounded text-xs flex items-center justify-center font-bold">1</span>
-          Personal Information
+      {/* ── 1. Teacher Identity ────────────────────────────────────────── */}
+      <div className="bg-zinc-50/70 border border-zinc-200/80 rounded-2xl p-4 space-y-3">
+        <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+          Teacher Personal Identity
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>First Name <span className="text-red-400">*</span></label>
+            <label className={labelCls}>Full Name (English) <span className="text-red-500">*</span></label>
             <input
               type="text"
-              placeholder="e.g. Shafiqul"
-              value={data.firstName}
-              onChange={e => syncFullName(data.firstName, data.lastName, onChange, 'firstName', e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Last Name <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              placeholder="e.g. Islam"
-              value={data.lastName}
-              onChange={e => syncFullName(data.firstName, data.lastName, onChange, 'lastName', e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Full Name (English)</label>
-            <input
-              type="text"
-              placeholder="Auto-generated from First + Last"
+              placeholder="e.g. Mohammad Shafiqul Islam"
               value={data.fullName}
               onChange={e => onChange({ fullName: e.target.value })}
               className={inputCls}
+              required
             />
           </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Full Name (Bengali / বাংলা নাম)</label>
+
+          <div>
+            <label className={labelCls}>Full Name (বাংলা)</label>
             <input
               type="text"
-              placeholder="যেমন: মো. শফিকুল ইসলাম"
+              placeholder="যেমন: মোহাম্মদ শফিকুল ইসলাম"
               value={data.nameBangla}
               onChange={e => onChange({ nameBangla: e.target.value })}
               className={inputCls}
             />
           </div>
+
           <div>
-            <label className={labelCls}>Employee ID</label>
-            <input
-              type="text"
-              placeholder="EMP-001 (auto if blank)"
-              value={data.employeeId}
-              onChange={e => onChange({ employeeId: e.target.value })}
+            <label className={labelCls}>Gender <span className="text-red-500">*</span></label>
+            <select
+              value={data.gender}
+              onChange={e => onChange({ gender: e.target.value as Gender })}
               className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Gender <span className="text-red-400">*</span></label>
-            <select value={data.gender} onChange={e => onChange({ gender: e.target.value as Gender | '' })} className={inputCls}>
-              <option value="">Select Gender</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
+            >
+              <option value="MALE">Male (পুরুষ)</option>
+              <option value="FEMALE">Female (নারী)</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
+
           <div>
-            <label className={labelCls}>Date of Birth <span className="text-red-400">*</span></label>
-            <input type="date" value={data.dateOfBirth} onChange={e => onChange({ dateOfBirth: e.target.value })} className={inputCls} />
+            <label className={labelCls}>Date of Birth</label>
+            <input
+              type="date"
+              value={data.dateOfBirth}
+              onChange={e => onChange({ dateOfBirth: e.target.value })}
+              className={inputCls}
+            />
           </div>
+
           <div>
             <label className={labelCls}>Blood Group</label>
-            <select value={data.bloodGroup} onChange={e => onChange({ bloodGroup: e.target.value as BloodGroup | '' })} className={inputCls}>
+            <select
+              value={data.bloodGroup}
+              onChange={e => onChange({ bloodGroup: e.target.value as BloodGroup })}
+              className={inputCls}
+            >
               <option value="">Select Blood Group</option>
-              {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+              {(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as BloodGroup[]).map(bg => (
                 <option key={bg} value={bg}>{bg}</option>
               ))}
             </select>
           </div>
+
           <div>
-            <label className={labelCls}>Marital Status</label>
-            <select value={data.maritalStatus} onChange={e => onChange({ maritalStatus: e.target.value as MaritalStatus | '' })} className={inputCls}>
-              <option value="">Select Status</option>
-              <option value="SINGLE">Single</option>
-              <option value="MARRIED">Married</option>
-              <option value="DIVORCED">Divorced</option>
-              <option value="WIDOWED">Widowed</option>
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Religion</label>
-            <select value={data.religion} onChange={e => onChange({ religion: e.target.value as Religion | '' })} className={inputCls}>
-              <option value="">Select Religion</option>
-              <option value="ISLAM">Islam</option>
-              <option value="HINDUISM">Hinduism</option>
-              <option value="CHRISTIANITY">Christianity</option>
-              <option value="BUDDHISM">Buddhism</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Nationality</label>
-            <input type="text" value={data.nationality} onChange={e => onChange({ nationality: e.target.value })} className={inputCls} />
+            <label className={labelCls}>National ID (NID) Number</label>
+            <input
+              type="text"
+              placeholder="e.g. 19901234567890"
+              value={data.nidNumber || ''}
+              onChange={e => onChange({ nidNumber: e.target.value })}
+              className={inputCls}
+            />
           </div>
         </div>
       </div>
 
-      {/* ── Identity Documents ──────────────────────────────── */}
-      <div className={sectionCls}>
-        <h3 className={sectionTitleCls}>
-          <span className="w-5 h-5 bg-purple-600/30 text-purple-400 rounded text-xs flex items-center justify-center font-bold">2</span>
-          Identity Documents
+      {/* ── 2. Contact & Address ───────────────────────────────────────── */}
+      <div className="bg-zinc-50/70 border border-zinc-200/80 rounded-2xl p-4 space-y-3">
+        <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+          Contact & Residential Address
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>NID Number</label>
-            <input type="text" placeholder="13 or 17 digit NID" value={data.nidNumber} onChange={e => onChange({ nidNumber: e.target.value })} className={inputCls} />
+            <label className={labelCls}>Mobile Number <span className="text-red-500">*</span></label>
+            <input
+              type="tel"
+              placeholder="017XX-XXXXXX"
+              value={data.phone}
+              onChange={e => onChange({ phone: e.target.value })}
+              className={inputCls}
+              required
+            />
           </div>
+
           <div>
-            <label className={labelCls}>Birth Certificate Number</label>
-            <input type="text" placeholder="Birth certificate no." value={data.birthCertificateNumber} onChange={e => onChange({ birthCertificateNumber: e.target.value })} className={inputCls} />
+            <label className={labelCls}>Email Address (Optional)</label>
+            <input
+              type="email"
+              placeholder="teacher@example.com"
+              value={data.email}
+              onChange={e => onChange({ email: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className={labelCls}>Present Address (বর্তমান ঠিকানা) <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              placeholder="House, Road, Area, Thana, District (যেমন: বাড়ি ১৫, রোড ৪, ধানমন্ডি, ঢাকা)"
+              value={data.presentAddress}
+              onChange={e => onChange({ presentAddress: e.target.value })}
+              className={inputCls}
+              required
+            />
           </div>
         </div>
       </div>

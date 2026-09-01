@@ -1,22 +1,19 @@
 import { useState } from 'react'
-import { Plus, RefreshCw, ClipboardList } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, RefreshCw, ClipboardList, Trophy } from 'lucide-react'
 import { useExamHelds, useCreateExamHeld, useUpdateExamHeldStatus, useDeleteExamHeld, useSaveSchedules } from '@/features/examHeld/hooks/useExamHeld'
 import { ExamHeldCard } from '@/features/examHeld/components/ExamHeldCard'
 import { ExamHeldModal } from '@/features/examHeld/components/ExamHeldModal'
 import { SubjectSchedulePicker } from '@/features/examHeld/components/SubjectSchedulePicker'
-import { ResultsEntryModal } from '@/features/examHeld/components/ResultsEntryModal'
-import { ResultSummaryModal } from '@/features/examHeld/components/ResultSummaryModal'
-import { useExamResults } from '@/features/examHeld/hooks/useExamResults'
 import type { ExamHeld, CreateExamHeldDto, CreateScheduleDto } from '@/features/examHeld/types'
 import { EXAM_STATUS_CONFIG } from '@/features/examHeld/types'
 
 type FilterStatus = 'ALL' | ExamHeld['status']
 
 export function ExamHeldPage() {
+  const navigate = useNavigate()
   const [createOpen, setCreateOpen] = useState(false)
   const [scheduling, setScheduling] = useState<ExamHeld | null>(null)
-  const [resultsExam, setResultsExam] = useState<ExamHeld | null>(null)
-  const [summaryExam, setSummaryExam] = useState<ExamHeld | null>(null)
   const [filter, setFilter] = useState<FilterStatus>('ALL')
 
   const { data: exams = [], isLoading } = useExamHelds()
@@ -24,7 +21,6 @@ export function ExamHeldPage() {
   const updateStatus = useUpdateExamHeldStatus()
   const deleteExam = useDeleteExamHeld()
   const saveSchedules = useSaveSchedules(scheduling?.id ?? '')
-  const { data: resultsData = [] } = useExamResults(resultsExam?.id ?? null)
 
   const filtered = filter === 'ALL' ? exams : exams.filter((e) => e.status === filter)
 
@@ -42,90 +38,89 @@ export function ExamHeldPage() {
     }
   }
 
+  // Navigate to full tabulation matrix
+  const handleOpenTabulation = (exam: ExamHeld) => {
+    navigate(`/exam-results?examId=${exam.id}&tab=TABULATION`)
+  }
+
+  // Navigate to summary analytics
+  const handleOpenSummary = (exam: ExamHeld) => {
+    navigate(`/exam-results?examId=${exam.id}&tab=ANALYTICS`)
+  }
+
   const filterOptions: FilterStatus[] = ['ALL', 'SCHEDULED', 'ONGOING', 'COMPLETED', 'POSTPONED', 'CANCELLED']
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Exam Management</h1>
-          <p className="text-zinc-600 mt-1 text-sm flex items-center gap-1.5">
-            <RefreshCw size={12} className="text-purple-400" />
-            Schedules auto-sync to Routines on save
+          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Exam & Routine Management</h1>
+          <p className="text-zinc-500 mt-0.5 text-xs sm:text-sm flex items-center gap-1.5">
+            <RefreshCw size={13} className="text-emerald-600" />
+            Plan date-sheets, generate batch admit cards & evaluate marks
           </p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl hover:bg-purple-700 transition-colors font-medium text-sm shadow-lg shadow-purple-500/20"
-        >
-          <Plus size={17} />
-          New Exam
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/exam-results')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 text-xs font-bold hover:bg-zinc-50 shadow-xs transition-all cursor-pointer"
+          >
+            <Trophy size={14} className="text-amber-500" />
+            <span>Tabulation Hub</span>
+          </button>
+
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="btn-primary flex items-center gap-1.5"
+          >
+            <Plus size={16} />
+            Create Exam
+          </button>
+        </div>
       </div>
 
-      {/* Sync info banner */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/8 border border-purple-500/20">
-        <RefreshCw size={16} className="text-purple-400 flex-shrink-0" />
-        <p className="text-sm text-purple-300">
-          Schedules created from this module will appear automatically as <strong>FORMAL_EXAM</strong> in the <em>Routines module</em>. Students can view them from their dashboard.
-        </p>
-      </div>
-
-      {/* Status Filter */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {filterOptions.map((s) => {
-          const cfg = s !== 'ALL' ? EXAM_STATUS_CONFIG[s] : null
-          const isActive = filter === s
-          return (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                isActive
-                  ? s === 'ALL'
-                    ? 'bg-zinc-100 text-white border-zinc-100'
-                    : `${cfg!.bg} ${cfg!.color} ${cfg!.border}`
-                  : 'border-zinc-100 text-zinc-600 hover:border-zinc-100'
-              }`}
-            >
-              {s === 'ALL' ? `All (${exams.length})` : cfg!.label}
-              {s !== 'ALL' && (
-                <span className="ml-1.5 opacity-60">
-                  ({exams.filter((e) => e.status === s).length})
-                </span>
-              )}
-            </button>
-          )
-        })}
+      {/* Filter Tabs */}
+      <div className="pill-tab-container w-fit">
+        {filterOptions.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={filter === f ? 'pill-tab-active' : 'pill-tab-inactive'}
+          >
+            {f === 'ALL' ? `All (${exams.length})` : `${EXAM_STATUS_CONFIG[f].label} (${exams.filter(e => e.status === f).length})`}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-56 rounded-2xl bg-zinc-50" />
+            <div key={i} className="h-56 rounded-2xl bg-zinc-100" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-600">
-          <ClipboardList size={48} className="mb-4 opacity-30" />
+        <div className="flex flex-col items-center justify-center py-20 text-zinc-600 bg-white border border-zinc-200/80 rounded-3xl p-8">
+          <ClipboardList size={48} className="mb-4 opacity-30 text-zinc-400" />
           {filter === 'ALL' ? (
             <>
-              <p className="text-sm">No exams found</p>
+              <p className="text-sm font-semibold text-zinc-800">No exams created yet</p>
+              <p className="text-xs text-zinc-500 mt-1">Create your first examination to set date-sheets and generate admit cards.</p>
               <button
                 onClick={() => setCreateOpen(true)}
-                className="mt-4 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                className="mt-4 text-xs font-bold px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors cursor-pointer"
               >
                 + Create First Exam
               </button>
             </>
           ) : (
             <>
-              <p className="text-sm">No exams with status &ldquo;{EXAM_STATUS_CONFIG[filter as Exclude<FilterStatus, 'ALL'>]?.label}&rdquo;</p>
+              <p className="text-sm font-semibold text-zinc-800">No exams with status &ldquo;{EXAM_STATUS_CONFIG[filter as Exclude<FilterStatus, 'ALL'>]?.label}&rdquo;</p>
               <button
                 onClick={() => setFilter('ALL')}
-                className="mt-3 text-xs text-zinc-600 hover:text-zinc-800 underline transition-colors"
+                className="mt-3 text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline transition-colors cursor-pointer"
               >
                 Clear filter
               </button>
@@ -133,7 +128,7 @@ export function ExamHeldPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((exam) => (
             <ExamHeldCard
               key={exam.id}
@@ -141,8 +136,8 @@ export function ExamHeldPage() {
               onStatusChange={(id, status) => updateStatus.mutate({ id, status })}
               onDelete={handleDelete}
               onSchedule={setScheduling}
-              onEnterResults={setResultsExam}
-              onViewSummary={setSummaryExam}
+              onEnterResults={handleOpenTabulation}
+              onViewSummary={handleOpenSummary}
             />
           ))}
         </div>
@@ -162,17 +157,7 @@ export function ExamHeldPage() {
         onSave={handleSaveSchedules}
         isSaving={saveSchedules.isPending}
       />
-      <ResultsEntryModal
-        open={!!resultsExam}
-        exam={resultsExam}
-        existingResults={resultsData}
-        onClose={() => setResultsExam(null)}
-      />
-      <ResultSummaryModal
-        open={!!summaryExam}
-        exam={summaryExam}
-        onClose={() => setSummaryExam(null)}
-      />
     </div>
   )
 }
+

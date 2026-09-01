@@ -1,10 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createStore } from '@/lib/localStore'
+import { feeStructureStore as store } from '@/data/stores'
 import type { FeeStructure, CreateFeeStructureDto } from '../types'
-
-// ─── Store ────────────────────────────────────────────────────────────────────
-
-const store = createStore<FeeStructure>('fee_structures')
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
@@ -47,7 +43,7 @@ export function useFeeStructureForClass(classId: string | null) {
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-function createFeeStructure(dto: CreateFeeStructureDto): FeeStructure {
+async function createFeeStructure(dto: CreateFeeStructureDto): Promise<FeeStructure> {
   // TODO: replace with Supabase
   const newStructure: FeeStructure = {
     id: crypto.randomUUID(),
@@ -75,7 +71,7 @@ export function useCreateFeeStructure() {
 
 // ─── Update ───────────────────────────────────────────────────────────────────
 
-function updateFeeStructure({ id, dto }: { id: string; dto: CreateFeeStructureDto }): FeeStructure {
+async function updateFeeStructure({ id, dto }: { id: string; dto: CreateFeeStructureDto }): Promise<FeeStructure> {
   // TODO: replace with Supabase
   return store.update(id, {
     name: dto.name,
@@ -84,7 +80,7 @@ function updateFeeStructure({ id, dto }: { id: string; dto: CreateFeeStructureDt
     batch_id: dto.batch_id ?? null,
     class_name: dto.class_name ?? null,
     batch_name: dto.batch_name ?? null,
-    fee_items: dto.fee_items.map(item => ({ ...item, id: item.id ?? crypto.randomUUID() })),
+    fee_items: dto.fee_items.map(item => ({ ...item, id: ('id' in item && typeof item.id === 'string') ? item.id : crypto.randomUUID() })),
     updated_at: new Date().toISOString(),
   })
 }
@@ -99,7 +95,7 @@ export function useUpdateFeeStructure() {
 
 // ─── Toggle Active ────────────────────────────────────────────────────────────
 
-function toggleFeeStructureActive({ id, is_active }: { id: string; is_active: boolean }): FeeStructure {
+async function toggleFeeStructureActive({ id, is_active }: { id: string; is_active: boolean }): Promise<FeeStructure> {
   return store.update(id, { is_active, updated_at: new Date().toISOString() })
 }
 
@@ -113,7 +109,7 @@ export function useToggleFeeStructureActive() {
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-function deleteFeeStructure(id: string): void {
+async function deleteFeeStructure(id: string): Promise<void> {
   // TODO: replace with Supabase
   store.remove(id)
 }

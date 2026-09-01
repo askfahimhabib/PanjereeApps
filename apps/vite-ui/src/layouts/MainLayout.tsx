@@ -8,32 +8,34 @@ import {
   LayoutDashboard, Users, GraduationCap, LogOut, BookOpen,
   CalendarDays, ClipboardList, ClipboardCheck, Bell, Wallet,
   Settings, Trophy, FileBarChart2, Menu, X, ChevronRight,
-  GraduationCap as AlumniIcon, BookCopy, Layers, History, DollarSign, CalendarCheck, Calendar
+  GraduationCap as AlumniIcon, BookCopy, Layers, DollarSign, Calendar,
+  Scale, Receipt
 } from 'lucide-react'
 
 // ── Page Title Map ─────────────────────────────────────────────────────────────
 const PAGE_META: Record<string, { title: string; breadcrumb?: string[] }> = {
-  '/':             { title: 'Dashboard' },
-  '/students':     { title: 'Students',    breadcrumb: ['Manage', 'Students'] },
-  '/teachers':     { title: 'Teachers',    breadcrumb: ['Manage', 'Teachers'] },
-  '/classes':      { title: 'Classes',     breadcrumb: ['Academic', 'Classes'] },
-  '/alumni':       { title: 'Alumni',      breadcrumb: ['Manage', 'Alumni'] },
-  '/routines':     { title: 'Routines',    breadcrumb: ['Academic', 'Routines'] },
-  '/attendance':   { title: 'Attendance',  breadcrumb: ['Academic', 'Attendance'] },
-  '/exam-held':    { title: 'Exams',       breadcrumb: ['Academic', 'Exams'] },
-  '/exam-results': { title: 'Results',     breadcrumb: ['Academic', 'Results'] },
-  '/payments':     { title: 'Payments & Fees', breadcrumb: ['Finance', 'Payments'] },
-  '/notices':      { title: 'Notices',     breadcrumb: ['Communication', 'Notices'] },
-  '/reports':      { title: 'Reports',     breadcrumb: ['Reports'] },
-  '/settings':     { title: 'Settings',    breadcrumb: ['System', 'Settings'] },
-  '/profile':      { title: 'My Profile',  breadcrumb: ['Profile'] },
-  '/subjects':     { title: 'Subjects',    breadcrumb: ['Academic', 'Subjects'] },
-  '/groups':       { title: 'Groups',      breadcrumb: ['Academic', 'Groups'] },
-  '/batches':      { title: 'Batches',     breadcrumb: ['Academic', 'Batches'] },
-  '/rollover':     { title: 'Class Rollover', breadcrumb: ['Academic', 'Rollover'] },
-  '/salary':       { title: 'Teacher Salary', breadcrumb: ['Finance', 'Salary'] },
-  '/leaves':       { title: 'Leave Management', breadcrumb: ['Manage', 'Leaves'] },
-  '/calendar':     { title: 'Calendar',    breadcrumb: ['Academic', 'Calendar'] },
+  '/':                 { title: 'Dashboard' },
+  '/students':         { title: 'Students',    breadcrumb: ['Manage', 'Students'] },
+  '/teachers':         { title: 'Teachers',    breadcrumb: ['Manage', 'Teachers'] },
+  '/classes':          { title: 'Classes',     breadcrumb: ['Academic', 'Classes'] },
+  '/alumni':           { title: 'Alumni',      breadcrumb: ['Manage', 'Alumni'] },
+  '/routines':         { title: 'Routines',    breadcrumb: ['Academic', 'Routines'] },
+  '/attendance':       { title: 'Attendance & Leaves', breadcrumb: ['Academic', 'Attendance & Leaves'] },
+  '/exam-held':        { title: 'Exams',       breadcrumb: ['Academic', 'Exams'] },
+  '/exam-results':     { title: 'Results',     breadcrumb: ['Academic', 'Results'] },
+  '/finance':          { title: 'Finance Overview', breadcrumb: ['Finance', 'Overview'] },
+  '/finance/expenses': { title: 'Institutional Expenses', breadcrumb: ['Finance', 'Expenses'] },
+  '/payments':         { title: 'Payments & Fees', breadcrumb: ['Finance', 'Payments'] },
+  '/salary':           { title: 'Teacher Salary', breadcrumb: ['Finance', 'Salary'] },
+  '/notices':          { title: 'Notices',     breadcrumb: ['Communication', 'Notices'] },
+  '/reports':          { title: 'Reports',     breadcrumb: ['Reports'] },
+  '/settings':         { title: 'Settings',    breadcrumb: ['System', 'Settings'] },
+  '/profile':          { title: 'My Profile',  breadcrumb: ['Profile'] },
+  '/subjects':         { title: 'Subjects',    breadcrumb: ['Academic', 'Subjects'] },
+  '/batches':          { title: 'Batches',     breadcrumb: ['Academic', 'Batches'] },
+  '/rollover':         { title: 'Class Rollover', breadcrumb: ['Academic', 'Rollover'] },
+  '/leaves':           { title: 'Attendance & Leaves', breadcrumb: ['Academic', 'Attendance & Leaves'] },
+  '/calendar':         { title: 'Calendar',    breadcrumb: ['Academic', 'Calendar'] },
 }
 
 // ── Nav Types ──────────────────────────────────────────────────────────────────
@@ -134,86 +136,6 @@ export function MainLayout() {
     .join('')
     .toUpperCase() ?? 'A'
 
-  // ── Sidebar Content ──────────────────────────────────────────────────────────
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-5 py-5 shrink-0 flex items-center gap-3 border-b border-zinc-100">
-        <div className="bg-[var(--color-primary)] text-white p-2 rounded-xl shadow-md shadow-green-200/60 shrink-0">
-          <BookOpen size={18} />
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-[15px] font-bold text-zinc-900 leading-none">Estudy</h1>
-          <p className="text-[10px] text-zinc-400 mt-0.5 truncate">School Management</p>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 overflow-y-auto py-3 space-y-0.5">
-        <SectionLabel label="Menu" />
-        <NavItemLink to="/"         label="Dashboard" icon={LayoutDashboard} />
-        <NavItemLink to="/students" label="Students"  icon={Users} />
-        <NavItemLink to="/teachers" label="Teachers"  icon={GraduationCap} />
-        <NavItemLink to="/classes"  label="Classes"   icon={BookOpen} />
-        <NavItemLink to="/leaves"   label="Leaves"    icon={CalendarCheck} />
-        <NavItemLink to="/alumni"   label="Alumni"    icon={AlumniIcon} />
-
-        <Divider />
-        <SectionLabel label="Academic" />
-        <NavItemLink to="/subjects"    label="Subjects"   icon={BookCopy} />
-        <NavItemLink to="/groups"      label="Groups"     icon={Users} />
-        <NavItemLink to="/batches"     label="Batches"    icon={Layers} />
-        <NavItemLink to="/rollover"    label="Class Rollover" icon={History} />
-        <NavItemLink to="/routines"    label="Routines"   icon={CalendarDays} />
-        <NavItemLink to="/calendar"    label="Calendar"   icon={Calendar} />
-        <NavItemLink to="/attendance"  label="Attendance" icon={ClipboardCheck} />
-        <NavItemLink to="/exam-held"   label="Exams"      icon={ClipboardList} />
-        <NavItemLink to="/exam-results" label="Results"   icon={Trophy} />
-
-        <Divider />
-        <SectionLabel label="Finance" />
-        <NavItemLink to="/payments" label="Payments & Fees" icon={Wallet} />
-        <NavItemLink to="/salary"   label="Teacher Salary" icon={DollarSign} />
-
-        <Divider />
-        <SectionLabel label="Communication" />
-        <NavItemLink to="/notices" label="Notices" icon={Bell} />
-
-        <Divider />
-        <SectionLabel label="Reports" />
-        <NavItemLink to="/reports" label="Reports" icon={FileBarChart2} />
-      </nav>
-
-      {/* Bottom: User + Settings */}
-      <div className="shrink-0 px-3 pb-4 pt-3 border-t border-zinc-100 space-y-1">
-        <NavItemLink to="/settings" label="Settings" icon={Settings} />
-
-        {/* User row */}
-        <button
-          onClick={() => navigate('/profile')}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition-all group"
-        >
-          <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-[13px] font-semibold text-zinc-900 truncate">{user?.fullName}</p>
-            <p className="text-[11px] text-zinc-400 truncate capitalize">{user?.role?.toLowerCase().replace(/_/g, ' ')}</p>
-          </div>
-          <ChevronRight size={13} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </button>
-
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-2 justify-center px-4 py-2 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
-        >
-          <LogOut size={14} />
-          Sign Out
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="min-h-screen flex bg-[var(--color-dark-bg)]">
 
@@ -245,7 +167,79 @@ export function MainLayout() {
           <X size={16} />
         </button>
 
-        <SidebarContent />
+        {/* Logo */}
+        <div className="px-5 py-5 shrink-0 flex items-center gap-3 border-b border-zinc-100">
+          <div className="bg-[var(--color-primary)] text-white p-2 rounded-xl shadow-md shadow-green-200/60 shrink-0">
+            <BookOpen size={18} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-bold text-zinc-900 leading-none">Estudy</h1>
+            <p className="text-[10px] text-zinc-400 mt-0.5 truncate">School Management</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 overflow-y-auto py-3 space-y-0.5 scrollbar-thin">
+          <SectionLabel label="Menu" />
+          <NavItemLink to="/"         label="Dashboard" icon={LayoutDashboard} />
+          <NavItemLink to="/students" label="Students"  icon={Users} />
+          <NavItemLink to="/teachers" label="Teachers"  icon={GraduationCap} />
+          <NavItemLink to="/classes"  label="Classes"   icon={BookOpen} />
+          <NavItemLink to="/alumni"   label="Alumni"    icon={AlumniIcon} />
+
+          <Divider />
+          <SectionLabel label="Academic" />
+          <NavItemLink to="/subjects"    label="Subjects"   icon={BookCopy} />
+          <NavItemLink to="/batches"     label="Batches"    icon={Layers} />
+          <NavItemLink to="/routines"    label="Routines"   icon={CalendarDays} />
+          <NavItemLink to="/calendar"    label="Calendar"   icon={Calendar} />
+          <NavItemLink to="/attendance"  label="Attendance & Leaves" icon={ClipboardCheck} />
+          <NavItemLink to="/exam-held"   label="Exams"      icon={ClipboardList} />
+          <NavItemLink to="/exam-results" label="Results"   icon={Trophy} />
+
+          <Divider />
+          <SectionLabel label="Finance" />
+          <NavItemLink to="/finance"          label="Overview"          icon={Scale} />
+          <NavItemLink to="/payments"         label="Payments & Fees"   icon={Wallet} />
+          <NavItemLink to="/salary"           label="Teacher Salary"    icon={DollarSign} />
+          <NavItemLink to="/finance/expenses" label="Expenses"          icon={Receipt} />
+
+          <Divider />
+          <SectionLabel label="Communication" />
+          <NavItemLink to="/notices" label="Notices" icon={Bell} />
+
+          <Divider />
+          <SectionLabel label="Reports" />
+          <NavItemLink to="/reports" label="Reports" icon={FileBarChart2} />
+        </nav>
+
+        {/* Bottom: User + Settings */}
+        <div className="shrink-0 px-3 pb-4 pt-3 border-t border-zinc-100 space-y-1">
+          <NavItemLink to="/settings" label="Settings" icon={Settings} />
+
+          {/* User row */}
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition-all group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[13px] font-semibold text-zinc-900 truncate">{user?.fullName}</p>
+              <p className="text-[11px] text-zinc-400 truncate capitalize">{user?.role?.toLowerCase().replace(/_/g, ' ')}</p>
+            </div>
+            <ChevronRight size={13} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </button>
+
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2 justify-center px-4 py-2 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors cursor-pointer"
+          >
+            <LogOut size={14} />
+            Sign Out
+          </button>
+        </div>
       </aside>
 
       {/* ── Main Content ─────────────────────────────────── */}

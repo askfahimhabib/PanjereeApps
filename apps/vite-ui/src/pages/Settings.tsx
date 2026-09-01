@@ -20,17 +20,17 @@ function SettingsSection({
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-8">
-      <div className="flex items-start gap-4 mb-5">
-        <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 shrink-0">
-          <Icon size={18} className="text-indigo-400" />
+    <section id={id} className="scroll-mt-8 space-y-4">
+      <div className="flex items-start gap-3.5">
+        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60 shrink-0">
+          <Icon size={18} className="text-emerald-700" />
         </div>
         <div>
           <h2 className="text-base font-bold text-zinc-900">{title}</h2>
-          <p className="text-sm text-zinc-600 mt-0.5">{description}</p>
+          <p className="text-sm text-zinc-500 mt-0.5">{description}</p>
         </div>
       </div>
-      <div className="bg-white border border-zinc-100 rounded-2xl p-5">
+      <div className="card-surface p-6">
         {children}
       </div>
     </section>
@@ -132,21 +132,21 @@ export function Settings() {
           </SettingsSection>
 
           {/* Danger Zone */}
-          <section id="danger" className="scroll-mt-8">
-            <div className="flex items-start gap-4 mb-5">
-              <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 shrink-0">
-                <AlertTriangle size={18} className="text-red-400" />
+          <section id="danger" className="scroll-mt-8 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 shrink-0">
+                <AlertTriangle size={18} className="text-red-600" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-zinc-900">Danger Zone</h2>
-                <p className="text-sm text-zinc-600 mt-0.5">Irreversible actions — proceed with caution.</p>
+                <p className="text-sm text-zinc-500 mt-0.5">Irreversible actions — proceed with caution.</p>
               </div>
             </div>
-            <div className="bg-red-950/20 border border-red-500/20 rounded-2xl p-5 space-y-4">
+            <div className="bg-red-50/40 border border-red-200/80 rounded-2xl p-6 space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-zinc-800">Reset Settings to Defaults</p>
-                  <p className="text-xs text-zinc-600 mt-0.5">Restore all settings to their original values. Does not affect student/teacher/payment data.</p>
+                  <p className="text-sm font-bold text-zinc-900">Reset Settings to Defaults</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Restore all settings to their original values. Does not affect student/teacher/payment data.</p>
                 </div>
                 <button
                   onClick={() =>
@@ -158,15 +158,15 @@ export function Settings() {
                       action: resetToDefaults,
                     })
                   }
-                  className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-amber-600 border border-amber-200 hover:bg-amber-50 transition-all"
+                  className="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-all"
                 >
                   Reset Settings
                 </button>
               </div>
-              <div className="flex items-start justify-between gap-4 pt-4 border-t border-red-500/15">
+              <div className="flex items-start justify-between gap-4 pt-4 border-t border-red-200/60">
                 <div>
-                  <p className="text-sm font-semibold text-zinc-800">Clear All Mock Data</p>
-                  <p className="text-xs text-zinc-600 mt-0.5">Wipes all localStorage data (students, teachers, exams, payments). App will reload with empty stores.</p>
+                  <p className="text-sm font-bold text-zinc-900">Clear All Mock Data</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Wipes all localStorage data (students, teachers, exams, payments). App will reload with empty stores.</p>
                 </div>
                 <button
                   onClick={() =>
@@ -183,7 +183,7 @@ export function Settings() {
                       },
                     })
                   }
-                  className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-all"
+                  className="btn-danger shrink-0 text-xs px-4 py-2"
                 >
                   Clear All Data
                 </button>

@@ -67,45 +67,45 @@ function ExamRow({ routine, onClick }: { routine: Routine; onClick?: () => void 
     <div
       onClick={onClick}
       className={`
-        flex items-center gap-4 p-4 rounded-xl border transition-all
+        flex items-center gap-4 p-4 rounded-2xl border transition-all
         ${onClick ? 'cursor-pointer' : ''}
         ${isInactive
-          ? 'border-amber-500/20 bg-amber-500/5 opacity-70'
+          ? 'border-amber-200 bg-amber-50/40 opacity-75'
           : onClick
-            ? 'border-zinc-100 bg-zinc-50 hover:border-purple-500/40 hover:bg-purple-500/5'
-            : 'border-zinc-100 bg-zinc-50'
+            ? 'border-zinc-200/80 bg-white hover:border-indigo-300 hover:shadow-xs'
+            : 'border-zinc-200/80 bg-white'
         }
       `}>
       {/* Date Column */}
-      <div className={`flex-shrink-0 w-20 text-center py-2 px-1 rounded-lg ${isInactive ? 'bg-zinc-50' : 'bg-white'}`}>
+      <div className={`flex-shrink-0 w-20 text-center py-2 px-1 rounded-xl ${isInactive ? 'bg-amber-100/50' : 'bg-zinc-50 border border-zinc-200/60'}`}>
         {routine.specific_date ? (
           <>
-            <p className="text-xl font-bold text-zinc-800 leading-none">
+            <p className="text-xl font-black font-mono text-zinc-900 leading-none">
               {format(parseISO(routine.specific_date), 'dd')}
             </p>
-            <p className="text-[10px] text-zinc-600 mt-0.5">
+            <p className="text-[10px] font-semibold text-zinc-500 mt-0.5 uppercase tracking-wider">
               {format(parseISO(routine.specific_date), 'MMM')}
             </p>
           </>
         ) : (
-          <p className="text-xs text-zinc-600">—</p>
+          <p className="text-xs text-zinc-400 font-medium">—</p>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-sm mb-1 ${isInactive ? 'line-through text-zinc-600' : 'text-zinc-800'}`}>
+        <p className={`font-bold text-sm mb-0.5 ${isInactive ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
           {routine.subjects?.name_bn ?? routine.subjects?.name ?? 'Subject not set'}
         </p>
-        <p className="text-xs text-zinc-600">{dateLabel}</p>
+        <p className="text-xs text-zinc-500">{dateLabel}</p>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-          <span className="flex items-center gap-1 text-[11px] text-zinc-600">
-            <Clock size={11} />
+          <span className="flex items-center gap-1 text-[11px] text-zinc-600 font-medium">
+            <Clock size={11} className="text-zinc-400" />
             {routine.start_time} – {routine.end_time}
           </span>
           {routine.room && (
-            <span className="flex items-center gap-1 text-[11px] text-zinc-600">
-              <MapPin size={11} />
+            <span className="flex items-center gap-1 text-[11px] text-zinc-600 font-medium">
+              <MapPin size={11} className="text-zinc-400" />
               {routine.room}
             </span>
           )}

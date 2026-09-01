@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { ClassItem, ShiftType } from './types'
-import { classStore, paymentStore, sectionStore, groupStore } from '@/data/stores'
+import { classStore, paymentStore, sectionStore, groupStore, studentStore } from '@/data/stores'
+import { deriveStudentAttendanceRate } from '@/features/payments/utils/feeStatus'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -29,9 +30,7 @@ export function useClasses() {
 
   // Dynamically compute stats for each class
   const classes = useMemo(() => {
-    const allStudentsRaw = localStorage.getItem('lms_store_students')
-    const allStudents: Array<{ id?: string; classId?: string; attendanceRate?: number }> =
-      allStudentsRaw ? JSON.parse(allStudentsRaw) : []
+    const allStudents = studentStore.getAll()
 
     // Current month's paid student IDs per class — from real payment records
     const now = new Date()
@@ -72,7 +71,7 @@ export function useClasses() {
       const feeCollectionRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
 
       const attendanceRate = totalStudents > 0
-        ? Math.round(classStudents.reduce((sum, s) => sum + (s.attendanceRate || 0), 0) / totalStudents)
+        ? Math.round(classStudents.reduce((sum, s) => sum + deriveStudentAttendanceRate(s.id), 0) / totalStudents)
         : 0
 
       return {

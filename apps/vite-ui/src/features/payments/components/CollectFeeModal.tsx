@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Search, Plus, Trash2, CheckCircle2, Printer, ChevronRight, ChevronLeft } from 'lucide-react'
 import { createStore } from '@/lib/localStore'
@@ -7,6 +7,7 @@ import type {
   CollectPaymentDto,
   PaymentMethod,
   PaymentLineItem,
+  PaymentRecord,
   FeeType,
 } from '../types'
 import {
@@ -64,7 +65,7 @@ export function CollectFeeModal({ open, preselectedStudent, onClose }: Props) {
   const [transactionId, setTransactionId] = useState('')
   const [paidAt, setPaidAt] = useState(new Date().toISOString().split('T')[0])
   const [note, setNote] = useState('')
-  const [lastRecord, setLastRecord] = useState<ReturnType<typeof useCollectFee>['data']>(undefined)
+  const [lastRecord, setLastRecord] = useState<PaymentRecord | null>(null)
   const [successStep, setSuccessStep] = useState(false)
 
   const collectFee = useCollectFee()
@@ -132,7 +133,7 @@ export function CollectFeeModal({ open, preselectedStudent, onClose }: Props) {
       setPaidAt(new Date().toISOString().split('T')[0])
       setNote('')
       setSuccessStep(false)
-      setLastRecord(undefined)
+      setLastRecord(null)
     }
   }, [open])
 
@@ -215,6 +216,7 @@ export function CollectFeeModal({ open, preselectedStudent, onClose }: Props) {
           </div>
         </div>
       </div>
+    , document.body
     )
   }
 

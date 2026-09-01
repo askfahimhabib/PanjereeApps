@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, BarChart3, Users, Trophy, TrendingUp, Eye, EyeOff, CheckCircle2, AlertCircle, Printer, FileText } from 'lucide-react'
 import type { ExamHeld, ExamResult } from '../types'
@@ -14,13 +14,6 @@ interface Props {
   onClose: () => void
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function gradeOrder(g: string | null) {
-  const order = ['A+', 'A', 'A-', 'B', 'C', 'D', 'F']
-  return order.indexOf(g ?? 'F')
-}
-
 // ─── Stat Mini Card ───────────────────────────────────────────────────────────
 
 function StatCard({
@@ -28,20 +21,22 @@ function StatCard({
   label,
   value,
   color,
+  bg,
 }: {
   icon: React.ElementType
   label: string
   value: string | number
   color: string
+  bg: string
 }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl bg-white border border-zinc-100`}>
-      <div className={`p-2 rounded-lg ${color} bg-current/10`}>
-        <Icon size={15} className="opacity-80" />
+    <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/80">
+      <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
+        <Icon size={16} />
       </div>
       <div>
-        <p className={`text-lg font-bold leading-none ${color}`}>{value}</p>
-        <p className="text-[10px] text-zinc-600 mt-0.5">{label}</p>
+        <p className="text-lg font-black font-mono leading-none text-zinc-900">{value}</p>
+        <p className="text-[11px] font-semibold text-zinc-500 mt-1">{label}</p>
       </div>
     </div>
   )
@@ -65,24 +60,24 @@ function GradeDistribution({ results }: { results: ExamResult[] }) {
     'B':  'bg-blue-500',
     'C':  'bg-amber-500',
     'D':  'bg-orange-500',
-    'F':  'bg-red-500',
+    'F':  'bg-rose-500',
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {gradeKeys.map(g => {
         const count = counts[g] ?? 0
         const pct = Math.round((count / total) * 100)
         return (
           <div key={g} className="flex items-center gap-2 text-xs">
-            <span className="w-6 text-right text-zinc-600 font-mono font-semibold">{g}</span>
-            <div className="flex-1 h-2 bg-zinc-50 rounded-full overflow-hidden">
+            <span className="w-6 text-right text-zinc-700 font-mono font-bold">{g}</span>
+            <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${colorMap[g]}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="w-8 text-right text-zinc-600">{count}</span>
+            <span className="w-8 text-right text-zinc-500 font-mono text-[11px]">{count}</span>
           </div>
         )
       })}
@@ -159,43 +154,44 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
   const isPublished = exam.result_published
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white border border-zinc-100 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-in zoom-in-95 duration-150">
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-zinc-100 bg-zinc-50/50 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-bold text-zinc-900 truncate">{exam.name}</h3>
-              <span className="text-[10px] text-zinc-600 bg-zinc-50 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-full">
                 {EXAM_SCOPE_LABELS[exam.scope]}
               </span>
               {isPublished && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full">
-                  <CheckCircle2 size={9} />
+                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 size={10} />
                   Published
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-600 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Total Marks: <strong className="text-zinc-800">{exam.total_marks}</strong>
               {exam.pass_marks && <span> · Pass: <strong className="text-zinc-800">{exam.pass_marks}</strong></span>}
-              <span className="ml-2">· {allResults.length} results entered</span>
+              <span className="ml-2">· {allResults.length} marks entries loaded</span>
             </p>
           </div>
 
           <div className="flex items-center gap-2 ml-4 flex-shrink-0">
             {/* Publish / Unpublish */}
             <button
+              type="button"
               onClick={handlePublishToggle}
               disabled={publish.isPending || allResults.length === 0}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                 isPublished
-                  ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
-                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                  ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
-              {isPublished ? <EyeOff size={12} /> : <Eye size={12} />}
+              {isPublished ? <EyeOff size={13} /> : <Eye size={13} />}
               {publish.isPending
                 ? 'Saving...'
                 : isPublished
@@ -203,37 +199,41 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
                 : 'Publish Results'}
             </button>
 
-            <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors p-1">
-              <X size={20} />
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* ── Publish notice ──────────────────────────────────────────────────── */}
         {publishNotice && (
-          <div className={`flex items-center gap-2 mx-6 mt-3 px-4 py-2.5 rounded-xl text-sm flex-shrink-0 ${
+          <div className={`flex items-center gap-2 mx-6 mt-4 px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-xs flex-shrink-0 ${
             publishNotice === 'published'
-              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-              : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-amber-50 border border-amber-200 text-amber-800'
           }`}>
-            {publishNotice === 'published' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+            {publishNotice === 'published' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
             {publishNotice === 'published'
-              ? 'Results published! Students can now view their results.'
-              : 'Results unpublished. Students can no longer view results.'}
+              ? 'Results published! Students can now view their marks in student portal.'
+              : 'Results unpublished. Result details are now hidden from students.'}
           </div>
         )}
 
         {/* ── No results warning ──────────────────────────────────────────────── */}
         {!isLoading && allResults.length === 0 && (
-          <div className="flex items-center gap-3 mx-6 mt-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm flex-shrink-0">
-            <AlertCircle size={16} />
-            No results entered yet. Use "Enter Results" to add marks first.
+          <div className="flex items-center gap-2.5 mx-6 mt-4 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex-shrink-0 font-medium">
+            <AlertCircle size={16} className="text-amber-600 flex-shrink-0" />
+            <span>No results entered yet. Use &ldquo;Tabulation & Marks&rdquo; to add marks first.</span>
           </div>
         )}
 
         {/* ── Subject Tabs ────────────────────────────────────────────────────── */}
         {schedules.length > 1 && (
-          <div className="flex gap-1 px-6 pt-4 overflow-x-auto flex-shrink-0">
+          <div className="flex gap-1.5 px-6 pt-4 overflow-x-auto flex-shrink-0 border-b border-zinc-100 pb-2">
             {schedules.map(s => {
               const name = s.subjects?.name_bn ?? s.subjects?.name ?? s.subject_id
               const isActive = (activeSubject ?? schedules[0]?.subject_id) === s.subject_id
@@ -241,15 +241,18 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
               return (
                 <button
                   key={s.subject_id}
+                  type="button"
                   onClick={() => setActiveSubject(s.subject_id)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-                      : 'border-zinc-100 text-zinc-600 hover:border-zinc-100 hover:text-zinc-600'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                   }`}
                 >
                   {name}
-                  <span className="ml-1.5 opacity-60">({subRes.length})</span>
+                  <span className={`ml-1.5 text-[10px] font-mono ${isActive ? 'text-indigo-100' : 'text-zinc-400'}`}>
+                    ({subRes.length})
+                  </span>
                 </button>
               )
             })}
@@ -261,71 +264,71 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
           {isLoading ? (
             <div className="space-y-2 animate-pulse">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-10 rounded-lg bg-zinc-50" />
+                <div key={i} className="h-10 rounded-xl bg-zinc-100" />
               ))}
             </div>
           ) : subjectResults.length === 0 && allResults.length > 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
-              <BarChart3 size={32} className="mb-3 opacity-30" />
-              <p className="text-sm">No results for this subject yet</p>
+            <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+              <BarChart3 size={32} className="mb-3 opacity-40 text-zinc-400" />
+              <p className="text-sm font-semibold">No results entered for this subject yet</p>
             </div>
           ) : subjectResults.length > 0 ? (
             <div className="space-y-5">
               {/* Stats row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <StatCard icon={Users} label="Total Students" value={stats.total} color="text-blue-400" />
-                <StatCard icon={CheckCircle2} label={`Passed (${stats.total ? Math.round((stats.passCount / (stats.total - stats.absentCount || 1)) * 100) : 0}%)`} value={stats.passCount} color="text-emerald-400" />
-                <StatCard icon={TrendingUp} label="Avg Marks" value={stats.avg.toFixed(1)} color="text-purple-400" />
-                <StatCard icon={Trophy} label="Highest" value={stats.highest} color="text-amber-400" />
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard icon={Users} label="Total Students" value={stats.total} color="text-blue-700" bg="bg-blue-100" />
+                <StatCard icon={CheckCircle2} label={`Passed (${stats.total ? Math.round((stats.passCount / (stats.total - stats.absentCount || 1)) * 100) : 0}%)`} value={stats.passCount} color="text-emerald-700" bg="bg-emerald-100" />
+                <StatCard icon={TrendingUp} label="Avg Marks" value={stats.avg.toFixed(1)} color="text-indigo-700" bg="bg-indigo-100" />
+                <StatCard icon={Trophy} label="Highest Marks" value={stats.highest} color="text-amber-700" bg="bg-amber-100" />
               </div>
 
               {/* Top scorer */}
               {stats.topScorer && (
-                <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-500/8 border border-amber-500/20">
-                  <Trophy size={14} className="text-amber-400 flex-shrink-0" />
-                  <p className="text-xs text-amber-300">
-                    Top scorer: <strong>{stats.topScorer.student_name}</strong> (Roll {stats.topScorer.roll_number}) — {stats.topScorer.marks_obtained}/{exam.total_marks}
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200/80">
+                  <Trophy size={16} className="text-amber-600 flex-shrink-0" />
+                  <p className="text-xs text-amber-900 font-medium">
+                    Top scorer in this subject: <strong className="font-bold">{stats.topScorer.student_name}</strong> (Roll {stats.topScorer.roll_number}) — <span className="font-mono font-bold text-amber-950">{stats.topScorer.marks_obtained}</span>/{effectiveTotalMarks}
                   </p>
                 </div>
               )}
 
               {/* Two-column layout: table + grade dist */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_200px] gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
 
                 {/* Result table */}
-                <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
+                <div className="bg-white rounded-2xl border border-zinc-200/80 overflow-hidden shadow-xs">
                   {/* Column headers */}
-                  <div className="grid grid-cols-[2.5rem_1fr_5rem_5rem_4.5rem_4rem_2rem] gap-2 text-[10px] font-semibold text-zinc-600 uppercase tracking-wider px-4 py-2 border-b border-zinc-100">
-                    <span>#</span>
+                  <div className="grid grid-cols-[2.5rem_1fr_5rem_5rem_4.5rem_4rem_2.5rem] gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-4 py-3 bg-zinc-50 border-b border-zinc-200/80">
+                    <span>Roll</span>
                     <span>Student</span>
                     <span className="text-center">Marks</span>
-                    <span className="text-center">/ {effectiveTotalMarks}</span>
+                    <span className="text-center">Total</span>
                     <span className="text-center">Grade</span>
                     <span className="text-center">GPA</span>
                     <span />
                   </div>
 
-                  <div className="divide-y divide-slate-800/60">
-                    {sortedRows.map((row, idx) => {
-                      const gradeColor = row.grade ? GRADE_COLORS[row.grade] ?? '' : ''
+                  <div className="divide-y divide-zinc-100">
+                    {sortedRows.map((row) => {
+                      const gradeColor = row.grade ? GRADE_COLORS[row.grade] ?? 'text-zinc-600 bg-zinc-100' : ''
                       const isFail = row.grade === 'F' || row.is_absent
                       return (
                         <div
                           key={row.id}
-                          className={`grid grid-cols-[2.5rem_1fr_5rem_5rem_4.5rem_4rem_2rem] gap-2 items-center px-4 py-2.5 transition-colors hover:bg-zinc-50 ${
-                            row.is_absent ? 'opacity-50' : isFail ? 'bg-red-500/3' : ''
+                          className={`grid grid-cols-[2.5rem_1fr_5rem_5rem_4.5rem_4rem_2.5rem] gap-2 items-center px-4 py-2.5 transition-colors hover:bg-zinc-50 ${
+                            row.is_absent ? 'opacity-60 bg-zinc-50/40' : isFail ? 'bg-rose-50/30' : ''
                           }`}
                         >
-                          <span className="text-xs font-mono text-zinc-600">{row.roll_number}</span>
-                          <span className="text-sm text-zinc-800 truncate">{row.student_name}</span>
-                          <span className="text-sm text-center font-mono font-medium text-zinc-800">
+                          <span className="text-xs font-mono font-bold text-zinc-600">{row.roll_number}</span>
+                          <span className="text-sm font-semibold text-zinc-900 truncate">{row.student_name}</span>
+                          <span className="text-sm text-center font-mono font-bold text-zinc-900">
                             {row.is_absent ? '—' : (row.marks_obtained ?? '—')}
                           </span>
-                          <span className="text-xs text-center text-zinc-800">/ {effectiveTotalMarks}</span>
-                          <span className={`text-[11px] font-bold text-center px-1.5 py-0.5 rounded border mx-auto ${gradeColor || 'text-zinc-800 border-transparent'}`}>
+                          <span className="text-xs text-center font-mono text-zinc-500">/ {effectiveTotalMarks}</span>
+                          <span className={`text-[10px] font-bold text-center px-2 py-0.5 rounded-md border mx-auto ${gradeColor || 'text-zinc-400 border-transparent'}`}>
                             {row.is_absent ? 'ABS' : (row.grade ?? '—')}
                           </span>
-                          <span className="text-xs text-center text-zinc-600 font-mono">
+                          <span className="text-xs text-center font-bold text-zinc-700 font-mono">
                             {row.is_absent ? '—' : (row.gpa?.toFixed(2) ?? '—')}
                           </span>
                           {/* Per-student print button */}
@@ -338,9 +341,9 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
                               rollNumber: row.roll_number,
                               results: allResults.filter(r => r.student_id === row.student_id),
                             })}
-                            className="flex items-center justify-center text-zinc-800 hover:text-blue-400 transition-colors"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center cursor-pointer"
                           >
-                            <FileText size={13} />
+                            <FileText size={14} />
                           </button>
                         </div>
                       )
@@ -349,17 +352,17 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
                 </div>
 
                 {/* Grade distribution */}
-                <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
-                  <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider mb-3">Grade Distribution</p>
+                <div className="bg-zinc-50/70 rounded-2xl border border-zinc-200/80 p-4">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Grade Distribution</p>
                   <GradeDistribution results={subjectResults} />
-                  <div className="mt-4 pt-3 border-t border-zinc-100 space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-zinc-600">Absent</span>
-                      <span className="text-red-400 font-medium">{stats.absentCount}</span>
+                  <div className="mt-4 pt-3 border-t border-zinc-200/80 space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500 font-medium">Absent:</span>
+                      <span className="text-rose-600 font-bold font-mono">{stats.absentCount}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-zinc-600">Lowest</span>
-                      <span className="text-zinc-800 font-mono">{stats.lowest}</span>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500 font-medium">Lowest Mark:</span>
+                      <span className="text-zinc-800 font-mono font-bold">{stats.lowest}</span>
                     </div>
                   </div>
                 </div>
@@ -369,28 +372,30 @@ export function ResultSummaryModal({ open, exam, onClose }: Props) {
         </div>
 
         {/* ── Footer ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-zinc-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50 flex-shrink-0">
           <div className="flex items-center gap-2">
             {/* Print Class Marksheet */}
             {allResults.length > 0 && (
               <button
+                type="button"
                 onClick={() => printClassMarksheet({ exam: exam!, results: allResults })}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-100 text-zinc-600 hover:text-white hover:border-zinc-100 transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 transition-all cursor-pointer shadow-xs"
               >
-                <Printer size={13} />
-                Print Marksheet
+                <Printer size={14} className="text-indigo-600" />
+                <span>Print Marksheet</span>
               </button>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-zinc-800">
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-zinc-500 font-medium hidden sm:block">
               {isPublished
                 ? '✅ Results are visible to students'
                 : '🔒 Results are hidden from students'}
             </p>
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm text-zinc-600 hover:text-white border border-zinc-100 hover:border-zinc-100 transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-200/70 border border-zinc-200 transition-all cursor-pointer"
             >
               Close
             </button>

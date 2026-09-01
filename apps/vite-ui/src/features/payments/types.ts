@@ -12,6 +12,72 @@ export type FeeType =
 export type PaymentMethod = 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'BANK' | 'OTHER'
 export type PaymentStatus = 'PAID' | 'WAIVED' | 'REFUNDED'
 export type FeeFrequency = 'MONTHLY' | 'ONE_TIME' | 'YEARLY'
+export type ReceiptPrintMode = 'DUAL_A4' | 'POS_80MM'
+
+// ─── Student Waiver & Scholarship ─────────────────────────────────────────────
+
+export interface StudentWaiver {
+  id: string
+  student_id: string
+  student_name: string
+  roll_number: string
+  class_name?: string
+  waiver_type: 'PERCENTAGE' | 'FIXED'
+  value: number          // e.g. 50 (for 50%) or 500 (for ৳500)
+  fee_type: FeeType | 'ALL'
+  reason: string         // e.g. "Merit Scholarship", "Sibling Discount", "Need Based"
+  is_active: boolean
+  created_at: string
+}
+
+// ─── Automated Monthly Billing Record ─────────────────────────────────────────
+
+export interface MonthlyBillingRun {
+  id: string
+  month: number
+  year: number
+  target_type: 'CLASS' | 'BATCH' | 'ALL'
+  class_id?: string
+  class_name?: string
+  batch_id?: string
+  batch_name?: string
+  generated_count: number
+  total_billed_amount: number
+  fee_structure_id?: string
+  created_by: string
+  created_at: string
+}
+
+// ─── Student Fee Ledger ───────────────────────────────────────────────────────
+
+export type MonthPaymentStatus = 'PAID' | 'DUE' | 'PARTIAL' | 'UNBILLED'
+
+export interface MonthLedgerCell {
+  month: number
+  year: number
+  status: MonthPaymentStatus
+  billed_amount: number
+  paid_amount: number
+  discount_amount: number
+  due_amount: number
+  payment_ids: string[]
+  due_ids: string[]
+  invoice_numbers: string[]
+}
+
+export interface StudentFeeLedgerSummary {
+  student_id: string
+  student_name: string
+  roll_number: string
+  class_name: string
+  section_name?: string
+  total_billed: number
+  total_paid: number
+  total_discount: number
+  total_due: number
+  advance_balance: number
+  months: MonthLedgerCell[]
+}
 
 // ─── Fee Structure ────────────────────────────────────────────────────────────
 
@@ -222,3 +288,4 @@ export function generateInvoiceNumber(): string {
 export function formatCurrency(amount: number): string {
   return `৳ ${amount.toLocaleString('en-BD')}`
 }
+

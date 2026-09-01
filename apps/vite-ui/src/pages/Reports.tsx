@@ -21,12 +21,12 @@ export function Reports() {
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Reports</h1>
-          <p className="text-sm text-zinc-600 mt-1">Aggregate insights across attendance, payments, and student performance</p>
+          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Reports</h1>
+          <p className="text-sm text-zinc-500 mt-1">Aggregate insights across attendance, payments, and student performance</p>
         </div>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-zinc-100 text-zinc-600 hover:text-white hover:border-zinc-100 transition-all"
+          className="btn-secondary"
         >
           <Printer size={15} />
           Print Report
@@ -34,7 +34,7 @@ export function Reports() {
       </div>
 
       {/* ── Tab Bar ──────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 p-1 bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl w-fit">
+      <div className="pill-tab-container w-fit">
         {TABS.map(tab => {
           const Icon = tab.icon
           const isActive = activeTab === tab.key
@@ -42,11 +42,7 @@ export function Reports() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? 'bg-[var(--color-primary)] text-white shadow-sm shadow-green-200'
-                  : 'text-zinc-500 hover:text-zinc-800'
-              }`}
+              className={isActive ? 'pill-tab-active flex items-center gap-2' : 'pill-tab-inactive flex items-center gap-2'}
             >
               <Icon size={15} />
               {tab.label}

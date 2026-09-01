@@ -1,7 +1,10 @@
 import { useState, useCallback, useMemo } from 'react'
 import type { ClassItem, Section, ClassGroup } from './types'
-import { classStore, sectionStore, studentStore } from '@/data/stores'
-import { groupStore } from '@/data/stores'
+import { classStore, sectionStore, studentStore, groupStore } from '@/data/stores'
+import {
+  deriveStudentFeeStatus,
+  deriveStudentAttendanceRate,
+} from '@/features/payments/utils/feeStatus'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -58,11 +61,11 @@ export function useClassDetail(classId: string | undefined) {
       const maleCount = secStudents.filter(s => s.gender === 'MALE').length
       const femaleCount = secStudents.filter(s => s.gender === 'FEMALE').length
       
-      const paidStudents = secStudents.filter(s => (s as any).feeStatus === 'PAID').length
+      const paidStudents = secStudents.filter(s => deriveStudentFeeStatus(s.id) === 'PAID').length
       const feeCollectionRate = totalStudents > 0 ? Math.round((paidStudents / totalStudents) * 100) : 0
       
       const attendanceRate = totalStudents > 0
-        ? Math.round(secStudents.reduce((sum, s) => sum + ((s as any).attendanceRate || 0), 0) / totalStudents)
+        ? Math.round(secStudents.reduce((sum, s) => sum + deriveStudentAttendanceRate(s.id), 0) / totalStudents)
         : 0
 
       return {
@@ -89,8 +92,8 @@ export function useClassDetail(classId: string | undefined) {
       fullNameEn: s.fullNameEn,
       fullNameBn: s.fullNameBn || '',
       gender: s.gender,
-      attendanceRate: Math.floor(Math.random() * 30) + 70,
-      feeStatus: (Math.random() > 0.2 ? 'PAID' : 'DUE') as 'PAID' | 'DUE' | 'PARTIAL',
+      attendanceRate: deriveStudentAttendanceRate(s.id),
+      feeStatus: deriveStudentFeeStatus(s.id),
       status: (s.status === 'ACTIVE' ? 'ACTIVE' : (s.status === 'SUSPENDED' ? 'SUSPENDED' : 'INACTIVE')) as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
       sectionId: s.sectionId,
       sectionName: s.sectionName,

@@ -1,168 +1,202 @@
 import { createPortal } from 'react-dom'
-import { X, Check } from 'lucide-react'
+import { X, Check, UserPlus, ArrowRight, ArrowLeft } from 'lucide-react'
 import type { TeacherFormData } from '../../types'
-import { Step1_BasicInfo }        from './Step1_BasicInfo'
-import { Step2_ContactAddress }   from './Step2_ContactAddress'
-import { Step3_Employment }       from './Step3_Employment'
-import { Step4_Academic }         from './Step4_Academic'
-import { Step5_Assignment }       from './Step5_Assignment'
-import { Step6_Account }          from './Step6_Account'
+import { Step1_BasicInfo } from './Step1_BasicInfo'
+import { Step2_Employment } from './Step2_Employment'
 
 interface Props {
   isOpen: boolean
   isEdit?: boolean
   onClose: () => void
   currentStep: number
-  totalSteps: number
   formData: TeacherFormData
   onChange: (partial: Partial<TeacherFormData>) => void
   onNext: () => void
   onPrev: () => void
-  onSubmit: () => void
+  onSubmit: (addAnother?: boolean) => void
 }
 
 const STEPS = [
-  { num: 1, label: 'Basic Info',    short: 'Basic'    },
-  { num: 2, label: 'Contact',       short: 'Contact'  },
-  { num: 3, label: 'Employment',    short: 'Job'      },
-  { num: 4, label: 'Academic',      short: 'Academic' },
-  { num: 5, label: 'Assignments',   short: 'Assign'   },
-  { num: 6, label: 'Account',       short: 'Account'  },
+  { num: 1, label: 'Identity & Contact', short: 'Identity' },
+  { num: 2, label: 'Designation & Subject', short: 'Designation' },
 ]
 
-function validateStep(step: number, data: TeacherFormData, isEdit: boolean): string | null {
+function validateStep(step: number, data: TeacherFormData): string | null {
   if (step === 1) {
-    if (!data.firstName.trim()) return 'First name is required'
-    if (!data.lastName.trim())  return 'Last name is required'
-    if (!data.gender)           return 'Gender is required'
-    if (!data.dateOfBirth)      return 'Date of birth is required'
-  }
-  if (step === 2) {
-    if (!data.phone.trim())          return 'Phone number is required'
+    if (!data.fullName.trim()) return 'Full Name (English) is required'
+    if (!data.phone.trim()) return 'Mobile number is required'
     if (!data.presentAddress.trim()) return 'Present address is required'
   }
-  if (step === 3) {
-    if (!data.joiningDate)        return 'Joining date is required'
-    if (!data.employmentType)     return 'Employment type is required'
-    if (!data.designation)        return 'Designation is required'
-  }
-  if (step === 6) {
-    if (!isEdit && !data.password)                 return 'Password is required'
-    if (data.password && data.password.length < 6) return 'Password must be at least 6 characters'
-    if (data.password !== data.confirmPassword)    return 'Passwords do not match'
+  if (step === 2) {
+    if (!data.designation) return 'Designation is required'
+    if (!data.department) return 'Primary subject/department is required'
+    if (!data.joiningDate) return 'Joining date is required'
+    if (data.isClassTeacher && !data.classTeacherClassId) {
+      return 'Please select the class for the Class Teacher role'
+    }
   }
   return null
 }
 
 export function AddTeacherModal({
-  isOpen, isEdit = false, onClose, currentStep, totalSteps, formData, onChange, onNext, onPrev, onSubmit,
+  isOpen,
+  isEdit = false,
+  onClose,
+  currentStep,
+  formData,
+  onChange,
+  onNext,
+  onPrev,
+  onSubmit,
 }: Props) {
   if (!isOpen) return null
 
-  const error = validateStep(currentStep, formData, isEdit)
-
   function handleNext() {
-    if (error) { alert(error); return }
+    const error = validateStep(currentStep, formData)
+    if (error) {
+      alert(error)
+      return
+    }
     onNext()
   }
 
-  function handleSubmit() {
-    const err = validateStep(6, formData, isEdit)
-    if (err) { alert(err); return }
-    onSubmit()
+  function handleSave(addAnother: boolean = false) {
+    const err = validateStep(2, formData)
+    if (err) {
+      alert(err)
+      return
+    }
+    onSubmit(addAnother)
   }
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        onClick={onClose}
+      />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-white border border-zinc-100 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
-        {/* ── Header ────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 shrink-0">
+      {/* Modal Box */}
+      <div className="relative w-full max-w-2xl bg-white border border-zinc-200 rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {/* ── Header ─────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">
-              {isEdit ? 'Edit Teacher' : 'Add New Teacher'}
+            <h2 className="text-base font-black text-zinc-900 flex items-center gap-2">
+              <span className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <UserPlus size={18} />
+              </span>
+              {isEdit ? 'Edit Faculty Profile' : 'New Teacher Onboarding'}
             </h2>
-            <p className="text-xs text-zinc-600 mt-0.5">
-              Step {currentStep} of {totalSteps}: {STEPS[currentStep - 1].label}
+            <p className="text-xs text-zinc-500 font-medium mt-0.5">
+              Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1].label}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* ── Progress Bar ──────────────────────────────────── */}
-        <div className="px-6 pt-4 shrink-0">
-          <div className="flex items-center gap-0">
+        {/* ── Visual Stepper ──────────────────────────────── */}
+        <div className="px-6 pt-3 pb-2 shrink-0 bg-white border-b border-zinc-100">
+          <div className="flex items-center justify-between gap-4 max-w-md mx-auto">
             {STEPS.map((step, idx) => (
               <div key={step.num} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    currentStep > step.num
-                      ? 'bg-[var(--color-primary)] text-white'
-                      : currentStep === step.num
-                      ? 'bg-[var(--color-primary)] text-white ring-2 ring-[var(--color-primary)]/30'
-                      : 'bg-zinc-100 text-zinc-600'
-                  }`}>
-                    {currentStep > step.num ? <Check size={13} /> : step.num}
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black transition-all ${
+                      currentStep > step.num
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : currentStep === step.num
+                        ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20 shadow-xs'
+                        : 'bg-zinc-100 text-zinc-400'
+                    }`}
+                  >
+                    {currentStep > step.num ? <Check size={14} strokeWidth={3} /> : step.num}
                   </div>
-                  <span className={`text-xs mt-1 whitespace-nowrap ${
-                    currentStep === step.num ? 'text-[var(--color-primary)]' : currentStep > step.num ? 'text-[var(--color-primary-dark)]' : 'text-zinc-400'
-                  }`}>
-                    {step.short}
+                  <span
+                    className={`text-xs font-bold whitespace-nowrap ${
+                      currentStep === step.num
+                        ? 'text-indigo-600'
+                        : currentStep > step.num
+                        ? 'text-emerald-700'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    {step.label}
                   </span>
                 </div>
                 {idx < STEPS.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-1 mb-4 transition-all ${currentStep > step.num ? 'bg-[var(--color-primary)]/40' : 'bg-zinc-100'}`} />
+                  <div
+                    className={`flex-1 h-0.5 mx-3 transition-all ${
+                      currentStep > step.num ? 'bg-emerald-500' : 'bg-zinc-100'
+                    }`}
+                  />
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Content (scrollable) ──────────────────────────── */}
+        {/* ── Scrollable Body ─────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {currentStep === 1 && <Step1_BasicInfo       data={formData} onChange={onChange} />}
-          {currentStep === 2 && <Step2_ContactAddress  data={formData} onChange={onChange} />}
-          {currentStep === 3 && <Step3_Employment      data={formData} onChange={onChange} />}
-          {currentStep === 4 && <Step4_Academic        data={formData} onChange={onChange} />}
-          {currentStep === 5 && <Step5_Assignment      data={formData} onChange={onChange} />}
-          {currentStep === 6 && <Step6_Account         data={formData} onChange={onChange} isEdit={isEdit} />}
+          {currentStep === 1 && <Step1_BasicInfo data={formData} onChange={onChange} />}
+          {currentStep === 2 && <Step2_Employment data={formData} onChange={onChange} />}
         </div>
 
-        {/* ── Footer ────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50 shrink-0 rounded-b-2xl">
+        {/* ── Footer ──────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-zinc-100 bg-zinc-50 shrink-0">
           <button
+            type="button"
             onClick={onPrev}
             disabled={currentStep === 1}
-            className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 rounded-lg transition-colors border border-zinc-100"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200/60 rounded-xl transition-colors cursor-pointer border border-zinc-200"
           >
-            ← Back
+            <ArrowLeft size={14} /> Back
           </button>
 
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-800 transition-colors">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer"
+            >
               Cancel
             </button>
 
-            {currentStep < totalSteps ? (
+            {currentStep === 1 ? (
               <button
+                type="button"
                 onClick={handleNext}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                Next →
+                Next Step <ArrowRight size={14} />
               </button>
             ) : (
-              <button
-                onClick={handleSubmit}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-              >
-                <Check size={15} />
-                {isEdit ? 'Save Changes' : 'Save Teacher'}
-              </button>
+              <div className="flex items-center gap-2">
+                {!isEdit && (
+                  <button
+                    type="button"
+                    onClick={() => handleSave(true)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+                    title="Save current teacher and quickly open form for next teacher"
+                  >
+                    <UserPlus size={14} />
+                    Save & Add Another
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleSave(false)}
+                  className="flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Check size={14} strokeWidth={3} />
+                  {isEdit ? 'Save Changes' : 'Complete Onboarding'}
+                </button>
+              </div>
             )}
           </div>
         </div>

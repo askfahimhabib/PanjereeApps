@@ -20,6 +20,8 @@ export interface Routine {
   start_time: string              // "09:00"
   end_time: string                // "10:30"
   room: string | null
+  topic?: string | null           // Syllabus / Chapter / Topic for Class Test
+  total_marks?: number | null     // Total marks for Class Test
   source_exam_held_id: string | null
   is_active: boolean
   postpone_note: string | null
@@ -31,6 +33,7 @@ export interface Routine {
   teachers?: { id: string; full_name: string }
   sections?: { id: string; name: string }
   classes?: { id: string; name: string }
+  batches?: { id: string; name: string }
 }
 
 // ─── Create / Update DTOs ────────────────────────────────────────────────────
@@ -48,6 +51,16 @@ export interface CreateRoutineDto {
   start_time: string
   end_time: string
   room?: string
+  topic?: string
+  total_marks?: number
+}
+
+// ─── Clash Detection ─────────────────────────────────────────────────────────
+
+export interface ClashWarning {
+  type: 'TEACHER_CLASH' | 'ROOM_CLASH'
+  message: string
+  conflictingSlot: Routine
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -68,29 +81,29 @@ export const ENTRY_TYPE_CONFIG: Record<RoutineEntryType, { label: string; labelB
   CLASS: {
     label: 'Class',
     labelBn: 'Class',
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/30',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
   },
   CLASS_EXAM: {
     label: 'Class Test',
     labelBn: 'Class Test',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
+    color: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
   },
   FORMAL_EXAM: {
     label: 'Formal Exam',
     labelBn: 'আনুষ্ঠানিক পরীক্ষা',
-    color: 'text-purple-400',
-    bg: 'bg-purple-900/40',
-    border: 'border-purple-500/30',
+    color: 'text-purple-700',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
   },
   OFF_DAY: {
     label: 'Off Day',
     labelBn: 'বন্ধ',
-    color: 'text-red-400',
-    bg: 'bg-red-900/40',
-    border: 'border-red-500/30',
+    color: 'text-rose-700',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
   },
 }

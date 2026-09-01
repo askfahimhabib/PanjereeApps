@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { AlertTriangle, Plus, Trash2, DollarSign, Check } from 'lucide-react'
-import type { ManualDue, FeeType, CreateManualDueDto } from '../types'
+import type { FeeType, CreateManualDueDto } from '../types'
 import { FEE_TYPE_LABELS, FEE_TYPE_ICONS, MONTH_NAMES, formatCurrency } from '../types'
 import { useManualDues, useCreateManualDue, useDeleteManualDue } from '../hooks/usePayments'
 import { createStore } from '@/lib/localStore'
 import type { Student } from '@/features/students/types'
-import type { CollectFeeModal as CollectFeeModalType } from './CollectFeeModal'
 
 const studentStore = createStore<Student>('students')
 const currentYear = new Date().getFullYear()

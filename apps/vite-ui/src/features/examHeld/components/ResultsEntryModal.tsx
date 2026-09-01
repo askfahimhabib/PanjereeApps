@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Save, CheckCircle2, AlertCircle } from 'lucide-react'
 import type { ExamHeld, ExamResult } from '../types'
@@ -119,49 +119,53 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
   const filledCells = draft.filter(r => r.isAbsent || r.marks !== '').length
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white border border-zinc-100 rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-in zoom-in-95 duration-150">
 
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-zinc-100 bg-zinc-50/50 flex-shrink-0">
           <div>
             <h3 className="text-lg font-bold text-zinc-900">{exam.name}</h3>
-            <p className="text-xs text-zinc-600 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Enter marks below · Default Total: <strong className="text-zinc-800">{exam.total_marks}</strong>
               {exam.pass_marks && <span> · Default Pass: <strong className="text-zinc-800">{exam.pass_marks}</strong></span>}
-              <span className="ml-2 text-zinc-800">(per-subject marks override if set)</span>
+              <span className="ml-2 text-zinc-500">(per-subject marks override if set)</span>
             </p>
           </div>
           <div className="flex items-center gap-3 ml-4">
             {/* Progress */}
-            <span className="text-xs text-zinc-600">{filledCells}/{totalCells} filled</span>
-            <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">
-              <X size={20} />
+            <span className="text-xs font-semibold text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-full">{filledCells}/{totalCells} filled</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* No subjects warning */}
         {schedules.length === 0 && (
-          <div className="flex items-center gap-3 mx-6 mt-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm flex-shrink-0">
-            <AlertCircle size={16} />
-            No subjects scheduled yet. Please create a schedule first.
+          <div className="flex items-center gap-2.5 mx-6 mt-4 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex-shrink-0 font-medium">
+            <AlertCircle size={16} className="text-amber-600 flex-shrink-0" />
+            <span>No subjects scheduled yet. Please configure a date-sheet first.</span>
           </div>
         )}
 
         {/* No students warning */}
         {schedules.length > 0 && students.length === 0 && (
-          <div className="flex items-center gap-3 mx-6 mt-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm flex-shrink-0">
-            <AlertCircle size={16} />
-            No active students found for this class.
+          <div className="flex items-center gap-2.5 mx-6 mt-4 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex-shrink-0 font-medium">
+            <AlertCircle size={16} className="text-amber-600 flex-shrink-0" />
+            <span>No active students found for this class.</span>
           </div>
         )}
 
         {/* Saved notice */}
         {isSaved && (
-          <div className="flex items-center gap-2 mx-6 mt-4 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex-shrink-0">
-            <CheckCircle2 size={15} />
-            Results saved successfully — grades calculated automatically
+          <div className="flex items-center gap-2 mx-6 mt-4 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex-shrink-0 font-semibold shadow-xs">
+            <CheckCircle2 size={16} className="text-emerald-600" />
+            <span>Results saved successfully — grades and ranks calculated automatically!</span>
           </div>
         )}
 
@@ -170,30 +174,30 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
           {Object.entries(bySubject).map(([subjectId, rows]) => {
             const subjectName = rows[0]?.subjectName ?? subjectId
             return (
-              <div key={subjectId}>
+              <div key={subjectId} className="bg-zinc-50/50 rounded-2xl border border-zinc-200/80 p-4">
                 {/* Subject header */}
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-sm font-semibold text-purple-300">{subjectName}</span>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-sm font-bold text-indigo-900">{subjectName}</span>
                   {(() => {
                     const tm = effectiveTotalMarks(subjectId)
                     return tm !== exam.total_marks ? (
-                      <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                         {tm} marks
                       </span>
                     ) : null
                   })()}
-                  <div className="flex-1 h-px bg-zinc-50" />
-                  <span className="text-[10px] text-zinc-800">/ {effectiveTotalMarks(subjectId)}</span>
+                  <div className="flex-1 h-px bg-zinc-200/80" />
+                  <span className="text-xs font-semibold text-zinc-500 font-mono">Max: {effectiveTotalMarks(subjectId)}</span>
                 </div>
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[2rem_1fr_5rem_5rem_4rem_4rem] gap-2 text-[10px] font-semibold text-zinc-600 uppercase tracking-wider px-3 mb-1">
-                  <span>#</span>
-                  <span>Student</span>
-                  <span>Marks</span>
-                  <span>/ {effectiveTotalMarks(subjectId)}</span>
-                  <span>Grade</span>
-                  <span>Absent</span>
+                <div className="grid grid-cols-[2.5rem_1fr_6rem_5rem_4.5rem_4.5rem] gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-3 mb-2">
+                  <span>Roll</span>
+                  <span>Student Name</span>
+                  <span className="text-center">Marks</span>
+                  <span className="text-center">Total</span>
+                  <span className="text-center">Grade</span>
+                  <span className="text-center">Absent</span>
                 </div>
 
                 {/* Student rows */}
@@ -205,23 +209,23 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
                       ? null
                       : calculateGrade(numMarks, subTotalMarks)
                     const gradeColor = gradeResult
-                      ? GRADE_COLORS[gradeResult.grade] ?? 'text-zinc-600'
+                      ? GRADE_COLORS[gradeResult.grade] ?? 'text-zinc-600 bg-zinc-100'
                       : ''
 
                     return (
                       <div
                         key={`${row.studentId}-${subjectId}`}
-                        className={`grid grid-cols-[2rem_1fr_5rem_5rem_4rem_4rem] gap-2 items-center px-3 py-2 rounded-lg transition-all ${
+                        className={`grid grid-cols-[2.5rem_1fr_6rem_5rem_4.5rem_4.5rem] gap-2 items-center px-3 py-2 rounded-xl transition-all ${
                           row.isAbsent
-                            ? 'bg-red-500/5 border border-red-500/20'
-                            : 'bg-white border border-zinc-100'
+                            ? 'bg-rose-50/70 border border-rose-200'
+                            : 'bg-white border border-zinc-200/80 hover:border-indigo-300'
                         }`}
                       >
                         {/* Roll */}
-                        <span className="text-xs text-zinc-600 font-mono">{row.rollNumber}</span>
+                        <span className="text-xs text-zinc-600 font-mono font-bold">{row.rollNumber}</span>
 
                         {/* Name */}
-                        <span className="text-sm text-zinc-800 truncate">{row.studentName}</span>
+                        <span className="text-sm font-semibold text-zinc-900 truncate">{row.studentName}</span>
 
                         {/* Marks input */}
                         <input
@@ -232,14 +236,14 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
                           value={row.marks}
                           onChange={e => updateRow(row.studentId, subjectId, { marks: e.target.value })}
                           placeholder="—"
-                          className="w-full bg-white border border-zinc-100 rounded-md px-2 py-1 text-sm text-zinc-800 text-center focus:outline-none focus:border-purple-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-sm text-zinc-900 text-center font-bold font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed"
                         />
 
                         {/* Total marks (static) */}
-                        <span className="text-xs text-zinc-800 text-center">/ {effectiveTotalMarks(subjectId)}</span>
+                        <span className="text-xs text-zinc-500 text-center font-mono font-medium">/ {effectiveTotalMarks(subjectId)}</span>
 
                         {/* Grade badge */}
-                        <span className={`text-[11px] font-bold text-center px-1.5 py-0.5 rounded border ${gradeColor || 'text-zinc-800 border-transparent'}`}>
+                        <span className={`text-[11px] font-bold text-center px-2 py-0.5 rounded-md border mx-auto ${gradeColor || 'text-zinc-400 border-transparent'}`}>
                           {row.isAbsent ? 'ABS' : gradeResult?.grade ?? '—'}
                         </span>
 
@@ -251,13 +255,14 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
                               isAbsent: !row.isAbsent,
                               marks: !row.isAbsent ? '' : row.marks,
                             })}
-                            className={`w-6 h-6 rounded-md border text-xs font-bold transition-all ${
+                            className={`px-2 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                               row.isAbsent
-                                ? 'bg-red-500 border-red-500 text-white'
-                                : 'border-zinc-100 text-zinc-800 hover:border-red-500/50'
+                                ? 'bg-rose-600 border-rose-600 text-white'
+                                : 'border-zinc-200 text-zinc-500 hover:border-rose-400 hover:text-rose-600 bg-white'
                             }`}
+                            title="Toggle Absent Status"
                           >
-                            A
+                            {row.isAbsent ? 'ABS' : 'Mark ABS'}
                           </button>
                         </div>
                       </div>
@@ -270,23 +275,25 @@ export function ResultsEntryModal({ open, exam, existingResults, onClose }: Prop
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 flex-shrink-0">
-          <p className="text-xs text-zinc-600">
-            Grades are calculated automatically using the BD grading system (A+ to F)
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50 flex-shrink-0">
+          <p className="text-xs text-zinc-500">
+            Grades & GPA are automatically calculated using the official Bangladesh Education Board system.
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm text-zinc-600 hover:text-white border border-zinc-100 hover:border-zinc-100 transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-200/70 border border-zinc-200 transition-all cursor-pointer"
             >
               Close
             </button>
             <button
+              type="button"
               onClick={handleSave}
               disabled={saveResults.isPending || students.length === 0 || schedules.length === 0}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
             >
-              <Save size={15} />
+              <Save size={14} />
               {saveResults.isPending ? 'Saving...' : 'Save Results'}
             </button>
           </div>

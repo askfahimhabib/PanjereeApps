@@ -1,20 +1,20 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { GraduationCap } from 'lucide-react'
 import { useStudents } from '../features/students/useStudents'
 import { StudentFilters } from '../features/students/components/StudentFilters'
 import { StudentTable } from '../features/students/components/StudentTable'
-import { StudentDetailDrawer } from '../features/students/components/StudentDetailDrawer'
 import { AddStudentModal } from '../features/students/components/AddStudentModal'
 import { CertificateModal } from '../features/certificates/components/CertificateModal'
 import type { Student } from '../features/students/types'
 
 export function Alumni() {
+  const navigate = useNavigate()
   const {
     filteredStudents, paginatedStudents,
     filters, updateFilter, resetFilters,
     currentPage, setCurrentPage, totalPages,
-    selectedStudent, isDrawerOpen, openDrawer, closeDrawer,
-    isModalOpen, openEditModal, closeModal,
+    isModalOpen, closeModal,
     editingStudentId,
     formData, updateFormData, currentStep, nextStep, prevStep, submitStudent,
     deleteStudent,
@@ -39,9 +39,9 @@ export function Alumni() {
           </div>
           <button
             onClick={() => handleOpenCertificateModal(null)}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98]"
+            className="btn-primary cursor-pointer"
           >
-            <GraduationCap size={17} />
+            <GraduationCap size={16} />
             Generate Certificates
           </button>
         </div>
@@ -54,28 +54,18 @@ export function Alumni() {
           totalResults={filteredStudents.length}
         />
 
-        {/* ── Table ──────────────────────────────────── */}
+        {/* ── Table (Navigates directly to Main Profile) ── */}
         <StudentTable
           students={paginatedStudents}
           currentPage={currentPage}
           totalPages={totalPages}
           totalResults={filteredStudents.length}
           onPageChange={setCurrentPage}
-          onView={openDrawer}
+          onView={(student) => navigate(`/students/${student.id}`)}
           onDelete={deleteStudent}
           onCertificate={(student) => handleOpenCertificateModal(student)}
         />
       </div>
-
-      {/* ── Detail Drawer ─────────────────────────────── */}
-      <StudentDetailDrawer
-        student={selectedStudent}
-        isOpen={isDrawerOpen}
-        onClose={closeDrawer}
-        onEdit={openEditModal}
-        onDelete={deleteStudent}
-        onCertificate={(student) => handleOpenCertificateModal(student)}
-      />
 
       {/* ── Add/Edit Modal (for edits only in Alumni mode) */}
       <AddStudentModal

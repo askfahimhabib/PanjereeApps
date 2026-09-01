@@ -1,223 +1,355 @@
-import type { PaymentRecord } from '../types'
-import { PAYMENT_METHOD_LABELS, MONTH_NAMES } from '../types'
+import type { PaymentRecord, ReceiptPrintMode } from '../types'
+import { PAYMENT_METHOD_LABELS, MONTH_NAMES, formatCurrency } from '../types'
+
+/**
+ * Generates SMS / WhatsApp payment receipt confirmation text.
+ */
+export function generateReceiptSmsText(record: PaymentRecord): string {
+  const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+  const itemsSummary = record.items.map(it => it.label).join(', ')
+
+  return `Dear Parent, received ${formatCurrency(record.total_amount)} for ${record.student_name} (Roll: ${record.roll_number}, ${record.class_name || 'Class'}) on ${paidDate}. Purpose: ${itemsSummary}. Memo: ${record.invoice_number}. Thank you. - Panjeree LMS`
+}
 
 /**
  * Generates and opens a printable invoice for a PaymentRecord.
- * Pattern follows printStudentResultCard.ts — opens a new window and calls print().
+ * Supports DUAL_A4 (Student Copy + Office Copy) & POS_80MM (Thermal slip).
  */
-export function printInvoice(record: PaymentRecord): void {
-  const centerName = 'PANJEREE COACHING CENTER'
-  const printDate = new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'long', year: 'numeric' })
-  const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', { day: '2-digit', month: 'long', year: 'numeric' })
+export function printInvoice(record: PaymentRecord, mode: ReceiptPrintMode = 'DUAL_A4'): void {
+  const institutionName = 'PANJEREE EDUCATION & COACHING'
+  const institutionAddress = 'Mirpur-10, Dhaka-1216 | Phone: +880 1711-000000'
+  const printDate = new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
+  const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
 
-  const itemRows = record.items.map(item => {
-    const monthLabel = item.month ? MONTH_NAMES[item.month - 1] : ''
-    const periodLabel = monthLabel && item.year ? `${monthLabel} ${item.year}` : ''
-    return `
-      <tr>
-        <td>${item.label}${periodLabel ? ` <span class="period">(${periodLabel})</span>` : ''}</td>
-        <td class="amount">৳ ${item.amount.toLocaleString('en-BD')}</td>
+  const renderVoucherBlock = (copyTitle: string) => {
+    const itemRows = record.items.map(item => {
+      const monthLabel = item.month ? MONTH_NAMES[item.month - 1] : ''
+      const periodLabel = monthLabel && item.year ? ` (${monthLabel} ${item.year})` : ''
+      return `
+        <tr>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9;">
+            <div style="font-weight: 600; color: #1e293b;">${item.label}</div>
+            <div style="font-size: 10px; color: #64748b;">${item.fee_type}${periodLabel}</div>
+          </td>
+          <td style="padding: 6px 8px; text-align: right; font-weight: 700; font-family: monospace; border-bottom: 1px solid #f1f5f9;">
+            ৳ ${item.amount.toLocaleString('en-BD')}
+          </td>
+        </tr>
+      `
+    }).join('')
+
+    const discountRow = record.discount_amount > 0 ? `
+      <tr style="color: #e11d48; background: #fff1f2;">
+        <td style="padding: 6px 8px; font-size: 11px; font-weight: 600;">
+          Special Waiver / Scholarship ${record.waiver_reason ? `(${record.waiver_reason})` : ''}
+        </td>
+        <td style="padding: 6px 8px; text-align: right; font-weight: 700; font-family: monospace;">
+          - ৳ ${record.discount_amount.toLocaleString('en-BD')}
+        </td>
       </tr>
-    `
-  }).join('')
+    ` : ''
 
-  const discountRow = record.discount_amount > 0 ? `
-    <tr class="discount-row">
-      <td>Discount / Waiver${record.waiver_reason ? ` <span class="period">(${record.waiver_reason})</span>` : ''}</td>
-      <td class="amount text-red">- ৳ ${record.discount_amount.toLocaleString('en-BD')}</td>
-    </tr>
-  ` : ''
+    return `
+      <div class="voucher-box">
+        <!-- Header -->
+        <div class="header">
+          <div class="badge-copy">${copyTitle}</div>
+          <h2>${institutionName}</h2>
+          <p class="subtitle">${institutionAddress}</p>
+          <div class="receipt-pill">
+            <span>MONEY RECEIPT</span> • <strong>${record.invoice_number}</strong>
+          </div>
+        </div>
+
+        <!-- Student & Payment Info Grid -->
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="lbl">STUDENT NAME</span>
+            <span class="val">${record.student_name}</span>
+          </div>
+          <div class="info-item">
+            <span class="lbl">ROLL / ID</span>
+            <span class="val font-mono">Roll: ${record.roll_number}</span>
+          </div>
+          <div class="info-item">
+            <span class="lbl">CLASS / SECTION</span>
+            <span class="val">${record.class_name || 'Class 8'}</span>
+          </div>
+          <div class="info-item">
+            <span class="lbl">PAYMENT DATE</span>
+            <span class="val">${paidDate}</span>
+          </div>
+          <div class="info-item">
+            <span class="lbl">PAYMENT METHOD</span>
+            <span class="val">${PAYMENT_METHOD_LABELS[record.payment_method]} ${record.transaction_id ? `(Trx: ${record.transaction_id})` : ''}</span>
+          </div>
+          <div class="info-item">
+            <span class="lbl">STATUS</span>
+            <span class="val status-paid">PAID & VERIFIED ✓</span>
+          </div>
+        </div>
+
+        <!-- Fee Items Table -->
+        <div class="table-container">
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+              <tr style="background: #f8fafc; color: #475569; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">
+                <th style="padding: 6px 8px; text-align: left; border-bottom: 2px solid #cbd5e1;">Particulars / Fee Item</th>
+                <th style="padding: 6px 8px; text-align: right; border-bottom: 2px solid #cbd5e1;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+              ${discountRow}
+            </tbody>
+            <tfoot>
+              <tr style="border-top: 2px solid #0f172a; font-size: 13px; font-weight: 800;">
+                <td style="padding: 8px 8px; color: #0f172a;">TOTAL COLLECTED</td>
+                <td style="padding: 8px 8px; text-align: right; color: #059669; font-family: monospace;">
+                  ৳ ${record.total_amount.toLocaleString('en-BD')}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        ${record.note ? `<div class="note-box">Memo: ${record.note}</div>` : ''}
+
+        <!-- Signatures & Stamp -->
+        <div class="footer-signatures">
+          <div class="sign-block">
+            <div class="line"></div>
+            <span>Student / Depositor</span>
+          </div>
+          <div class="seal-block">
+            <div class="stamp-circle">PAID<br><small>${paidDate}</small></div>
+          </div>
+          <div class="sign-block">
+            <div class="line"></div>
+            <span>Authorized Officer</span>
+          </div>
+        </div>
+        <div class="print-meta">System generated on ${printDate} • Verified by LMS</div>
+      </div>
+    `
+  }
+
+  let bodyHtml = ''
+
+  if (mode === 'POS_80MM') {
+    bodyHtml = `
+      <div class="pos-wrapper">
+        ${renderVoucherBlock('OFFICE / CUSTOMER COPY')}
+      </div>
+    `
+  } else {
+    // DUAL A4: Side-by-Side or Stacked Dual Copies
+    bodyHtml = `
+      <div class="dual-wrapper">
+        ${renderVoucherBlock('STUDENT COPY')}
+        <div class="cut-line">
+          <span>✂ ----------------- CUT HERE (SEPARATION LINE) ----------------- ✂</span>
+        </div>
+        ${renderVoucherBlock('OFFICE / ACCOUNTS COPY')}
+      </div>
+    `
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Invoice ${record.invoice_number}</title>
+  <title>Receipt_${record.invoice_number}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 13px;
-      color: #1a1a2e;
-      background: #fff;
-      padding: 20px;
-    }
-    .invoice-wrapper {
-      max-width: 420px;
-      margin: 0 auto;
-      border: 2px solid #1a1a2e;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    /* Header */
-    .header {
-      background: #1a1a2e;
-      color: white;
-      padding: 18px 20px 14px;
-      text-align: center;
-    }
-    .header h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
-    .header p  { font-size: 10px; color: #94a3b8; margin-top: 2px; }
-    .invoice-no {
-      background: #334155;
-      color: #60a5fa;
-      text-align: center;
-      padding: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-    /* Student Info */
-    .student-section {
-      padding: 14px 20px;
-      border-bottom: 1px dashed #e2e8f0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
-    .info-row { display: flex; flex-direction: column; }
-    .info-label { font-size: 9px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
-    .info-value { font-size: 13px; font-weight: 600; color: #1a1a2e; }
-    .full-width { grid-column: 1 / -1; }
-    /* Fee Table */
-    .fee-section { padding: 14px 20px; }
-    .fee-section h3 { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; }
-    td { padding: 6px 4px; vertical-align: top; }
-    td.amount { text-align: right; font-weight: 600; white-space: nowrap; }
-    tr + tr td { border-top: 1px solid #f1f5f9; }
-    .period { font-size: 11px; color: #64748b; }
-    .discount-row td { color: #dc2626; }
-    /* Total */
-    .total-row {
-      border-top: 2px solid #1a1a2e !important;
-      margin-top: 4px;
-    }
-    .total-row td { font-size: 15px; font-weight: 800; padding-top: 10px; }
-    /* Payment Method */
-    .method-row {
-      padding: 10px 20px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      color: #0f172a;
       background: #f8fafc;
-      border-top: 1px dashed #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .method-badge {
-      background: #dbeafe;
-      color: #1d4ed8;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    /* Footer */
-    .footer {
-      padding: 14px 20px;
-      border-top: 1px dashed #e2e8f0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .sig-box {
-      text-align: center;
-      padding-top: 30px;
-      border-top: 1px solid #1a1a2e;
-      font-size: 10px;
-      color: #64748b;
-      margin-top: 8px;
-    }
-    .watermark {
-      text-align: center;
-      padding: 8px;
-      font-size: 9px;
-      color: #cbd5e1;
-      letter-spacing: 1px;
+      padding: 12px;
     }
     @media print {
-      body { padding: 0; }
-      .invoice-wrapper { border: none; max-width: 100%; }
+      body { background: #fff; padding: 0; }
+      .dual-wrapper { gap: 8px !important; }
+      @page { size: A4 portrait; margin: 10mm; }
+    }
+
+    .dual-wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pos-wrapper {
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    .voucher-box {
+      background: #fff;
+      border: 1.5px solid #0f172a;
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-copy {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .header {
+      text-align: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .header h2 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #0f172a;
+    }
+    .header .subtitle {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 1px;
+    }
+    .receipt-pill {
+      display: inline-block;
+      margin-top: 6px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      color: #334155;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .info-item .lbl {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .info-item .val {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .status-paid {
+      color: #059669;
+    }
+
+    .table-container {
+      padding: 12px 0;
+    }
+
+    .note-box {
+      font-size: 10px;
+      font-style: italic;
+      color: #475569;
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .footer-signatures {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 16px;
+      margin-top: 4px;
+    }
+    .sign-block {
+      text-align: center;
+      width: 140px;
+    }
+    .sign-block .line {
+      border-top: 1px dashed #475569;
+      margin-bottom: 4px;
+    }
+    .sign-block span {
+      font-size: 9px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+    }
+    .seal-block {
+      text-align: center;
+    }
+    .stamp-circle {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      border: 2px solid #059669;
+      border-radius: 50%;
+      color: #059669;
+      font-weight: 900;
+      font-size: 10px;
+      transform: rotate(-10deg);
+      opacity: 0.85;
+    }
+
+    .cut-line {
+      text-align: center;
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin: 4px 0;
+    }
+
+    .print-meta {
+      text-align: right;
+      font-size: 8px;
+      color: #94a3b8;
+      margin-top: 6px;
     }
   </style>
 </head>
 <body>
-  <div class="invoice-wrapper">
-    <div class="header">
-      <h1>${centerName}</h1>
-      <p>Official Fee Receipt</p>
-    </div>
-    <div class="invoice-no">${record.invoice_number}</div>
-
-    <div class="student-section">
-      <div class="info-row full-width">
-        <span class="info-label">Student Name</span>
-        <span class="info-value">${record.student_name}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Roll Number</span>
-        <span class="info-value">${record.roll_number}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Class</span>
-        <span class="info-value">${record.class_name ?? '—'}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Payment Date</span>
-        <span class="info-value">${paidDate}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Print Date</span>
-        <span class="info-value">${printDate}</span>
-      </div>
-    </div>
-
-    <div class="fee-section">
-      <h3>Fee Details</h3>
-      <table>
-        <tbody>
-          ${itemRows}
-          ${discountRow}
-          <tr class="total-row">
-            <td>Total Paid</td>
-            <td class="amount">৳ ${record.total_amount.toLocaleString('en-BD')}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="method-row">
-      <span style="font-size:11px; color:#64748b;">Payment Method</span>
-      <span class="method-badge">${PAYMENT_METHOD_LABELS[record.payment_method]}${record.transaction_id ? ` · ${record.transaction_id}` : ''}</span>
-    </div>
-
-    ${record.note ? `<div style="padding:10px 20px; font-size:11px; color:#64748b; background:#fffbeb; border-top:1px dashed #fde68a;">
-      <strong>Note:</strong> ${record.note}
-    </div>` : ''}
-
-    <div class="footer">
-      <div>
-        <div class="sig-box">Student / Guardian Signature</div>
-      </div>
-      <div>
-        <div class="sig-box">Collector: ${record.collected_by}</div>
-      </div>
-    </div>
-
-    <div class="watermark">PANJEREE COACHING CENTER · OFFICIAL RECEIPT</div>
-  </div>
-
+  ${bodyHtml}
   <script>
-    window.onload = function () {
-      window.print()
-      setTimeout(function () { window.close() }, 500)
+    window.onload = function() {
+      window.print();
     }
   </script>
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=500,height=700')
-  if (!win) return
-  win.document.open()
-  win.document.write(html)
-  win.document.close()
+  const printWindow = window.open('', '_blank', 'width=900,height=800')
+  if (printWindow) {
+    printWindow.document.write(html)
+    printWindow.document.close()
+  }
 }

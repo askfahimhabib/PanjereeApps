@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 // import { supabase } from '@/lib/supabase'
-import { routineStore as store } from '@/data/stores'
+import { routineStore as store, subjectStore, teacherStore, classStore, sectionStore, batchStore } from '@/data/stores'
 import type { Routine, CreateRoutineDto, DayOfWeek } from '../types'
 
 // ─── Query Keys ──────────────────────────────────────────────────────────────
@@ -9,22 +9,41 @@ export const routineKeys = {
   all: ['routines'] as const,
   byClass: (classId: string) => ['routines', 'class', classId] as const,
   byBatch: (batchId: string) => ['routines', 'batch', batchId] as const,
+  byTeacher: (teacherId: string) => ['routines', 'teacher', teacherId] as const,
+}
+
+export function enrichRoutine(r: Routine): Routine {
+  const sub = r.subject_id ? subjectStore.getOne(r.subject_id) : undefined
+  const tch = r.teacher_id ? teacherStore.getOne(r.teacher_id) : undefined
+  const cls = r.class_id ? classStore.getOne(r.class_id) : undefined
+  const sec = r.section_id ? sectionStore.getOne(r.section_id) : undefined
+  const btc = r.batch_id ? batchStore.getOne(r.batch_id) : undefined
+
+  return {
+    ...r,
+    subjects: r.subjects ?? (sub ? { id: sub.id, name: sub.name, name_bn: sub.nameBn ?? null } : undefined),
+    teachers: r.teachers ?? (tch ? { id: tch.id, full_name: tch.fullName } : undefined),
+    classes: r.classes ?? (cls ? { id: cls.id, name: cls.name } : undefined),
+    sections: r.sections ?? (sec ? { id: sec.id, name: sec.name } : undefined),
+    batches: r.batches ?? (btc ? { id: btc.id, name: btc.name } : undefined),
+  }
+}
+
+// ─── Fetch All Routines ───────────────────────────────────────────────────────
+
+export function useAllRoutines() {
+  return useQuery({
+    queryKey: routineKeys.all,
+    queryFn: () => store.getAll().map(enrichRoutine),
+    staleTime: 0,
+  })
 }
 
 // ─── Fetch Routines by Class ──────────────────────────────────────────────────
 
 async function fetchClassRoutine(classId: string): Promise<Routine[]> {
-  // TODO: replace with Supabase when tables are ready
-  // const { data, error } = await supabase
-  //   .from('routines')
-  //   .select(`*, subjects (id, name, name_bn), teachers (id, full_name), sections (id, name)`)
-  //   .eq('class_id', classId)
-  //   .eq('target_type', 'CLASS')
-  //   .eq('is_active', true)
-  //   .order('start_time', { ascending: true })
-  // if (error) throw error
-  // return data as Routine[]
-  return store.getWhere(r => r.class_id === classId && r.target_type === 'CLASS')
+  const items = store.getWhere(r => r.class_id === classId && r.target_type === 'CLASS')
+  return items.map(enrichRoutine)
 }
 
 export function useClassRoutine(classId: string | null) {
@@ -36,20 +55,35 @@ export function useClassRoutine(classId: string | null) {
   })
 }
 
+// ─── Fetch Routines by Teacher (Real-time Sync) ───────────────────────────────
+
+export async function fetchTeacherRoutine(teacherId: string): Promise<Routine[]> {
+  const teacher = teacherStore.getOne(teacherId)
+  const items = store.getWhere(r => {
+    if (r.teacher_id === teacherId) return true
+    if (teacher) {
+      if (r.teacher_id === teacher.id || r.teacher_id === teacher.teacherId || r.teacher_id === teacher.employeeId) return true
+      if (r.teachers?.id === teacher.id || (teacher.fullName && r.teachers?.full_name?.toLowerCase() === teacher.fullName.toLowerCase())) return true
+    }
+    return false
+  })
+  return items.map(enrichRoutine)
+}
+
+export function useTeacherRoutine(teacherId: string | null) {
+  return useQuery({
+    queryKey: routineKeys.byTeacher(teacherId ?? ''),
+    queryFn: () => fetchTeacherRoutine(teacherId!),
+    enabled: !!teacherId,
+    staleTime: 0,
+  })
+}
+
 // ─── Fetch Routines by Batch ──────────────────────────────────────────────────
 
 async function fetchBatchRoutine(batchId: string): Promise<Routine[]> {
-  // TODO: replace with Supabase when tables are ready
-  // const { data, error } = await supabase
-  //   .from('routines')
-  //   .select(`*, subjects (id, name, name_bn), teachers (id, full_name)`)
-  //   .eq('batch_id', batchId)
-  //   .eq('target_type', 'BATCH')
-  //   .eq('entry_type', 'FORMAL_EXAM')
-  //   .order('specific_date', { ascending: true })
-  // if (error) throw error
-  // return data as Routine[]
-  return store.getWhere(r => r.batch_id === batchId && r.entry_type === 'FORMAL_EXAM')
+  const items = store.getWhere(r => r.batch_id === batchId)
+  return items.map(enrichRoutine)
 }
 
 export function useBatchRoutine(batchId: string | null) {
@@ -64,10 +98,11 @@ export function useBatchRoutine(batchId: string | null) {
 // ─── Create Routine Slot ──────────────────────────────────────────────────────
 
 async function createRoutineSlot(dto: CreateRoutineDto): Promise<Routine> {
-  // TODO: replace with Supabase when tables are ready
-  // const { data, error } = await supabase.from('routines').insert(dto).select().single()
-  // if (error) throw error
-  // return data as Routine
+  const sub = dto.subject_id ? subjectStore.getOne(dto.subject_id) : undefined
+  const tch = dto.teacher_id ? teacherStore.getOne(dto.teacher_id) : undefined
+  const cls = dto.class_id ? classStore.getOne(dto.class_id) : undefined
+  const sec = dto.section_id ? sectionStore.getOne(dto.section_id) : undefined
+
   const newSlot: Routine = {
     id: crypto.randomUUID(),
     ...dto,
@@ -84,6 +119,10 @@ async function createRoutineSlot(dto: CreateRoutineDto): Promise<Routine> {
     postpone_note: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    subjects: sub ? { id: sub.id, name: sub.name, name_bn: sub.nameBn ?? null } : undefined,
+    teachers: tch ? { id: tch.id, full_name: tch.fullName } : undefined,
+    classes: cls ? { id: cls.id, name: cls.name } : undefined,
+    sections: sec ? { id: sec.id, name: sec.name } : undefined,
   }
   return store.insert(newSlot)
 }
@@ -93,6 +132,7 @@ export function useCreateRoutine(classId?: string, batchId?: string) {
   return useMutation({
     mutationFn: createRoutineSlot,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: routineKeys.all })
       if (classId) qc.invalidateQueries({ queryKey: routineKeys.byClass(classId) })
       if (batchId) qc.invalidateQueries({ queryKey: routineKeys.byBatch(batchId) })
     },
@@ -102,11 +142,19 @@ export function useCreateRoutine(classId?: string, batchId?: string) {
 // ─── Update Routine Slot ──────────────────────────────────────────────────────
 
 async function updateRoutineSlot({ id, ...dto }: Partial<CreateRoutineDto> & { id: string }): Promise<Routine> {
-  // TODO: replace with Supabase when tables are ready
-  // const { data, error } = await supabase.from('routines').update({ ...dto, updated_at: new Date().toISOString() }).eq('id', id).select().single()
-  // if (error) throw error
-  // return data as Routine
-  return store.update(id, { ...dto, updated_at: new Date().toISOString() })
+  const sub = dto.subject_id ? subjectStore.getOne(dto.subject_id) : undefined
+  const tch = dto.teacher_id ? teacherStore.getOne(dto.teacher_id) : undefined
+  const cls = dto.class_id ? classStore.getOne(dto.class_id) : undefined
+  const sec = dto.section_id ? sectionStore.getOne(dto.section_id) : undefined
+
+  return store.update(id, {
+    ...dto,
+    updated_at: new Date().toISOString(),
+    ...(sub ? { subjects: { id: sub.id, name: sub.name, name_bn: sub.nameBn ?? null } } : {}),
+    ...(tch ? { teachers: { id: tch.id, full_name: tch.fullName } } : {}),
+    ...(cls ? { classes: { id: cls.id, name: cls.name } } : {}),
+    ...(sec ? { sections: { id: sec.id, name: sec.name } } : {}),
+  })
 }
 
 export function useUpdateRoutine(classId?: string, batchId?: string) {
@@ -114,6 +162,7 @@ export function useUpdateRoutine(classId?: string, batchId?: string) {
   return useMutation({
     mutationFn: updateRoutineSlot,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: routineKeys.all })
       if (classId) qc.invalidateQueries({ queryKey: routineKeys.byClass(classId) })
       if (batchId) qc.invalidateQueries({ queryKey: routineKeys.byBatch(batchId) })
     },
@@ -123,9 +172,6 @@ export function useUpdateRoutine(classId?: string, batchId?: string) {
 // ─── Delete Routine Slot ──────────────────────────────────────────────────────
 
 async function deleteRoutineSlot(id: string) {
-  // TODO: replace with Supabase when tables are ready
-  // const { error } = await supabase.from('routines').delete().eq('id', id).is('source_exam_held_id', null)
-  // if (error) throw error
   store.remove(id)
 }
 
@@ -133,7 +179,8 @@ export function useDeleteRoutine(classId?: string, batchId?: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: deleteRoutineSlot,
-    onSuccess: (_, id) => {
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: routineKeys.all })
       if (classId) qc.invalidateQueries({ queryKey: routineKeys.byClass(classId) })
       if (batchId) qc.invalidateQueries({ queryKey: routineKeys.byBatch(batchId) })
     },

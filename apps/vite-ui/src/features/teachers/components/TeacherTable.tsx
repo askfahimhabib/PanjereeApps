@@ -1,193 +1,379 @@
-import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, BookOpen, Phone, UserCircle2, ExternalLink } from 'lucide-react'
+import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, MessageSquare, ExternalLink, Star, Copy, Check, CreditCard } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Teacher } from '../types'
 import {
-  STATUS_LABELS, STATUS_COLORS, DESIGNATION_LABELS, EMPLOYMENT_TYPE_LABELS,
-  DEPARTMENT_LABELS, TEACHER_CATEGORY_COLORS,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  DESIGNATION_LABELS,
+  DEPARTMENT_LABELS,
 } from '../types'
+import {
+  getTeacherWorkload,
+  getTeacherTodayLeaveStatus,
+  getTeacherClassTeacherAssignment,
+  getTeacherCurrentMonthSalary,
+} from '../utils/teacherSync'
 
 interface Props {
   teachers: Teacher[]
   currentPage: number
   totalPages: number
-  onPageChange: (p: number) => void
-  onView: (t: Teacher) => void
-  onEdit: (t: Teacher) => void
+  totalResults: number
+  onPageChange: (page: number) => void
+  onView: (teacher: Teacher) => void
   onDelete: (id: string) => void
 }
 
-function Avatar({ teacher }: { teacher: Teacher }) {
-  if (teacher.profilePhoto) {
-    return <img src={teacher.profilePhoto} alt={teacher.fullName} className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-600" />
-  }
-  const initials = (teacher.firstName[0] || '') + (teacher.lastName[0] || '')
-  const colors = ['bg-blue-600', 'bg-purple-600', 'bg-emerald-600', 'bg-rose-600', 'bg-amber-600', 'bg-cyan-600']
-  const color  = colors[parseInt(teacher.id) % colors.length]
-  return (
-    <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-700 shrink-0`}>
-      {initials}
-    </div>
-  )
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
-export function TeacherTable({ teachers, currentPage, totalPages, onPageChange, onView, onEdit, onDelete }: Props) {
+function getAvatarColor(id: string) {
+  const colors = [
+    'bg-indigo-600', 'bg-blue-600', 'bg-purple-600',
+    'bg-emerald-600', 'bg-rose-600', 'bg-amber-600',
+    'bg-teal-600', 'bg-cyan-600',
+  ]
+  const index = id.charCodeAt(id.length - 1) % colors.length
+  return colors[index]
+}
+
+export function TeacherTable({
+  teachers,
+  currentPage,
+  totalPages,
+  totalResults,
+  onPageChange,
+  onView,
+  onDelete,
+}: Props) {
   const navigate = useNavigate()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  function copyToClipboard(text: string, id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1500)
+  }
+
+  function handleWhatsApp(teacher: Teacher, e: React.MouseEvent) {
+    e.stopPropagation()
+    const cleanNumber = teacher.phone.replace(/[^0-9]/g, '')
+    const url = `https://wa.me/${cleanNumber.startsWith('88') ? cleanNumber : `88${cleanNumber}`}?text=Assalamu%20Alaikum%20${encodeURIComponent(teacher.fullName)},%20regarding%20school%20schedule%20update.`
+    window.open(url, '_blank')
+  }
+
   if (teachers.length === 0) {
     return (
-      <div className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl">
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-        <UserCircle2 size={40} className="text-zinc-800" />
-        <p className="text-zinc-600 font-medium">No teachers found</p>
-        <p className="text-sm text-zinc-600">Try adjusting your filters</p>
+      <div className="bg-white border border-zinc-200 rounded-2xl p-12 text-center shadow-2xs">
+        <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-zinc-400">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
         </div>
+        <h3 className="text-sm font-bold text-zinc-800 mb-1">No faculty members found</h3>
+        <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+          No teacher matches the selected filter criteria. Try resetting filters or onboard a new teacher.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-zinc-200/90 rounded-2xl shadow-2xs overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-white border-b border-zinc-100">
+        <table className="w-full text-xs text-left min-w-[780px]">
+          <thead className="bg-zinc-50/80 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
             <tr>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Teacher</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Designation</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Department</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Contact</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Status</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Actions</th>
+              <th className="px-3.5 py-3 w-10 text-center">#</th>
+              <th className="px-3.5 py-3 min-w-[210px]">Faculty Member & Load</th>
+              <th className="px-3.5 py-3 min-w-[160px]">Designation & Role</th>
+              <th className="px-3.5 py-3 min-w-[130px]">Subject / Dept</th>
+              <th className="px-3.5 py-3 min-w-[140px]">Contact & WhatsApp</th>
+              <th className="px-3.5 py-3 min-w-[110px] text-center">Status & Salary</th>
+              <th className="px-3.5 py-3 w-24 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {teachers.map(teacher => (
-              <tr
-                key={teacher.id}
-                className="hover:bg-zinc-50 transition-colors cursor-pointer"
-                onClick={() => onView(teacher)}
-              >
-                {/* ── Teacher name + photo + ID ─────────────── */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar teacher={teacher} />
-                    <div className="min-w-0">
-                      {/* Name */}
-                      <button
-                        onClick={e => { e.stopPropagation(); navigate(`/teachers/${teacher.id}`) }}
-                        className="font-medium text-zinc-800 hover:text-indigo-400 transition-colors leading-tight flex items-center gap-1 group"
-                        title="View Full Profile"
+          <tbody className="divide-y divide-zinc-100 text-zinc-700">
+            {teachers.map((teacher, idx) => {
+              const rowNum = (currentPage - 1) * 10 + idx + 1
+              const workload = getTeacherWorkload(teacher.id)
+              const leaveStatus = getTeacherTodayLeaveStatus(teacher.id)
+              const ctAssignment = getTeacherClassTeacherAssignment(teacher)
+              const salaryStatus = getTeacherCurrentMonthSalary(teacher.id)
+
+              return (
+                <tr
+                  key={teacher.id}
+                  onClick={() => onView(teacher)}
+                  className="hover:bg-zinc-50/80 transition-colors group cursor-pointer"
+                >
+                  {/* # */}
+                  <td className="px-3.5 py-2.5 text-center text-zinc-400 font-mono font-medium align-top pt-3">
+                    {rowNum}
+                  </td>
+
+                  {/* Faculty Member & Workload */}
+                  <td className="px-3.5 py-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className={`w-8 h-8 rounded-xl ${getAvatarColor(teacher.id)} flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-xs mt-0.5`}
                       >
-                        {teacher.fullName}
-                        <ExternalLink size={10} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
-                      </button>
-                      {/* Bengali name — smaller */}
-                      {teacher.nameBangla && (
-                        <p className="text-xs text-zinc-600 mt-0.5 truncate">{teacher.nameBangla}</p>
-                      )}
-                      {/* Teacher ID — small monospace */}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/15 px-1.5 py-0.5 rounded leading-none">
-                          {teacher.teacherId}
-                        </span>
-                        {/* Regular / Guest badge */}
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border leading-none ${TEACHER_CATEGORY_COLORS[teacher.teacherCategory]}`}>
+                        {teacher.profilePhoto ? (
+                          <img
+                            src={teacher.profilePhoto}
+                            alt={teacher.fullName}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          getInitials(teacher.fullName)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            navigate(`/teachers/${teacher.id}`)
+                          }}
+                          className="font-bold text-zinc-900 hover:text-indigo-600 transition-colors truncate flex items-center gap-1 group/link text-xs max-w-[180px]"
+                          title="View Full 360° Profile"
+                        >
+                          {teacher.fullName}
+                          <ExternalLink size={11} className="opacity-0 group-hover/link:opacity-70 transition-opacity" />
+                        </button>
+                        {teacher.nameBangla && (
+                          <div className="text-[10px] text-zinc-500 font-medium truncate max-w-[180px] leading-tight mt-0.5">
+                            {teacher.nameBangla}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-zinc-400 font-mono flex items-center gap-1">
+                            {teacher.teacherId}
+                          </span>
+                          <button
+                            onClick={e => copyToClipboard(teacher.teacherId, teacher.id, e)}
+                            className="p-0.5 text-zinc-300 hover:text-zinc-600 rounded transition-colors cursor-pointer"
+                            title="Copy Teacher ID"
+                          >
+                            {copiedId === teacher.id ? (
+                              <Check size={10} className="text-emerald-600" />
+                            ) : (
+                              <Copy size={10} />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Mini Workload Progress Bar */}
+                        <div
+                          className="mt-1.5 flex items-center gap-1.5 max-w-[170px]"
+                          title={`${workload.weeklyClasses} classes/week (Standard: 25) • Today: ${workload.todayClasses} classes`}
+                        >
+                          <div className="flex-1 h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                workload.weeklyClasses > 22
+                                  ? 'bg-rose-500'
+                                  : workload.weeklyClasses > 12
+                                  ? 'bg-indigo-600'
+                                  : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${Math.min(Math.round((workload.weeklyClasses / 25) * 100), 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-mono font-bold text-zinc-500 shrink-0">
+                            {workload.weeklyClasses}/25 cls
+                          </span>
+                          {workload.todayClasses > 0 && (
+                            <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100 shrink-0">
+                              Today: {workload.todayClasses}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Designation & Role */}
+                  <td className="px-3.5 py-2.5 align-top pt-3">
+                    <div className="space-y-0.5">
+                      <div className="font-bold text-zinc-900 flex items-center gap-1.5 flex-wrap">
+                        <span className="truncate max-w-[140px]">{DESIGNATION_LABELS[teacher.designation] || teacher.designation}</span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                            teacher.teacherCategory === 'REGULAR'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-purple-50 text-purple-700 border border-purple-200'
+                          }`}
+                        >
                           {teacher.teacherCategory === 'REGULAR' ? 'Regular' : 'Guest'}
                         </span>
                       </div>
+
+                      {ctAssignment.isClassTeacher && (
+                        <div className="flex items-center gap-1 text-[9px] font-extrabold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200/80 w-fit">
+                          <Star size={9} className="text-amber-500 fill-amber-400" />
+                          <span>Class Teacher: {ctAssignment.classLabel}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                {/* Designation & Type */}
-                <td className="px-4 py-3">
-                  <p className="text-zinc-800 text-sm">{DESIGNATION_LABELS[teacher.designation]}</p>
-                  <p className="text-zinc-600 text-xs mt-0.5">{EMPLOYMENT_TYPE_LABELS[teacher.employmentType]}</p>
-                </td>
+                  {/* Subject / Dept */}
+                  <td className="px-3.5 py-2.5 align-top pt-3">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-zinc-800 bg-zinc-100 px-2 py-0.5 rounded-lg border border-zinc-200 text-[11px] inline-block max-w-[140px] truncate" title={teacher.department}>
+                        {teacher.department ? (DEPARTMENT_LABELS[teacher.department] || teacher.department) : 'General'}
+                      </span>
+                      <div className="text-[10px] text-zinc-400 font-medium">
+                        Joined: {teacher.joiningDate ? new Date(teacher.joiningDate).toLocaleDateString('en-GB') : '—'}
+                      </div>
+                    </div>
+                  </td>
 
-                {/* Department */}
-                <td className="px-4 py-3">
-                  {teacher.department ? (
+                  {/* Contact & WhatsApp */}
+                  <td className="px-3.5 py-2.5 align-top pt-3">
                     <div className="flex items-center gap-1.5">
-                      <BookOpen size={13} className="text-purple-400 shrink-0" />
-                      <span className="text-zinc-600 text-xs">{DEPARTMENT_LABELS[teacher.department]}</span>
+                      <div className="space-y-0.5 min-w-0">
+                        <a
+                          href={`tel:${teacher.phone}`}
+                          onClick={e => e.stopPropagation()}
+                          className="font-mono text-zinc-800 hover:text-indigo-600 transition-colors text-[11px] font-semibold flex items-center gap-1 truncate"
+                        >
+                          <Phone size={10} className="text-zinc-400 shrink-0" />
+                          {teacher.phone}
+                        </a>
+                        {teacher.email && (
+                          <div className="text-[10px] text-zinc-400 truncate max-w-[110px]">
+                            {teacher.email}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* WhatsApp Button */}
+                      <button
+                        type="button"
+                        onClick={e => handleWhatsApp(teacher, e)}
+                        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200/60 shadow-2xs shrink-0 cursor-pointer"
+                        title={`Message ${teacher.fullName} on WhatsApp`}
+                      >
+                        <MessageSquare size={12} />
+                      </button>
                     </div>
-                  ) : (
-                    <span className="text-zinc-800 text-xs">—</span>
-                  )}
-                </td>
+                  </td>
 
-                {/* Contact */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <Phone size={12} className="text-zinc-600" />
-                    <span className="text-zinc-600 text-xs font-mono">{teacher.phone}</span>
-                  </div>
-                  {teacher.email && (
-                    <p className="text-xs text-zinc-800 mt-0.5 truncate max-w-[160px]">{teacher.email}</p>
-                  )}
-                </td>
+                  {/* Status & Salary */}
+                  <td className="px-3.5 py-2.5 text-center align-top pt-3">
+                    <div className="space-y-1 flex flex-col items-center">
+                      {/* Attendance / Leave */}
+                      {leaveStatus.isOnLeave ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> On Leave
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full border ${
+                            STATUS_COLORS[teacher.employmentStatus] || 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          {STATUS_LABELS[teacher.employmentStatus] || teacher.employmentStatus}
+                        </span>
+                      )}
 
-                {/* Status badge */}
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${STATUS_COLORS[teacher.employmentStatus]}`}>
-                    {STATUS_LABELS[teacher.employmentStatus]}
-                  </span>
-                </td>
+                      {/* Salary */}
+                      <span
+                        className={`inline-block px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider ${
+                          salaryStatus === 'PAID'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}
+                      >
+                        Salary: {salaryStatus}
+                      </span>
+                    </div>
+                  </td>
 
-                {/* Actions */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => onView(teacher)}
-                      className="p-1.5 text-zinc-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                      title="View Profile"
-                    >
-                      <Eye size={15} />
-                    </button>
-                    <button
-                      onClick={() => onEdit(teacher)}
-                      className="p-1.5 text-zinc-600 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete ${teacher.fullName}?`)) onDelete(teacher.id)
-                      }}
-                      className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  {/* Actions */}
+                  <td className="px-3.5 py-2.5 text-right align-top pt-2.5" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/teachers/${teacher.id}`)}
+                        className="p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                        title="View 360° Profile"
+                      >
+                        <Eye size={13} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/teachers/salary?search=${encodeURIComponent(teacher.fullName)}`)}
+                        className="p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                        title="View Salary Desk"
+                      >
+                        <CreditCard size={13} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete faculty record for ${teacher.fullName}?`)) {
+                            onDelete(teacher.id)
+                          }
+                        }}
+                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Faculty Member"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* ── Pagination ────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 rounded-lg transition-colors border border-zinc-100"
-          >
-            <ChevronLeft size={14} /> Previous
-          </button>
-          <span className="text-xs text-zinc-600">
-            Page <span className="text-zinc-800 font-medium">{currentPage}</span> of{' '}
-            <span className="text-zinc-800 font-medium">{totalPages}</span>
-          </span>
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 rounded-lg transition-colors border border-zinc-100"
-          >
-            Next <ChevronRight size={14} />
-          </button>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
+          <p className="text-xs text-zinc-500 font-medium">
+            Page <strong className="text-zinc-800 font-bold">{currentPage}</strong> of <strong className="text-zinc-800 font-bold">{totalPages}</strong> · <span className="font-mono">{totalResults}</span> total faculty members
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-1.5 text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200/60 rounded-lg transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={`w-7 h-7 text-xs rounded-lg font-bold transition-all cursor-pointer ${
+                  page === currentPage
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-1.5 text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200/60 rounded-lg transition-colors cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -4,40 +4,33 @@ import {
   Users, GraduationCap, BookOpen, ClipboardList,
   CheckCircle2, ArrowRight, CalendarDays, Wallet,
 } from 'lucide-react'
-import { createStore } from '@/lib/localStore'
-import type { Student } from '@/features/students/types'
-import type { Teacher } from '@/features/teachers/types'
-import type { ExamHeld } from '@/features/examHeld/types'
-import type { AttendanceRecord } from '@/features/attendance/types'
-import type { ClassItem } from '@/features/classes/types'
-import type { PaymentRecord } from '@/features/payments/types'
+import {
+  studentStore,
+  teacherStore,
+  examStore,
+  attendanceStore,
+  classStore,
+  paymentStore,
+} from '@/data/stores'
 import { EXAM_SCOPE_LABELS } from '@/features/examHeld/types'
 import { format, parseISO } from 'date-fns'
 
-// ─── Direct store reads (no hooks — avoids re-render complexity) ──────────────
-const studentStore    = createStore<Student>('students')
-const teacherStore    = createStore<Teacher>('teachers')
-const examStore       = createStore<ExamHeld>('exam_held')
-const attendanceStore = createStore<AttendanceRecord>('attendance')
-const classStore      = createStore<ClassItem>('classes')
-const paymentStore    = createStore<PaymentRecord>('payments')
-
 // ─── Color Maps to prevent Tailwind purging ───────────────────────────────────
 const STAT_COLORS: Record<string, { bg: string, text: string }> = {
-  blue:    { bg: 'bg-blue-50',    text: 'text-blue-600' },
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  orange:  { bg: 'bg-orange-50',  text: 'text-orange-600' },
-  purple:  { bg: 'bg-purple-50',  text: 'text-purple-600' },
-  indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
+  blue:    { bg: 'bg-blue-50',    text: 'text-blue-700' },
+  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  orange:  { bg: 'bg-amber-50',   text: 'text-amber-700' },
+  purple:  { bg: 'bg-purple-50',  text: 'text-purple-700' },
+  indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-700' },
 }
 
 const LIST_COLORS = [
-  { bar: 'bg-orange-500',  bg: 'bg-orange-50',  text: 'text-orange-600' },
-  { bar: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-600' },
-  { bar: 'bg-indigo-500',  bg: 'bg-indigo-50',  text: 'text-indigo-600' },
-  { bar: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  { bar: 'bg-purple-500',  bg: 'bg-purple-50',  text: 'text-purple-600' },
-  { bar: 'bg-pink-500',    bg: 'bg-pink-50',    text: 'text-pink-600' },
+  { bar: 'bg-amber-500',   bg: 'bg-amber-50',   text: 'text-amber-700' },
+  { bar: 'bg-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
+  { bar: 'bg-indigo-500',  bg: 'bg-indigo-50',  text: 'text-indigo-700' },
+  { bar: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  { bar: 'bg-purple-500',  bg: 'bg-purple-50',  text: 'text-purple-700' },
+  { bar: 'bg-pink-500',    bg: 'bg-pink-50',    text: 'text-pink-700' },
 ]
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -54,21 +47,21 @@ function StatCard({
   const color = STAT_COLORS[colorKey] || STAT_COLORS.blue
 
   const inner = (
-    <div className="bg-white p-5 rounded-3xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-zinc-200 hover:shadow-lg transition-all duration-300 group flex flex-col justify-between h-full relative overflow-hidden">
-      <div className="flex items-start justify-between mb-4 relative z-10">
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color.bg} ${color.text}`}>
-          <Icon size={22} strokeWidth={2} />
+    <div className="card-surface p-5 hover:shadow-md transition-all duration-200 group flex flex-col justify-between h-full relative overflow-hidden">
+      <div className="flex items-start justify-between mb-3 relative z-10">
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color.bg} ${color.text}`}>
+          <Icon size={20} strokeWidth={2} />
         </div>
         {to && (
-          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100 group-hover:text-zinc-600 transition-colors">
-            <ArrowRight size={14} />
+          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100 group-hover:text-zinc-700 transition-colors">
+            <ArrowRight size={13} />
           </div>
         )}
       </div>
 
       <div className="relative z-10">
-        <p className="text-3xl font-bold text-zinc-900 tracking-tight mb-1">{value}</p>
-        <p className="text-sm font-medium text-zinc-500">{label}</p>
+        <p className="text-2xl font-bold text-zinc-900 tracking-tight mb-0.5">{value}</p>
+        <p className="text-xs font-semibold text-zinc-500">{label}</p>
         {sub && <p className="text-[11px] text-zinc-400 mt-1 truncate">{sub}</p>}
       </div>
     </div>
@@ -101,8 +94,7 @@ export function Dashboard() {
       .slice(0, 5)
     const completedExams = exams.filter(e => e.status === 'COMPLETED').length
 
-    const allClasses = classStore.getAll().map(c => ({ isActive: true, ...c } as ClassItem & { isActive: boolean }))
-    const activeClasses = allClasses.filter(c => c.isActive !== false)
+    const activeClasses = classStore.getAll().filter(c => c.isActive !== false)
 
     const classBreakdown = activeClasses
       .map(c => ({
@@ -208,10 +200,10 @@ export function Dashboard() {
         </div>
 
         {/* Students by Class */}
-        <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-zinc-200">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-zinc-900">Students by Class</h2>
-            <Link to="/classes" className="text-sm font-semibold text-emerald-500 hover:text-emerald-600 transition-colors">See all</Link>
+        <div className="card-surface p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-zinc-900">Students by Class</h2>
+            <Link to="/classes" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">See all</Link>
           </div>
 
           {data.classBreakdown.length === 0 ? (
@@ -220,28 +212,28 @@ export function Dashboard() {
               <p className="text-sm font-medium">No students enrolled yet</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {data.classBreakdown.map((cls, idx) => {
                 const pct = data.totalStudents > 0 ? Math.round((cls.count / data.totalStudents) * 100) : 0
                 const color = LIST_COLORS[idx % LIST_COLORS.length]
 
                 return (
-                  <div key={cls.name} className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 hover:shadow-md transition-all bg-white">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color.bg} ${color.text} flex-shrink-0`}>
-                      <BookOpen size={20} />
+                  <div key={cls.name} className="flex items-center gap-4 p-3.5 rounded-xl border border-zinc-100 hover:border-zinc-200 hover:shadow-xs transition-all bg-white">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color.bg} ${color.text} flex-shrink-0`}>
+                      <BookOpen size={18} />
                     </div>
                     <div className="flex-1 min-w-[100px]">
-                      <p className="text-[15px] font-bold text-zinc-900">{cls.name}</p>
-                      <p className="text-[12px] font-medium text-zinc-400">Class Size</p>
+                      <p className="text-sm font-bold text-zinc-900">{cls.name}</p>
+                      <p className="text-[11px] font-medium text-zinc-400">Class Size</p>
                     </div>
                     <div className="flex items-center gap-3 md:gap-5">
-                      <span className="text-sm font-bold text-zinc-800 w-10 text-right">{pct}%</span>
+                      <span className="text-xs font-bold text-zinc-700 w-10 text-right">{pct}%</span>
                       <div className="hidden sm:block w-24 md:w-32 h-2 bg-zinc-100 rounded-full overflow-hidden">
                         <div className={`h-full ${color.bar} rounded-full`} style={{ width: `${pct}%` }} />
                       </div>
                       <div className="flex items-center gap-1 w-12 justify-end">
-                        <Users size={14} className="text-zinc-400" />
-                        <span className="text-sm font-bold text-zinc-800">{cls.count}</span>
+                        <Users size={13} className="text-zinc-400" />
+                        <span className="text-xs font-bold text-zinc-800">{cls.count}</span>
                       </div>
                     </div>
                   </div>
@@ -253,32 +245,32 @@ export function Dashboard() {
       </div>
 
       {/* ── RIGHT COLUMN ── */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         
         {/* Quick Links styled as action buttons */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Attendance', to: '/attendance', icon: CheckCircle2, bg: 'bg-[#fff4e5]', text: 'text-[#f57c00]' },
-            { label: 'Exams',      to: '/exam-held',  icon: ClipboardList, bg: 'bg-[#f3e5f5]', text: 'text-[#7b1fa2]' },
-            { label: 'Routine',    to: '/routines',   icon: CalendarDays,  bg: 'bg-[#e3f2fd]', text: 'text-[#1565c0]' },
-            { label: 'Add Student',to: '/students',   icon: Users,         bg: 'bg-[var(--color-primary-light)]', text: 'text-[var(--color-primary-dark)]' },
+            { label: 'Attendance', to: '/attendance', icon: CheckCircle2, bg: 'bg-amber-50', text: 'text-amber-700' },
+            { label: 'Exams',      to: '/exam-held',  icon: ClipboardList, bg: 'bg-purple-50', text: 'text-purple-700' },
+            { label: 'Routine',    to: '/routines',   icon: CalendarDays,  bg: 'bg-blue-50', text: 'text-blue-700' },
+            { label: 'Add Student',to: '/students',   icon: Users,         bg: 'bg-emerald-50', text: 'text-emerald-700' },
           ].map(link => (
             <Link
               key={link.to}
               to={link.to}
-              className={`flex flex-col items-center justify-center p-5 rounded-[20px] ${link.bg} border border-zinc-100 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group`}
+              className={`flex flex-col items-center justify-center p-4 rounded-2xl ${link.bg} border border-zinc-200/60 hover:shadow-sm hover:scale-[1.01] transition-all duration-200 group`}
             >
-              <link.icon size={22} className={`${link.text} mb-2 group-hover:scale-110 transition-transform duration-200`} />
-              <span className={`text-[12px] font-bold ${link.text}`}>{link.label}</span>
+              <link.icon size={20} className={`${link.text} mb-1.5 group-hover:scale-110 transition-transform duration-200`} />
+              <span className={`text-xs font-bold ${link.text}`}>{link.label}</span>
             </Link>
           ))}
         </div>
 
         {/* Upcoming Exams */}
-        <div className="bg-white rounded-[28px] p-6 md:p-7 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-zinc-200">
+        <div className="card-surface p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-bold text-zinc-900">Upcoming Exams</h2>
-            <Link to="/exam-held" className="text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors">See all</Link>
+            <Link to="/exam-held" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">See all</Link>
           </div>
 
           {data.upcomingExams.length === 0 ? (

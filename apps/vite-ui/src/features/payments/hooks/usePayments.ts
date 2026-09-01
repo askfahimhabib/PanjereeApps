@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { paymentStore, manualDueStore } from '@/data/stores'
+import { paymentStore, manualDueStore, financeTransactionStore } from '@/data/stores'
 import {
   generateInvoiceNumber,
   type PaymentRecord,
@@ -7,6 +7,7 @@ import {
   type CollectPaymentDto,
   type CreateManualDueDto,
 } from '../types'
+import type { FinanceTransaction, FinancePaymentMethod } from '@/features/finance/types'
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
@@ -122,15 +123,17 @@ export function usePaymentStats() {
 
 // ─── Collect Payment ──────────────────────────────────────────────────────────
 
-function collectPayment(dto: CollectPaymentDto): PaymentRecord {
-  // TODO: replace with Supabase
+async function collectPayment(dto: CollectPaymentDto): Promise<PaymentRecord> {
   const subtotal = dto.items.reduce((sum, item) => sum + item.amount, 0)
   const discount = dto.discount_amount ?? 0
   const totalAmount = Math.max(0, subtotal - discount)
+  const invoiceNumber = generateInvoiceNumber()
+  const paymentId = crypto.randomUUID()
+  const dateObj = new Date(dto.paid_at)
 
   const record: PaymentRecord = {
-    id: crypto.randomUUID(),
-    invoice_number: generateInvoiceNumber(),
+    id: paymentId,
+    invoice_number: invoiceNumber,
     student_id: dto.student_id,
     student_name: dto.student_name,
     roll_number: dto.roll_number,
@@ -153,7 +156,47 @@ function collectPayment(dto: CollectPaymentDto): PaymentRecord {
     updated_at: new Date().toISOString(),
   }
 
-  return paymentStore.insert(record)
+  const saved = paymentStore.insert(record)
+
+  // Mark matching dues as paid
+  const studentDues = manualDueStore.getWhere(d => d.student_id === dto.student_id && !d.is_paid)
+  studentDues.forEach(due => {
+    const isMatched = dto.items.some(
+      it => it.label === due.label || (it.fee_type === due.fee_type && (it.month === due.month || !due.month))
+    )
+    if (isMatched) {
+      manualDueStore.update(due.id, {
+        is_paid: true,
+        paid_payment_id: paymentId,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  })
+
+  // Log in Central Finance Transactions
+  const feeLabel = dto.items.map(it => it.label).join(', ')
+  const tx: FinanceTransaction = {
+    id: crypto.randomUUID(),
+    type: 'INCOME',
+    category: 'STUDENT_FEE',
+    title: `Fee Collection: ${feeLabel || 'Tuition Fee'} - ${dto.student_name}`,
+    amount: totalAmount,
+    date: dto.paid_at.split('T')[0],
+    month: dateObj.getMonth() + 1,
+    year: dateObj.getFullYear(),
+    payment_method: dto.payment_method as FinancePaymentMethod,
+    reference_id: paymentId,
+    reference_type: 'PAYMENT',
+    invoice_no: invoiceNumber,
+    party_name: dto.student_name,
+    party_id: dto.student_id,
+    party_role: `Student (Roll ${dto.roll_number}${dto.class_name ? `, ${dto.class_name}` : ''})`,
+    notes: dto.note ?? undefined,
+    created_at: new Date().toISOString(),
+  }
+  financeTransactionStore.insert(tx)
+
+  return saved
 }
 
 export function useCollectFee() {
@@ -164,6 +207,12 @@ export function useCollectFee() {
       qc.invalidateQueries({ queryKey: paymentKeys.all })
       qc.invalidateQueries({ queryKey: paymentKeys.stats })
       qc.invalidateQueries({ queryKey: paymentKeys.dues })
+      qc.invalidateQueries({ queryKey: ['manual-dues'] })
+      qc.invalidateQueries({ queryKey: ['manual_dues'] })
+      qc.invalidateQueries({ queryKey: ['student_fee_ledger'] })
+      qc.invalidateQueries({ queryKey: ['daily_cash_register'] })
+      qc.invalidateQueries({ queryKey: ['finance_transactions'] })
+      qc.invalidateQueries({ queryKey: ['finance_overview'] })
     },
   })
 }
@@ -196,7 +245,7 @@ export function useStudentManualDues(studentId: string | null) {
 
 // ─── Create Manual Due ────────────────────────────────────────────────────────
 
-function createManualDue(dto: CreateManualDueDto): ManualDue {
+async function createManualDue(dto: CreateManualDueDto): Promise<ManualDue> {
   // TODO: replace with Supabase
   const due: ManualDue = {
     id: crypto.randomUUID(),
@@ -234,7 +283,7 @@ export function useCreateManualDue() {
 
 // ─── Mark Manual Due as Paid ──────────────────────────────────────────────────
 
-function markDuePaid({ dueId, paymentId }: { dueId: string; paymentId: string }): ManualDue {
+async function markDuePaid({ dueId, paymentId }: { dueId: string; paymentId: string }): Promise<ManualDue> {
   return manualDueStore.update(dueId, {
     is_paid: true,
     paid_payment_id: paymentId,
@@ -258,7 +307,7 @@ export function useMarkDuePaid() {
 export function useDeleteManualDue() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => { manualDueStore.remove(id) },
+    mutationFn: async (id: string) => { manualDueStore.remove(id) },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: paymentKeys.dues })
       qc.invalidateQueries({ queryKey: paymentKeys.stats })
@@ -271,7 +320,7 @@ export function useDeleteManualDue() {
 export function useDeletePayment() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => { paymentStore.remove(id) },
+    mutationFn: async (id: string) => { paymentStore.remove(id) },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: paymentKeys.all })
       qc.invalidateQueries({ queryKey: paymentKeys.stats })

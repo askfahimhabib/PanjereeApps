@@ -1,4 +1,4 @@
-﻿import { X, Printer, Download } from 'lucide-react'
+import { X, Printer } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import type { PaymentRecord } from '../types'
 import {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { subjectStore } from '@/data/stores'
+import { subjectStore, classStore } from '@/data/stores'
 import type { Subject, SubjectFormData, SubjectPaper, ClassGroupType } from './types'
 
 function generateId() {
@@ -63,15 +63,23 @@ export function useSubjects() {
   }
 
   const saveSubject = (data: SubjectFormData) => {
+    const matchedClass = classStore.getOne(data.classId)
+    const className = matchedClass ? matchedClass.name : `Class ${data.classId.replace('cls-', '')}`
+    const groupName = data.groupId as ClassGroupType | undefined
+
     if (editingSubject) {
-      const updated = subjectStore.update(editingSubject.id, { ...data })
+      const updated = subjectStore.update(editingSubject.id, {
+        ...data,
+        className,
+        groupName,
+      })
       setSubjects(prev => prev.map(s => s.id === editingSubject.id ? updated : s))
     } else {
       const newSub: Subject = {
         id: generateId(),
         ...data,
-        className: `Class ${data.classId.replace('cls-', '')}`,
-        groupName: data.groupId as ClassGroupType | undefined,
+        className,
+        groupName,
         createdAt: new Date().toISOString(),
       }
       subjectStore.insert(newSub)

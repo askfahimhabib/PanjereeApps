@@ -23,6 +23,25 @@ export interface Store<T extends { id: string }> {
   remove: (id: string) => void
   seed: (items: T[]) => void
   clear: () => void
+  subscribe: (callback: () => void) => () => void
+}
+
+function notifyStoreUpdate(key: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('lms_store_updated', { detail: { key } }))
+  }
+}
+
+export function subscribeStores(keys: string[], callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  const handler = (e: Event) => {
+    const custom = e as CustomEvent<{ key?: string }>
+    if (!custom.detail?.key || keys.includes(custom.detail.key)) {
+      callback()
+    }
+  }
+  window.addEventListener('lms_store_updated', handler)
+  return () => window.removeEventListener('lms_store_updated', handler)
 }
 
 export function createStore<T extends { id: string }>(key: string): Store<T> {
@@ -39,6 +58,7 @@ export function createStore<T extends { id: string }>(key: string): Store<T> {
 
   function writeAll(items: T[]): void {
     localStorage.setItem(storageKey, JSON.stringify(items))
+    notifyStoreUpdate(key)
   }
 
   return {
@@ -85,6 +105,11 @@ export function createStore<T extends { id: string }>(key: string): Store<T> {
 
     clear() {
       localStorage.removeItem(storageKey)
+      notifyStoreUpdate(key)
+    },
+
+    subscribe(callback: () => void) {
+      return subscribeStores([key], callback)
     },
   }
 }

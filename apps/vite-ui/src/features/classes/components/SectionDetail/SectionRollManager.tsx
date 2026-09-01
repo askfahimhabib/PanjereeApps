@@ -1,90 +1,99 @@
 import { useState } from 'react'
-import { Settings2, ArrowDownAZ, Lock, LockOpen, CheckCircle, AlertCircle } from 'lucide-react'
+import {
+  Sparkles,
+  Lock,
+  LockOpen,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react'
 
 interface SectionRollManagerProps {
   isFrozen: boolean
   onToggleFreeze: () => void
-  onAutoAssign: () => void
+  onOpenSmartRoll: () => void
 }
 
-export function SectionRollManager({ isFrozen, onToggleFreeze, onAutoAssign }: SectionRollManagerProps) {
+export function SectionRollManager({
+  isFrozen,
+  onToggleFreeze,
+  onOpenSmartRoll,
+}: SectionRollManagerProps) {
   const [confirming, setConfirming] = useState(false)
-  const [autoAssigned, setAutoAssigned] = useState(false)
-
-  const handleToggleClick = () => {
-    if (isFrozen) {
-      // Unfreeze — ask for confirmation
-      setConfirming(true)
-    } else {
-      // Freeze — ask for confirmation
-      setConfirming(true)
-    }
-  }
 
   const handleConfirm = () => {
     onToggleFreeze()
     setConfirming(false)
   }
 
-  const handleAutoAssign = () => {
-    onAutoAssign()
-    setAutoAssigned(true)
-    setTimeout(() => setAutoAssigned(false), 2000)
-  }
-
   return (
-    <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-5">
-      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-1">
-        <Settings2 className="w-4 h-4 text-blue-400" />
-        Roll Management
-      </h3>
-      <p className="text-xs text-zinc-600 mb-4">Manage student roll numbers for this section.</p>
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-indigo-600" />
+          Roll Number Hub
+        </h3>
+        {isFrozen ? (
+          <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+            Frozen
+          </span>
+        ) : (
+          <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+            Editable
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-zinc-500 mb-4">
+        Automated exam merit, alphabetical & roll swap management.
+      </p>
 
       {/* Status banner */}
-      <div className={`rounded-lg p-3 text-sm flex items-start gap-2 mb-4 ${
-        isFrozen
-          ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-          : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
-      }`}>
-        {isFrozen
-          ? <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
-          : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-        }
+      <div
+        className={`rounded-xl p-3 text-xs flex items-start gap-2.5 mb-4 ${
+          isFrozen
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-amber-50 border border-amber-200 text-amber-800'
+        }`}
+      >
+        {isFrozen ? (
+          <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
+        ) : (
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+        )}
         <div>
-          <p className="font-medium leading-tight">
-            {isFrozen ? 'Roll numbers are frozen' : 'Rolls not finalized'}
+          <p className="font-bold leading-tight">
+            {isFrozen ? 'Roll numbers are locked' : 'Rolls are customizable'}
           </p>
-          <p className="text-xs opacity-75 mt-0.5">
+          <p className="text-[11px] opacity-85 mt-0.5">
             {isFrozen
               ? 'Rolls finalized for exams. Unfreeze to make changes.'
-              : 'Finalize and freeze rolls before scheduling exams.'}
+              : 'Auto-assign by exam marks, names, or swap before exams.'}
           </p>
         </div>
       </div>
 
       {/* Confirmation prompt */}
       {confirming && (
-        <div className="mb-3 p-3 bg-zinc-100 border border-zinc-100 rounded-lg text-sm">
-          <p className="text-zinc-800 font-medium mb-2">
-            {isFrozen ? 'Unfreeze roll numbers?' : 'Freeze & finalize roll numbers?'}
+        <div className="mb-3.5 p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs">
+          <p className="text-zinc-900 font-bold mb-1">
+            {isFrozen ? 'Unfreeze roll numbers?' : 'Freeze & finalize rolls?'}
           </p>
-          <p className="text-xs text-zinc-600 mb-3">
+          <p className="text-zinc-500 text-[11px] mb-3">
             {isFrozen
-              ? 'This will allow roll edits again. Exams using these rolls may be affected.'
-              : 'Roll numbers will be locked for this section. Students cannot be reordered.'}
+              ? 'This will allow editing roll numbers again.'
+              : 'Roll numbers will be locked to prevent accidental changes during exams.'}
           </p>
           <div className="flex gap-2">
             <button
               onClick={handleConfirm}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium text-white transition-colors ${
-                isFrozen ? 'bg-slate-600 hover:bg-zinc-500' : 'bg-blue-600 hover:bg-blue-500'
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold text-white transition-colors cursor-pointer ${
+                isFrozen ? 'bg-zinc-700 hover:bg-zinc-800' : 'bg-indigo-600 hover:bg-indigo-700'
               }`}
             >
               Yes, {isFrozen ? 'Unfreeze' : 'Freeze'}
             </button>
             <button
               onClick={() => setConfirming(false)}
-              className="flex-1 py-1.5 rounded-lg text-xs font-medium text-zinc-800 border border-zinc-100 hover:bg-zinc-50 transition-colors"
+              className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-zinc-700 border border-zinc-200 hover:bg-zinc-100 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -94,38 +103,36 @@ export function SectionRollManager({ isFrozen, onToggleFreeze, onAutoAssign }: S
 
       {/* Actions */}
       <div className="space-y-2">
+        {/* Open Smart Roll Modal Button */}
         <button
-          disabled={isFrozen || autoAssigned}
-          onClick={handleAutoAssign}
-          className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-            autoAssigned
-              ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400'
-              : isFrozen
-              ? 'opacity-40 cursor-not-allowed bg-zinc-50 border-zinc-100 text-zinc-600'
-              : 'bg-zinc-50 border-zinc-100 hover:bg-zinc-50 hover:border-zinc-100 text-zinc-800'
-          }`}
+          disabled={isFrozen}
+          onClick={onOpenSmartRoll}
+          className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
         >
-          {autoAssigned ? (
-            <CheckCircle className="w-4 h-4" />
-          ) : (
-            <ArrowDownAZ className="w-4 h-4" />
-          )}
-          {autoAssigned ? 'Rolls Assigned!' : 'Auto-assign Alphabetically'}
+          <Sparkles className="w-4 h-4 text-indigo-600" />
+          <span>Smart Roll Engine</span>
         </button>
 
+        {/* Toggle Freeze */}
         <button
-          onClick={handleToggleClick}
+          onClick={() => setConfirming(true)}
           disabled={confirming}
-          className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
             isFrozen
-              ? 'bg-zinc-100 hover:bg-slate-600 border border-zinc-100 text-zinc-800'
-              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
+              ? 'bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-800'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
           }`}
         >
           {isFrozen ? (
-            <><LockOpen className="w-4 h-4" /> Unfreeze Rolls</>
+            <>
+              <LockOpen className="w-3.5 h-3.5" />
+              <span>Unfreeze Rolls</span>
+            </>
           ) : (
-            <><Lock className="w-4 h-4" /> Freeze & Finalize Rolls</>
+            <>
+              <Lock className="w-3.5 h-3.5" />
+              <span>Freeze & Finalize Rolls</span>
+            </>
           )}
         </button>
       </div>

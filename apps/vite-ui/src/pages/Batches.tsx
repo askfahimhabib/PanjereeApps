@@ -5,6 +5,7 @@ import { BatchDetailDrawer } from '../features/batches/components/BatchDetailDra
 import { STATUS_CONFIG, EXAM_LABELS } from '../features/batches/types'
 import type { Batch, BatchStatus, TargetExam } from '../features/batches/types'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 export function Batches() {
@@ -29,9 +30,9 @@ export function Batches() {
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-indigo-500/20 shrink-0"
+          className="btn-primary"
         >
-          <Plus size={17} />
+          <Plus size={16} />
           New Batch
         </button>
       </div>
@@ -39,45 +40,45 @@ export function Batches() {
       {/* ── Stats ──────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: 'Total Batches', value: stats.total, color: 'text-indigo-600', bg: 'bg-indigo-50', icon: BookOpen },
-          { label: 'Ongoing', value: stats.ongoing, color: 'text-green-600', bg: 'bg-green-50', icon: TrendingUp },
-          { label: 'Upcoming', value: stats.upcoming, color: 'text-blue-600', bg: 'bg-blue-50', icon: Calendar },
-          { label: 'Completed', value: stats.completed, color: 'text-zinc-500', bg: 'bg-zinc-100', icon: GraduationCap },
-          { label: 'Total Students', value: stats.totalStudents, color: 'text-purple-600', bg: 'bg-purple-50', icon: Users },
+          { label: 'Total Batches', value: stats.total, color: 'text-indigo-700', bg: 'bg-indigo-50', icon: BookOpen },
+          { label: 'Ongoing', value: stats.ongoing, color: 'text-emerald-700', bg: 'bg-emerald-50', icon: TrendingUp },
+          { label: 'Upcoming', value: stats.upcoming, color: 'text-blue-700', bg: 'bg-blue-50', icon: Calendar },
+          { label: 'Completed', value: stats.completed, color: 'text-zinc-600', bg: 'bg-zinc-100', icon: GraduationCap },
+          { label: 'Total Students', value: stats.totalStudents, color: 'text-purple-700', bg: 'bg-purple-50', icon: Users },
         ].map(s => (
-          <div key={s.label} className="bg-white border border-zinc-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-            <div className={`w-8 h-8 rounded-xl ${s.bg} flex items-center justify-center shrink-0`}>
-              <s.icon size={16} className={s.color} />
+          <div key={s.label} className="card-surface p-4 flex items-center gap-3.5">
+            <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0`}>
+              <s.icon size={18} className={s.color} />
             </div>
             <div>
-              <p className={`text-xl font-bold leading-none ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-bold text-zinc-900 leading-none tracking-tight">{s.value}</p>
+              <p className="text-xs text-zinc-500 mt-1">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* ── Filters ────────────────────────────────────── */}
-      <div className="bg-white border border-zinc-100 rounded-2xl p-4 shadow-sm flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-44">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+      <div className="filter-container">
+        <div className="relative flex-1 min-w-48">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search batches..."
-            className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-xl bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+            className="input-field w-full pl-9.5 pr-4"
           />
         </div>
-        <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl">
+        <div className="pill-tab-container">
           {(['ALL', 'UPCOMING', 'ONGOING', 'COMPLETED'] as const).map(s => (
             <button key={s} onClick={() => setFilterStatus(s as BatchStatus | 'ALL')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${filterStatus === s ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}>
+              className={filterStatus === s ? 'pill-tab-active' : 'pill-tab-inactive'}>
               {s === 'ALL' ? 'All' : STATUS_CONFIG[s as BatchStatus].label}
             </button>
           ))}
         </div>
         <select value={filterExam} onChange={e => setFilterExam(e.target.value as TargetExam | 'ALL')}
-          className="px-3 py-2 text-sm border border-zinc-200 rounded-xl bg-zinc-50 focus:outline-none">
+          className="input-field">
           <option value="ALL">All Exams</option>
           {(Object.keys(EXAM_LABELS) as TargetExam[]).map(e => (
             <option key={e} value={e}>{EXAM_LABELS[e]}</option>
@@ -247,9 +248,9 @@ function BatchModal({ editing, onClose, onSave }: {
     onSave(form)
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-zinc-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
@@ -257,7 +258,7 @@ function BatchModal({ editing, onClose, onSave }: {
             </div>
             <h2 className="font-bold text-zinc-900">{editing ? 'Edit Batch' : 'New Batch'}</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors"><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
@@ -309,12 +310,13 @@ function BatchModal({ editing, onClose, onSave }: {
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-medium text-zinc-600 border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">
+            <button type="submit" className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20">
               {editing ? 'Update' : 'Create'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

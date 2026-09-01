@@ -217,7 +217,7 @@ function StudentPickerModal({ available, onClose, onAssign }: {
     available.filter(s =>
       !search ||
       s.fullNameEn.toLowerCase().includes(search.toLowerCase()) ||
-      s.fullNameBn.includes(search) ||
+      (s.fullNameBn ?? '').includes(search) ||
       s.studentId.toLowerCase().includes(search.toLowerCase()) ||
       (s.mobile ?? '').includes(search) ||
       (s.className ?? '').toLowerCase().includes(search.toLowerCase())

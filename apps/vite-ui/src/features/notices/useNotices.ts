@@ -1,16 +1,10 @@
 import { useState } from 'react'
-import { createStore } from '@/lib/localStore'
+import { noticeStore } from '@/data/stores'
 import type { Notice, CreateNoticeDto } from './types'
-
-// ─── Store ────────────────────────────────────────────────────
-
-const store = createStore<Notice>('notices')
-
-// ─── Hook ─────────────────────────────────────────────────────
 
 export function useNotices() {
   const [notices, setNotices] = useState<Notice[]>(() =>
-    store.getAll().sort((a, b) => {
+    noticeStore.getAll().sort((a, b) => {
       // Pinning: URGENT first, then IMPORTANT, then NORMAL; within each group, newest first
       const priorityOrder = { URGENT: 0, IMPORTANT: 1, NORMAL: 2 }
       const pa = priorityOrder[a.priority]
@@ -22,7 +16,7 @@ export function useNotices() {
 
   const refresh = () => {
     setNotices(
-      store.getAll().sort((a, b) => {
+      noticeStore.getAll().sort((a, b) => {
         const priorityOrder = { URGENT: 0, IMPORTANT: 1, NORMAL: 2 }
         const pa = priorityOrder[a.priority]
         const pb = priorityOrder[b.priority]
@@ -33,27 +27,32 @@ export function useNotices() {
   }
 
   const createNotice = (dto: CreateNoticeDto) => {
-    store.insert({
+    noticeStore.insert({
       id: crypto.randomUUID(),
       ...dto,
       isPublished: true,
       publishedAt: new Date().toISOString(),
-      createdBy: 'Admin',
+      createdBy: 'Academic Head',
     })
     refresh()
   }
 
+  const updateNotice = (id: string, dto: Partial<CreateNoticeDto>) => {
+    noticeStore.update(id, dto)
+    refresh()
+  }
+
   const deleteNotice = (id: string) => {
-    store.remove(id)
+    noticeStore.remove(id)
     refresh()
   }
 
   const togglePublish = (id: string) => {
-    const notice = store.getOne(id)
+    const notice = noticeStore.getOne(id)
     if (!notice) return
-    store.update(id, { isPublished: !notice.isPublished })
+    noticeStore.update(id, { isPublished: !notice.isPublished })
     refresh()
   }
 
-  return { notices, createNotice, deleteNotice, togglePublish }
+  return { notices, createNotice, updateNotice, deleteNotice, togglePublish, refresh }
 }

@@ -1,214 +1,243 @@
-import { useState, useMemo } from 'react'
-import { CalendarDays, Save, CheckCheck, Users } from 'lucide-react'
-import { classStore, sectionStore, studentStore } from '@/data/stores'
-import { useAttendance, buildSummary, todayString } from '@/features/attendance/useAttendance'
-import { AttendanceRow } from '@/features/attendance/components/AttendanceRow'
-import { AttendanceSummaryBar } from '@/features/attendance/components/AttendanceSummaryBar'
-import type { AttendanceStatus } from '@/features/attendance/types'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import {
+  Users,
+  Briefcase,
+  Calendar,
+  FileBarChart2,
+  TrendingUp,
+  Clock,
+  Award,
+} from 'lucide-react'
+import { useAttendanceHubKPI, todayString } from '@/features/attendance/useAttendance'
+import { StudentAttendanceTab } from '@/features/attendance/components/StudentAttendanceTab'
+import { TeacherAttendanceTab } from '@/features/attendance/components/TeacherAttendanceTab'
+import { StudentLeavesTab } from '@/features/attendance/components/StudentLeavesTab'
+import { TeacherLeavesTab } from '@/features/attendance/components/TeacherLeavesTab'
+import { AttendanceReportsTab } from '@/features/attendance/components/AttendanceReportsTab'
 
-// ─── Quick-fill statuses ──────────────────────────────────────
-const QUICK_FILL: { label: string; status: AttendanceStatus; color: string }[] = [
-  { label: 'All Present',  status: 'PRESENT', color: 'bg-emerald-600 hover:bg-emerald-700' },
-  { label: 'All Absent',   status: 'ABSENT',  color: 'bg-red-600 hover:bg-red-700' },
-]
+type AttendanceTabType =
+  | 'student-attendance'
+  | 'teacher-attendance'
+  | 'student-leaves'
+  | 'teacher-leaves'
+  | 'reports'
 
 export function Attendance() {
-  // Load only active classes from store (fallback to mockData defaults)
-  const activeClasses = useMemo(() => {
-    const stored = classStore.getAll().map(c => ({ isActive: true, ...c } as ClassItem & { isActive: boolean }))
-    return stored.length > 0 ? stored.filter(c => c.isActive !== false) : []
-  }, [])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = (searchParams.get('tab') as AttendanceTabType) || 'student-attendance'
+  const [activeTab, setActiveTab] = useState<AttendanceTabType>(tabParam)
+  const today = todayString()
 
-  const [selectedClassId,   setSelectedClassId]   = useState<string>(activeClasses[0]?.id ?? '')
-  const [selectedSectionId, setSelectedSectionId] = useState<string>('')
-  const [date, setDate]                           = useState<string>(todayString())
-  const [isSaved, setIsSaved]                     = useState(false)
+  // Sync state with URL params
+  useEffect(() => {
+    if (searchParams.get('tab')) {
+      setActiveTab(searchParams.get('tab') as AttendanceTabType)
+    }
+  }, [searchParams])
 
-  // Sections for the selected class
-  const classSections = useMemo(
-    () => sectionStore.getWhere(s => s.classId === selectedClassId),
-    [selectedClassId]
-  )
-
-  // Auto-select first section when class changes
-  const activeSectionId = selectedSectionId || classSections[0]?.id || ''
-
-  // Students for this class+section (ACTIVE only)
-  const sectionStudents = useMemo(() => {
-    return studentStore
-      .getWhere(s => s.classId === selectedClassId && s.status === 'ACTIVE')
-      .sort((a, b) => (parseInt(a.rollNumber) || 0) - (parseInt(b.rollNumber) || 0))
-  }, [selectedClassId, activeSectionId])
-
-  const studentIds = useMemo(() => sectionStudents.map(s => s.id), [sectionStudents])
-
-  // Attendance hook
-  const { draft, markStudent, markAll, saveDraft } = useAttendance(
-    selectedClassId,
-    activeSectionId,
-    date
-  )
-
-  const summary = buildSummary(draft, sectionStudents.length)
-
-  const handleSave = () => {
-    // Build proper records with student names before saving
-    const nameMap: Record<string, { name: string; roll: string }> = {}
-    for (const s of sectionStudents) nameMap[s.id] = { name: s.fullNameEn, roll: s.rollNumber }
-
-    saveDraft(studentIds, 'Teacher')
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 3000)
+  const handleTabChange = (tab: AttendanceTabType) => {
+    setActiveTab(tab)
+    setSearchParams({ tab })
   }
 
-  const handleClassChange = (classId: string) => {
-    setSelectedClassId(classId)
-    setSelectedSectionId('')
-    setIsSaved(false)
-  }
+  // Master KPI data for top cards
+  const kpi = useAttendanceHubKPI(today)
 
   return (
-    <div className="space-y-5">
-      {/* ── Page Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+    <div className="space-y-6 pb-12">
+      {/* ── 1. Master Page Header ────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Attendance</h1>
-          <p className="text-zinc-600 mt-1 text-sm">Daily student attendance tracking</p>
-        </div>
-
-        {/* Date Picker */}
-        <div className="flex items-center gap-2 bg-white border border-zinc-100 px-3 py-2 rounded-xl">
-          <CalendarDays size={16} className="text-zinc-600" />
-          <input
-            type="date"
-            value={date}
-            onChange={e => { setDate(e.target.value); setIsSaved(false) }}
-            className="bg-transparent text-sm text-zinc-800 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      {/* ── Class Selector ───────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-zinc-600 uppercase tracking-wider flex-shrink-0">Class:</span>
-        <div className="flex gap-1.5 flex-wrap">
-          {activeClasses.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => handleClassChange(c.id)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                selectedClassId === c.id
-                  ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
-                  : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:text-zinc-800 hover:bg-zinc-50'
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Section Selector (if multiple sections exist) ────── */}
-      {classSections.length > 1 && (
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-zinc-600 uppercase tracking-wider flex-shrink-0">Section:</span>
-          <div className="flex gap-1.5">
-            {classSections.map(sec => (
-              <button
-                key={sec.id}
-                onClick={() => { setSelectedSectionId(sec.id); setIsSaved(false) }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                  activeSectionId === sec.id
-                    ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:text-zinc-800 hover:bg-zinc-50'
-                }`}
-              >
-                Section {sec.name}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-700">
+              Institutional Command Hub
+            </span>
+            <span className="text-xs text-zinc-400 font-medium">Academic Session 2024-2025</span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">
+            Attendance & Leaves Management
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+            Unified register for daily student roll-calls, faculty attendance, approved leaves, and eligibility audit
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* ── Main Card ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
-
-        {/* Card Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+      {/* ── 2. Top Executive Summary Metrics Strip (এক নজরে সার্বিক মেট্রিক্স) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Today Student Attendance Rate */}
+        <div className="bg-white border border-zinc-200 rounded-3xl p-5 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-zinc-800">
-              {activeClasses.find(c => c.id === selectedClassId)?.name}
-              {classSections.length > 0 && ` — Section ${classSections.find(s => s.id === activeSectionId)?.name ?? classSections[0]?.name ?? ''}`}
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              Today&apos;s Attendance Rate
             </p>
-            <p className="text-xs text-zinc-600 mt-0.5">
-              {sectionStudents.length} active students · {new Date(date).toLocaleDateString('en-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-
-          {/* Quick fill + Save */}
-          <div className="flex items-center gap-2">
-            {QUICK_FILL.map(qf => (
-              <button
-                key={qf.status}
-                onClick={() => { markAll(qf.status, studentIds); setIsSaved(false) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all ${qf.color}`}
-              >
-                <CheckCheck size={13} />
-                {qf.label}
-              </button>
-            ))}
-            <button
-              onClick={handleSave}
-              disabled={sectionStudents.length === 0}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
-            >
-              <Save size={13} />
-              Save
-            </button>
-          </div>
-        </div>
-
-        {/* Summary Bar */}
-        <div className="px-5 py-4 border-b border-zinc-100 bg-white">
-          <AttendanceSummaryBar summary={summary} isSaved={isSaved} />
-        </div>
-
-        {/* Student List */}
-        <div className="p-4 space-y-2">
-          {sectionStudents.length === 0 ? (
-            <div className="flex flex-col items-center py-16 text-zinc-400">
-              <Users size={36} className="mb-3 opacity-25" />
-              <p className="text-sm font-medium text-zinc-500">No active students found for this class.</p>
-              <p className="text-xs text-zinc-400 mt-1">Add students from the Students module first.</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-emerald-700 font-mono">
+                {kpi.todayAttendanceRate}%
+              </span>
+              <span className="text-xs font-semibold text-zinc-500">
+                ({kpi.todayStudentsPresent}/{kpi.todayStudentsTotal} Students)
+              </span>
             </div>
-          ) : (
-            sectionStudents.map(student => (
-              <AttendanceRow
-                key={student.id}
-                studentId={student.id}
-                rollNumber={student.rollNumber}
-                fullNameEn={student.fullNameEn}
-                fullNameBn={student.fullNameBn}
-                status={draft[student.id]}
-                onChange={(id, status) => { markStudent(id, status); setIsSaved(false) }}
+            <div className="w-full bg-zinc-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
+              <div
+                className="h-full bg-emerald-600 rounded-full"
+                style={{ width: `${Math.min(100, kpi.todayAttendanceRate)}%` }}
               />
-            ))
-          )}
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+            <TrendingUp size={22} />
+          </div>
         </div>
 
-        {/* Sticky footer save button for long lists */}
-        {sectionStudents.length > 8 && (
-          <div className="sticky bottom-0 px-5 py-3 border-t border-zinc-100 bg-white backdrop-blur-sm flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={sectionStudents.length === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-900/30"
-            >
-              <Save size={15} />
-              Save Attendance
-            </button>
+        {/* Card 2: Students Absent / On Leave */}
+        <div className="bg-white border border-zinc-200 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              Students Absent / Leave
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-rose-700 font-mono">
+                {kpi.todayStudentsAbsent}
+              </span>
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                {kpi.todayStudentsOnLeave} on leave
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-2 font-medium">
+              Guardian SMS alert available for all absentees
+            </p>
           </div>
-        )}
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+            <Users size={22} />
+          </div>
+        </div>
+
+        {/* Card 3: Teachers Presence */}
+        <div className="bg-white border border-zinc-200 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              Faculty Presence Today
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-zinc-900 font-mono">
+                {kpi.todayTeachersPresent}/{kpi.todayTeachersTotal}
+              </span>
+              <span className="text-xs font-semibold text-emerald-700">Present</span>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-2 font-medium">
+              {kpi.todayTeachersOnLeave} faculty on approved leave
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <Briefcase size={22} />
+          </div>
+        </div>
+
+        {/* Card 4: Pending Leave Requests */}
+        <div
+          onClick={() => handleTabChange('student-leaves')}
+          className="bg-white border border-zinc-200 rounded-3xl p-5 shadow-xs flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group"
+        >
+          <div>
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider group-hover:text-amber-700 transition-colors">
+              Pending Leave Reviews
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-amber-700 font-mono">
+                {kpi.pendingLeavesCount}
+              </span>
+              <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                Action Required
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-2 font-medium">
+              Click to view &amp; approve applications
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+            <Clock size={22} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Main Navigation Tab Pills ─────────────────────────────────── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-zinc-200 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => handleTabChange('student-attendance')}
+          className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'student-attendance'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
+          }`}
+        >
+          <Users size={16} />
+          <span>Student Attendance</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('teacher-attendance')}
+          className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'teacher-attendance'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
+          }`}
+        >
+          <Briefcase size={16} />
+          <span>Teacher &amp; Staff Attendance</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('student-leaves')}
+          className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'student-leaves'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
+          }`}
+        >
+          <Calendar size={16} />
+          <span>Student Leaves</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('teacher-leaves')}
+          className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'teacher-leaves'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
+          }`}
+        >
+          <Award size={16} />
+          <span>Faculty Leaves &amp; Balance</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('reports')}
+          className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'reports'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
+          }`}
+        >
+          <FileBarChart2 size={16} />
+          <span>Reports &amp; At-Risk Analytics</span>
+        </button>
+      </div>
+
+      {/* ── 4. Active Tab Content ────────────────────────────────────────── */}
+      <div>
+        {activeTab === 'student-attendance' && <StudentAttendanceTab />}
+        {activeTab === 'teacher-attendance' && <TeacherAttendanceTab />}
+        {activeTab === 'student-leaves' && <StudentLeavesTab />}
+        {activeTab === 'teacher-leaves' && <TeacherLeavesTab />}
+        {activeTab === 'reports' && <AttendanceReportsTab />}
       </div>
     </div>
   )

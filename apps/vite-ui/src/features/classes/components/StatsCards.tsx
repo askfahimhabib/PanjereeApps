@@ -1,4 +1,4 @@
-import { BookOpen, Users, LayoutGrid, DollarSign, History } from 'lucide-react'
+import { BookOpen, Users, LayoutGrid, DollarSign, ArrowUpRight, History } from 'lucide-react'
 
 interface StatsCardsProps {
   totalClasses: number
@@ -8,96 +8,92 @@ interface StatsCardsProps {
   onFeeCardClick?: () => void
 }
 
-const cards = [
-  {
-    key: 'totalClasses' as const,
-    label: 'Total Classes',
-    icon: BookOpen,
-    gradient: 'from-blue-600/20 to-blue-900/10',
-    border: 'border-blue-500/20',
-    iconBg: 'bg-blue-600/20',
-    iconColor: 'text-blue-400',
-    valueColor: 'text-blue-300',
-  },
-  {
-    key: 'totalStudents' as const,
-    label: 'Total Students',
-    icon: Users,
-    gradient: 'from-emerald-600/20 to-emerald-900/10',
-    border: 'border-emerald-500/20',
-    iconBg: 'bg-emerald-600/20',
-    iconColor: 'text-emerald-400',
-    valueColor: 'text-emerald-300',
-  },
-  {
-    key: 'totalSections' as const,
-    label: 'Total Sections',
-    icon: LayoutGrid,
-    gradient: 'from-purple-600/20 to-purple-900/10',
-    border: 'border-purple-500/20',
-    iconBg: 'bg-purple-600/20',
-    iconColor: 'text-purple-400',
-    valueColor: 'text-purple-300',
-  },
-  {
-    key: 'feeCollected' as const,
-    label: 'Collected This Month',
-    icon: DollarSign,
-    gradient: 'from-amber-600/20 to-amber-900/10',
-    border: 'border-amber-500/20',
-    iconBg: 'bg-amber-600/20',
-    iconColor: 'text-amber-400',
-    valueColor: 'text-amber-300',
-    format: (v: number) => {
-      if (v === 0) return '৳ 0'
-      if (v < 1000) return `৳ ${v.toLocaleString('en-BD')}`
-      if (v < 100000) return `৳ ${(v / 1000).toFixed(1).replace(/\.0$/, '')}k`
-      return `৳ ${(v / 100000).toFixed(1).replace(/\.0$/, '')}L`
-    },
-    clickable: true,
-  },
-]
-
-export function StatsCards({ totalClasses, totalStudents, totalSections, feeCollected, onFeeCardClick }: StatsCardsProps) {
-  const values = { totalClasses, totalStudents, totalSections, feeCollected }
+export function StatsCards({
+  totalClasses,
+  totalStudents,
+  totalSections,
+  feeCollected,
+  onFeeCardClick,
+}: StatsCardsProps) {
+  const formatMoney = (v: number) => {
+    if (v === 0) return '৳ 0'
+    if (v < 1000) return `৳ ${v.toLocaleString('en-BD')}`
+    if (v < 100000) return `৳ ${(v / 1000).toFixed(1).replace(/\.0$/, '')}k`
+    return `৳ ${(v / 100000).toFixed(1).replace(/\.0$/, '')}L`
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map(card => {
-        const Icon = card.icon
-        const raw = values[card.key]
-        const display = 'format' in card ? card.format?.(raw) ?? raw : raw
-        const isClickable = 'clickable' in card && card.clickable && !!onFeeCardClick
-
-        return (
-          <div
-            key={card.key}
-            onClick={isClickable ? onFeeCardClick : undefined}
-            className={`relative overflow-hidden rounded-xl border ${card.border} bg-gradient-to-br ${card.gradient} p-5 backdrop-blur-sm transition-all hover:-translate-y-0.5 ${
-              isClickable ? 'cursor-pointer hover:ring-1 hover:ring-amber-500/40 hover:shadow-lg hover:shadow-amber-900/20' : ''
-            }`}
-          >
-            <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-20 bg-white" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-zinc-600 uppercase tracking-wider mb-2">
-                  {card.label}
-                </p>
-                <p className={`text-3xl font-bold ${card.valueColor}`}>{display}</p>
-              </div>
-              <div className={`${card.iconBg} p-2.5 rounded-lg`}>
-                <Icon className={card.iconColor} size={20} />
-              </div>
-            </div>
-            {isClickable && (
-              <div className="mt-2 flex items-center gap-1 text-[10px] text-amber-500/70">
-                <History size={9} />
-                <span>View history</span>
-              </div>
-            )}
+      {/* Total Classes */}
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs hover:shadow-md hover:border-indigo-200 transition-all">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            Total Classes
+          </p>
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+            <BookOpen size={18} />
           </div>
-        )
-      })}
+        </div>
+        <div className="mt-3">
+          <p className="text-2xl sm:text-3xl font-black text-zinc-900">{totalClasses}</p>
+          <p className="text-xs text-zinc-500 font-medium mt-1">Active Curriculums</p>
+        </div>
+      </div>
+
+      {/* Total Students */}
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs hover:shadow-md hover:border-emerald-200 transition-all">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            Total Students
+          </p>
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+            <Users size={18} />
+          </div>
+        </div>
+        <div className="mt-3">
+          <p className="text-2xl sm:text-3xl font-black text-zinc-900">{totalStudents}</p>
+          <p className="text-xs text-emerald-600 font-semibold mt-1">Enrolled Across Classes</p>
+        </div>
+      </div>
+
+      {/* Total Sections */}
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs hover:shadow-md hover:border-purple-200 transition-all">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            Total Sections
+          </p>
+          <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+            <LayoutGrid size={18} />
+          </div>
+        </div>
+        <div className="mt-3">
+          <p className="text-2xl sm:text-3xl font-black text-zinc-900">{totalSections}</p>
+          <p className="text-xs text-purple-600 font-semibold mt-1">Classroom Groups</p>
+        </div>
+      </div>
+
+      {/* Collected This Month */}
+      <div
+        onClick={onFeeCardClick}
+        className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            Fee This Month
+          </p>
+          <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 group-hover:bg-amber-100 transition-colors">
+            <DollarSign size={18} />
+          </div>
+        </div>
+        <div className="mt-3">
+          <p className="text-2xl sm:text-3xl font-black text-zinc-900">{formatMoney(feeCollected)}</p>
+          <div className="flex items-center gap-1 text-xs text-amber-600 font-semibold mt-1">
+            <History size={12} />
+            <span>View Fee Structure</span>
+            <ArrowUpRight size={12} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

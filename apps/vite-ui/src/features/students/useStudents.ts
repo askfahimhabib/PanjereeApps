@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { studentStore as store } from '@/data/stores'
+import { studentStore as store, classStore, sectionStore, batchStore } from '@/data/stores'
 import type { Student, StudentType, StudentStatus, StudentFormData } from './types'
 import { initialFormData } from './types'
+import { deriveStudentFeeStatus } from '@/features/payments/utils/feeStatus'
 
 const PAGE_SIZE = 10
 
@@ -11,6 +12,8 @@ export interface StudentFilters {
   search: string
   type: StudentType | 'ALL'
   classId: string
+  batchId: string
+  feeStatus: 'ALL' | 'PAID' | 'DUE' | 'PARTIAL'
   status: StudentStatus | 'ALL'
   isAlumni?: boolean
 }
@@ -19,7 +22,15 @@ export interface StudentFilters {
 
 export function useStudents(initialIsAlumni: boolean = false) {
   const [students, setStudents]               = useState<Student[]>(() => store.getAll())
-  const [filters, setFilters]                 = useState<StudentFilters>({ search: '', type: 'ALL', classId: '', status: 'ALL', isAlumni: initialIsAlumni })
+  const [filters, setFilters]                 = useState<StudentFilters>({
+    search: '',
+    type: 'ALL',
+    classId: '',
+    batchId: '',
+    feeStatus: 'ALL',
+    status: 'ALL',
+    isAlumni: initialIsAlumni,
+  })
   const [currentPage, setCurrentPage]         = useState(1)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [isDrawerOpen, setIsDrawerOpen]       = useState(false)
@@ -28,7 +39,7 @@ export function useStudents(initialIsAlumni: boolean = false) {
   const [formData, setFormData]               = useState<StudentFormData>(initialFormData)
   const [currentStep, setCurrentStep]         = useState(1)
 
-  // Sync state from store on mount (in case another tab wrote to it)
+  // Sync state from store on mount
   useEffect(() => {
     setStudents(store.getAll())
   }, [])
@@ -48,19 +59,26 @@ export function useStudents(initialIsAlumni: boolean = false) {
       const matchesSearch =
         !q ||
         s.fullNameEn.toLowerCase().includes(q) ||
-        s.fullNameBn.includes(q) ||
+        (s.fullNameBn && s.fullNameBn.includes(q)) ||
         s.studentId.toLowerCase().includes(q) ||
         s.rollNumber.includes(q) ||
-        s.mobile.includes(q)
+        s.mobile.includes(q) ||
+        (s.schoolName && s.schoolName.toLowerCase().includes(q)) ||
+        (s.className && s.className.toLowerCase().includes(q)) ||
+        (s.batchName && s.batchName.toLowerCase().includes(q))
 
-      const matchesType    = filters.type === 'ALL'    || s.type    === filters.type
-      const matchesClass   = !filters.classId           || s.classId === filters.classId
-      const matchesStatus  = filters.status === 'ALL'  || s.status  === filters.status
-      
+      const matchesType    = filters.type === 'ALL' || s.type === filters.type
+      const matchesClass   = !filters.classId || s.classId === filters.classId
+      const matchesBatch   = !filters.batchId || s.batchId === filters.batchId
+      const matchesStatus  = filters.status === 'ALL' || s.status === filters.status
+
+      const feeStatus = deriveStudentFeeStatus(s.id)
+      const matchesFee     = filters.feeStatus === 'ALL' || feeStatus === filters.feeStatus
+
       const isAlumniStudent = ['PASSED', 'LEFT', 'SUSPENDED'].includes(s.status)
-      const matchesAlumni = filters.isAlumni ? isAlumniStudent : !isAlumniStudent
+      const matchesAlumni  = filters.isAlumni ? isAlumniStudent : !isAlumniStudent
 
-      return matchesSearch && matchesType && matchesClass && matchesStatus && matchesAlumni
+      return matchesSearch && matchesType && matchesClass && matchesBatch && matchesFee && matchesStatus && matchesAlumni
     })
   }, [students, filters])
 
@@ -78,7 +96,15 @@ export function useStudents(initialIsAlumni: boolean = false) {
   }
 
   function resetFilters() {
-    setFilters({ search: '', type: 'ALL', classId: '', status: 'ALL', isAlumni: filters.isAlumni })
+    setFilters({
+      search: '',
+      type: 'ALL',
+      classId: '',
+      batchId: '',
+      feeStatus: 'ALL',
+      status: 'ALL',
+      isAlumni: filters.isAlumni,
+    })
     setCurrentPage(1)
   }
 
@@ -93,10 +119,13 @@ export function useStudents(initialIsAlumni: boolean = false) {
     setTimeout(() => setSelectedStudent(null), 300)
   }
 
-  // ── Modal / Wizard ─────────────────────────────────────────
-  function openModal() {
+  // ── Modal / Stepper ────────────────────────────────────────
+  function openModal(defaultType?: StudentType) {
     setEditingStudentId(null)
-    setFormData(initialFormData)
+    setFormData({
+      ...initialFormData,
+      type: defaultType || 'REGULAR',
+    })
     setCurrentStep(1)
     setIsModalOpen(true)
   }
@@ -104,50 +133,50 @@ export function useStudents(initialIsAlumni: boolean = false) {
   function openEditModal(student: Student) {
     setEditingStudentId(student.id)
     setFormData({
+      type: student.type || 'REGULAR',
       fullNameEn: student.fullNameEn,
       fullNameBn: student.fullNameBn || '',
       gender: student.gender,
       dateOfBirth: student.dateOfBirth,
       bloodGroup: student.bloodGroup || '',
-      religion: student.religion,
-      nationality: student.nationality,
-      type: student.type,
-      classId: student.classId || '',
-      sectionId: student.sectionId || '',
-      groupId: student.groupId || '',
-      shift: student.shift || '',
-      batchId: student.batchId || '',
-      targetExam: student.targetExam || '',
-      version: student.version,
-      session: student.session,
-      admissionDate: student.admissionDate,
-      admissionNumber: student.admissionNumber,
-      previousSchool: student.previousSchool || '',
-      status: student.status,
       mobile: student.mobile,
-      whatsapp: student.whatsapp || '',
       email: student.email || '',
-      presentAddress: student.presentAddress,
-      permanentAddress: student.permanentAddress || '',
-      sameAddress: student.presentAddress === (student.permanentAddress || ''),
-      fatherName: student.father.name,
-      fatherMobile: student.father.mobile,
-      fatherOccupation: student.father.occupation,
-      fatherNid: student.father.nid || '',
-      motherName: student.mother.name,
-      motherMobile: student.mother.mobile,
-      motherOccupation: student.mother.occupation,
+      profilePhoto: student.profilePhoto || '',
+
+      classId: student.classId || '',
+      className: student.className || '',
+      sectionId: student.sectionId || '',
+      sectionName: student.sectionName || '',
+      rollNumber: student.rollNumber || '',
+      groupId: student.groupId || '',
+      shift: student.shift || 'DAY',
+
+      batchId: student.batchId || '',
+      batchName: student.batchName || '',
+      batchSectionId: student.batchSectionId || '',
+      batchSectionName: student.batchSectionName || '',
+      targetExam: student.targetExam || 'SSC',
+      schoolName: student.schoolName || '',
+
+      version: student.version || 'BANGLA',
+      session: student.session || new Date().getFullYear().toString(),
+      admissionDate: student.admissionDate || new Date().toISOString().split('T')[0],
+      admissionNumber: student.admissionNumber || '',
+      status: student.status || 'ACTIVE',
+
+      fatherName: student.father?.name || '',
+      fatherMobile: student.father?.mobile || '',
+      fatherOccupation: student.father?.occupation || '',
+      motherName: student.mother?.name || '',
+      motherMobile: student.mother?.mobile || '',
+      motherOccupation: student.mother?.occupation || '',
       hasGuardian: !!student.guardian,
       guardianName: student.guardian?.name || '',
       guardianRelation: student.guardian?.relation || '',
       guardianMobile: student.guardian?.mobile || '',
-      guardianAddress: student.guardian?.address || '',
-      emergencyContact: student.emergencyContact || '',
-      username: student.username,
-      password: '', // Leave blank when editing
-      confirmPassword: '',
-      loginStatus: student.loginStatus,
-      customFields: student.customFields || [],
+      presentAddress: student.presentAddress || '',
+      permanentAddress: student.permanentAddress || '',
+      sameAddress: !student.permanentAddress || student.presentAddress === student.permanentAddress,
     })
     setCurrentStep(1)
     setIsModalOpen(true)
@@ -165,116 +194,155 @@ export function useStudents(initialIsAlumni: boolean = false) {
     setFormData(prev => ({ ...prev, ...partial }))
   }
 
-  function nextStep() { setCurrentStep(s => Math.min(s + 1, 4)) }
+  function nextStep() { setCurrentStep(s => Math.min(s + 1, 2)) }
   function prevStep() { setCurrentStep(s => Math.max(s - 1, 1)) }
 
   // ── Submit ─────────────────────────────────────────────────
-  function submitStudent() {
+  function submitStudent(addAnother: boolean = false) {
     const now = new Date().toISOString()
+
+    // Resolve class & batch names
+    const matchedClass = formData.classId ? classStore.getOne(formData.classId) : null
+    const matchedSection = formData.sectionId ? sectionStore.getOne(formData.sectionId) : null
+    const matchedBatch = formData.batchId ? batchStore.getOne(formData.batchId) : null
 
     const studentData: Partial<Student> = {
       updatedAt:          now,
       updatedBy:          'admin',
-      fullNameEn:         formData.fullNameEn,
-      fullNameBn:         formData.fullNameBn,
+      fullNameEn:         formData.fullNameEn.trim(),
+      fullNameBn:         formData.fullNameBn.trim() || undefined,
       gender:             formData.gender as Student['gender'],
       dateOfBirth:        formData.dateOfBirth,
       bloodGroup:         formData.bloodGroup || undefined,
-      religion:           formData.religion,
-      nationality:        formData.nationality,
-      type:               formData.type as Student['type'],
-      classId:            formData.classId || undefined,
-      className:          formData.classId ? `Class ${formData.classId.replace('cls-', '')}` : undefined,
-      sectionId:          formData.sectionId || undefined,
-      sectionName:        formData.sectionId ? formData.sectionId.replace('sec-', '').toUpperCase() : undefined,
-      groupId:            formData.groupId || undefined,
-      shift:              formData.shift || undefined,
-      batchId:            formData.batchId || undefined,
-      targetExam:         formData.targetExam || undefined,
-      version:            formData.version as Student['version'],
+      type:               formData.type,
+      profilePhoto:       formData.profilePhoto || undefined,
+
+      // Regular
+      classId:            formData.type === 'REGULAR' ? formData.classId : undefined,
+      className:          formData.type === 'REGULAR' ? (matchedClass?.name || formData.className) : undefined,
+      sectionId:          formData.type === 'REGULAR' ? formData.sectionId : undefined,
+      sectionName:        formData.type === 'REGULAR' ? (matchedSection?.name || formData.sectionName) : undefined,
+      groupId:            formData.type === 'REGULAR' ? (formData.groupId || undefined) : undefined,
+      shift:              formData.type === 'REGULAR' ? (formData.shift || undefined) : undefined,
+
+      // Batch
+      batchId:            formData.type === 'EXAM_BATCH' ? formData.batchId : undefined,
+      batchName:          formData.type === 'EXAM_BATCH' ? (matchedBatch?.name || formData.batchName) : undefined,
+      targetExam:         formData.type === 'EXAM_BATCH' ? (formData.targetExam || undefined) : undefined,
+      schoolName:         formData.type === 'EXAM_BATCH' ? formData.schoolName : undefined,
+
+      // Common
+      version:            formData.version as Student['version'] || 'BANGLA',
       session:            formData.session,
       admissionDate:      formData.admissionDate,
-      admissionNumber:    formData.admissionNumber,
-      previousSchool:     formData.previousSchool || undefined,
+      admissionNumber:    formData.admissionNumber || undefined,
       status:             formData.status,
-      mobile:             formData.mobile,
-      whatsapp:           formData.whatsapp || undefined,
-      email:              formData.email || undefined,
-      presentAddress:     formData.presentAddress,
-      permanentAddress:   formData.sameAddress ? formData.presentAddress : formData.permanentAddress || undefined,
+      mobile:             formData.mobile.trim(),
+      email:              formData.email.trim() || undefined,
+      presentAddress:     formData.presentAddress.trim(),
+      permanentAddress:   formData.sameAddress ? formData.presentAddress.trim() : formData.permanentAddress.trim() || undefined,
+
       father: {
-        name:       formData.fatherName,
-        mobile:     formData.fatherMobile,
-        occupation: formData.fatherOccupation,
-        nid:        formData.fatherNid || undefined,
+        name:       formData.fatherName.trim(),
+        mobile:     formData.fatherMobile.trim(),
+        occupation: formData.fatherOccupation.trim(),
       },
       mother: {
-        name:       formData.motherName,
-        mobile:     formData.motherMobile,
-        occupation: formData.motherOccupation,
+        name:       formData.motherName.trim(),
+        mobile:     formData.motherMobile.trim(),
+        occupation: formData.motherOccupation.trim(),
       },
       guardian: formData.hasGuardian ? {
-        name:     formData.guardianName,
-        relation: formData.guardianRelation,
-        mobile:   formData.guardianMobile,
-        address:  formData.guardianAddress,
+        name:     formData.guardianName.trim(),
+        relation: formData.guardianRelation.trim(),
+        mobile:   formData.guardianMobile.trim(),
+        address:  formData.presentAddress.trim(),
       } : undefined,
-      emergencyContact: formData.emergencyContact || undefined,
-      username:         formData.username,
-      loginStatus:      formData.loginStatus,
-      customFields:     formData.customFields.length > 0 ? formData.customFields : undefined,
+
+      username:         formData.fullNameEn.toLowerCase().replace(/\s+/g, '') + (formData.rollNumber || '1'),
+      loginStatus:      'ACTIVE',
     }
 
     if (editingStudentId) {
-      // Update in store
       const updated = store.update(editingStudentId, studentData)
       setStudents(prev => prev.map(s => s.id === editingStudentId ? updated : s))
+      closeModal()
     } else {
       const allStudents = store.getAll()
-      const newId = crypto.randomUUID()
-
-      // ── Roll Number: Class + Section + Session scoped ──────
-      const rollScope = allStudents.filter(s =>
-        s.type === 'REGULAR' &&
-        s.classId   === formData.classId &&
-        s.sectionId === formData.sectionId &&
-        s.session   === formData.session
-      )
-      const rollNumber = String(rollScope.length + 1).padStart(2, '0')
-
-      // ── Registration Number: Class + Session scoped ─────────
-      const classNum = formData.classId ? formData.classId.replace('cls-', '') : '0'
-      const regScope = allStudents.filter(s =>
-        s.type === 'REGULAR' &&
-        s.classId === formData.classId &&
-        s.session === formData.session
-      )
-      const regSeq = String(regScope.length + 1).padStart(3, '0')
-      const registrationNumber = formData.type === 'REGULAR'
-        ? `REG-${classNum}-${formData.session}-${regSeq}`
-        : `REG-BATCH-${formData.session}-${String(allStudents.filter(s => s.type === 'EXAM_BATCH' && s.session === formData.session).length + 1).padStart(3, '0')}`
-
-      // ── Student ID: global unique ──────────────────────────
+      const newId = `std-${Date.now()}`
       const year = new Date().getFullYear()
-      const globalSeq = String(allStudents.filter(s => s.createdAt.startsWith(String(year))).length + 1).padStart(3, '0')
+
+      // Calculate roll
+      let finalRoll = formData.rollNumber.trim()
+      if (!finalRoll) {
+        if (formData.type === 'REGULAR') {
+          const rollScope = allStudents.filter(s =>
+            s.type === 'REGULAR' &&
+            s.classId === formData.classId &&
+            (formData.sectionId ? s.sectionId === formData.sectionId : true) &&
+            s.session === formData.session
+          )
+          finalRoll = String(rollScope.length + 1).padStart(2, '0')
+        } else {
+          const batchScope = allStudents.filter(s =>
+            s.type === 'EXAM_BATCH' &&
+            s.batchId === formData.batchId &&
+            s.session === formData.session
+          )
+          finalRoll = String(batchScope.length + 1).padStart(2, '0')
+        }
+      }
+
+      // Registration Number
+      const regSeq = String(allStudents.length + 1).padStart(3, '0')
+      const registrationNumber = formData.type === 'REGULAR'
+        ? `REG-${formData.classId ? formData.classId.replace('cls-', '') : 'GEN'}-${formData.session}-${regSeq}`
+        : `REG-BATCH-${formData.session}-${regSeq}`
+
+      const globalSeq = String(allStudents.length + 1).padStart(3, '0')
 
       const newStudent: Student = {
         ...studentData,
         id:                 newId,
         createdAt:          now,
+        updatedAt:          now,
         createdBy:          'admin',
+        updatedBy:          'admin',
         isArchived:         false,
         studentId:          `STU-${year}-${globalSeq}`,
-        rollNumber,
+        rollNumber:         finalRoll,
         registrationNumber,
       } as Student
 
-      // Insert in store and update state
       store.insert(newStudent)
       setStudents(prev => [newStudent, ...prev])
-    }
 
-    closeModal()
+      if (addAnother) {
+        // Fast next student: keep Class/Section/Batch, increment roll, clear personal
+        const nextRollNum = parseInt(finalRoll, 10)
+        const nextRoll = isNaN(nextRollNum) ? '' : String(nextRollNum + 1).padStart(2, '0')
+
+        setFormData(prev => ({
+          ...prev,
+          fullNameEn: '',
+          fullNameBn: '',
+          mobile: '',
+          email: '',
+          dateOfBirth: '',
+          rollNumber: nextRoll,
+          fatherName: '',
+          fatherMobile: '',
+          fatherOccupation: '',
+          motherName: '',
+          motherMobile: '',
+          guardianName: '',
+          guardianMobile: '',
+        }))
+        setCurrentStep(1)
+      } else {
+        closeModal()
+      }
+    }
   }
 
   // ── Delete student ─────────────────────────────────────────
@@ -321,3 +389,4 @@ export function useStudents(initialIsAlumni: boolean = false) {
     promoteStudents,
   }
 }
+
