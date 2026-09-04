@@ -173,51 +173,88 @@ export function SalaryHistoryTab({ teacher }: { teacher: Teacher }) {
             No past salary disbursement history found for this teacher.
           </div>
         ) : (
-          <div className="border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
-            <table className="w-full text-xs">
-              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 uppercase text-[10px] font-bold">
-                <tr>
-                  <th className="px-4 py-2.5 text-left">Pay Period</th>
-                  <th className="px-4 py-2.5 text-left">Disbursal Date</th>
-                  <th className="px-4 py-2.5 text-left">Method</th>
-                  <th className="px-4 py-2.5 text-right">Amount Paid</th>
-                  <th className="px-4 py-2.5 text-center">Receipt</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {salaryRecords.map((rec) => {
-                  const mName = MONTH_NAMES[rec.month - 1] || `Month ${rec.month}`
-                  return (
-                    <tr key={rec.id} className="hover:bg-zinc-50/50">
-                      <td className="px-4 py-3 font-bold text-zinc-900">
-                        {mName} {rec.year}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-500 font-mono">
-                        {rec.paidDate || `${rec.year}-0${rec.month}-05`}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 text-zinc-700 font-mono">
-                          {rec.paymentMethod || 'BANK'}
+          <>
+            {/* Mobile Card List */}
+            <div className="block sm:hidden space-y-3">
+              {salaryRecords.map((rec) => {
+                const mName = MONTH_NAMES[rec.month - 1] || `Month ${rec.month}`
+                return (
+                  <div key={rec.id} className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-zinc-900 text-xs">{mName} {rec.year}</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 text-zinc-700 font-mono">
+                        {rec.paymentMethod || 'BANK'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block font-mono">
+                          {rec.paidDate || `${rec.year}-0${rec.month}-05`}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-emerald-700">
-                        {formatCurrency(rec.paidAmount || netMonthlySalary)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handlePrintSlip(mName, rec.year, rec.paidAmount || netMonthlySalary)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[11px] font-bold transition-all cursor-pointer"
-                        >
-                          <Printer size={12} />
-                          Slip
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <span className="font-mono font-bold text-emerald-700 text-xs">
+                          {formatCurrency(rec.paidAmount || netMonthlySalary)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handlePrintSlip(mName, rec.year, rec.paidAmount || netMonthlySalary)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[11px] font-bold transition-all cursor-pointer"
+                      >
+                        <Printer size={12} />
+                        Slip
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
+              <table className="w-full text-xs">
+                <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left">Pay Period</th>
+                    <th className="px-4 py-2.5 text-left">Disbursal Date</th>
+                    <th className="px-4 py-2.5 text-left">Method</th>
+                    <th className="px-4 py-2.5 text-right">Amount Paid</th>
+                    <th className="px-4 py-2.5 text-center">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {salaryRecords.map((rec) => {
+                    const mName = MONTH_NAMES[rec.month - 1] || `Month ${rec.month}`
+                    return (
+                      <tr key={rec.id} className="hover:bg-zinc-50/50">
+                        <td className="px-4 py-3 font-bold text-zinc-900">
+                          {mName} {rec.year}
+                        </td>
+                        <td className="px-4 py-3 text-zinc-500 font-mono">
+                          {rec.paidDate || `${rec.year}-0${rec.month}-05`}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 text-zinc-700 font-mono">
+                            {rec.paymentMethod || 'BANK'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-emerald-700">
+                          {formatCurrency(rec.paidAmount || netMonthlySalary)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handlePrintSlip(mName, rec.year, rec.paidAmount || netMonthlySalary)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[11px] font-bold transition-all cursor-pointer"
+                          >
+                            <Printer size={12} />
+                            Slip
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

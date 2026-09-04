@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Clock, MapPin, Trash2 } from 'lucide-react'
 import type { Routine, DayOfWeek } from '../types'
 import { DAY_LABELS, WEEKDAYS, ENTRY_TYPE_CONFIG } from '../types'
@@ -12,27 +13,82 @@ interface Props {
   readonly?: boolean
 }
 
+const DAY_ABBR: Record<DayOfWeek, string> = {
+  SUNDAY: 'Sun',
+  MONDAY: 'Mon',
+  TUESDAY: 'Tue',
+  WEDNESDAY: 'Wed',
+  THURSDAY: 'Thu',
+  FRIDAY: 'Fri',
+  SATURDAY: 'Sat',
+}
+
 export function WeeklyGrid({ routines, onSlotClick, onAddClick, onDeleteSlot, readonly = false }: Props) {
   const byDay = groupByDay(routines)
 
+  // Map today's JS day (0=Sunday) to DayOfWeek
+  const todayDayIndex = new Date().getDay()
+  const todayDayMap: Record<number, DayOfWeek> = {
+    0: 'SUNDAY',
+    1: 'MONDAY',
+    2: 'TUESDAY',
+    3: 'WEDNESDAY',
+    4: 'THURSDAY',
+    5: 'FRIDAY',
+    6: 'SATURDAY',
+  }
+  const [activeMobileDay, setActiveMobileDay] = useState<DayOfWeek>(todayDayMap[todayDayIndex] || 'SUNDAY')
+
+  const mobileSlots = (byDay[activeMobileDay] ?? []).sort((a, b) => a.start_time.localeCompare(b.start_time))
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-      {WEEKDAYS.map((day) => {
-        const slots = (byDay[day] ?? []).sort((a, b) => a.start_time.localeCompare(b.start_time))
+    <div className="space-y-3">
+      {/* ── Mobile View: Day Switcher + Single Day Schedule ── */}
+      <div className="block sm:hidden space-y-3">
+        {/* Horizontal Day Tabs */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-zinc-100 rounded-2xl overflow-x-auto flex-nowrap scrollbar-none border border-zinc-200/60">
+          {WEEKDAYS.map((day) => {
+            const count = (byDay[day] ?? []).length
+            const isActive = activeMobileDay === day
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => setActiveMobileDay(day)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-indigo-700 shadow-sm border border-zinc-200/80'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <span>{DAY_ABBR[day]}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-zinc-200/80 text-zinc-500'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
-        return (
-          <div key={day} className="flex flex-col gap-2.5 bg-zinc-50/50 p-2.5 rounded-2xl border border-zinc-200/60">
-            {/* Day Header */}
-            <div className="text-center py-2 px-1 rounded-xl bg-white border border-zinc-200/80 shadow-2xs">
-              <p className="text-xs font-bold text-zinc-900 tracking-wide">{DAY_LABELS[day]}</p>
-              <span className="text-[10px] font-mono text-zinc-400">
-                {slots.length} {slots.length === 1 ? 'slot' : 'slots'}
-              </span>
-            </div>
+        {/* Selected Day Schedule Card */}
+        <div className="bg-zinc-50/50 p-3 rounded-2xl border border-zinc-200/60 space-y-2.5">
+          <div className="flex items-center justify-between py-1 px-2">
+            <h4 className="font-bold text-zinc-900 text-sm">{DAY_LABELS[activeMobileDay]}</h4>
+            <span className="text-xs text-zinc-500 font-medium">
+              {mobileSlots.length} {mobileSlots.length === 1 ? 'Period' : 'Periods'}
+            </span>
+          </div>
 
-            {/* Slots */}
-            <div className="flex flex-col gap-2 min-h-[140px]">
-              {slots.map((slot) => (
+          <div className="space-y-2">
+            {mobileSlots.length === 0 ? (
+              <div className="py-10 text-center text-zinc-400 bg-white rounded-xl border border-dashed border-zinc-200">
+                <p className="text-xs font-semibold text-zinc-600">No classes scheduled for {DAY_LABELS[activeMobileDay]}</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Enjoy your day off or add a new slot</p>
+              </div>
+            ) : (
+              mobileSlots.map((slot) => (
                 <SlotCard
                   key={slot.id}
                   slot={slot}
@@ -40,23 +96,65 @@ export function WeeklyGrid({ routines, onSlotClick, onAddClick, onDeleteSlot, re
                   onDelete={onDeleteSlot ? () => onDeleteSlot(slot.id) : undefined}
                   readonly={readonly}
                 />
-              ))}
+              ))
+            )}
 
-              {/* Add button */}
-              {!readonly && (
-                <button
-                  type="button"
-                  onClick={() => onAddClick?.(day)}
-                  className="w-full py-3 rounded-xl border border-dashed border-zinc-300 text-zinc-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all text-lg leading-none cursor-pointer flex items-center justify-center font-bold"
-                  title={`Add slot on ${DAY_LABELS[day]}`}
-                >
-                  +
-                </button>
-              )}
-            </div>
+            {!readonly && (
+              <button
+                type="button"
+                onClick={() => onAddClick?.(activeMobileDay)}
+                className="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 transition-all text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 bg-white"
+              >
+                + Add Slot for {DAY_LABELS[activeMobileDay]}
+              </button>
+            )}
           </div>
-        )
-      })}
+        </div>
+      </div>
+
+      {/* ── Desktop View: 7-Day Grid ── */}
+      <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {WEEKDAYS.map((day) => {
+          const slots = (byDay[day] ?? []).sort((a, b) => a.start_time.localeCompare(b.start_time))
+
+          return (
+            <div key={day} className="flex flex-col gap-2.5 bg-zinc-50/50 p-2.5 rounded-2xl border border-zinc-200/60">
+              {/* Day Header */}
+              <div className="text-center py-2 px-1 rounded-xl bg-white border border-zinc-200/80 shadow-2xs">
+                <p className="text-xs font-bold text-zinc-900 tracking-wide">{DAY_LABELS[day]}</p>
+                <span className="text-[10px] font-mono text-zinc-400">
+                  {slots.length} {slots.length === 1 ? 'slot' : 'slots'}
+                </span>
+              </div>
+
+              {/* Slots */}
+              <div className="flex flex-col gap-2 min-h-[140px]">
+                {slots.map((slot) => (
+                  <SlotCard
+                    key={slot.id}
+                    slot={slot}
+                    onClick={() => onSlotClick?.(slot)}
+                    onDelete={onDeleteSlot ? () => onDeleteSlot(slot.id) : undefined}
+                    readonly={readonly}
+                  />
+                ))}
+
+                {/* Add button */}
+                {!readonly && (
+                  <button
+                    type="button"
+                    onClick={() => onAddClick?.(day)}
+                    className="w-full py-3 rounded-xl border border-dashed border-zinc-300 text-zinc-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all text-lg leading-none cursor-pointer flex items-center justify-center font-bold"
+                    title={`Add slot on ${DAY_LABELS[day]}`}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

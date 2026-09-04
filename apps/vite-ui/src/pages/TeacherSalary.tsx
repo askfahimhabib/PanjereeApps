@@ -192,7 +192,7 @@ export function TeacherSalary() {
             ))}
           </div>
 
-          {/* Salary Table */}
+          {/* Salary Table & Mobile Cards */}
           <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
             {filtered.length === 0 ? (
               <div className="p-16 text-center text-zinc-400">
@@ -206,91 +206,161 @@ export function TeacherSalary() {
                 </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-zinc-50 border-b border-zinc-100 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="px-5 py-3">Teacher</th>
-                      <th className="px-4 py-3 text-right">Base Salary</th>
-                      <th className="px-4 py-3 text-right">Bonus / Allowance</th>
-                      <th className="px-4 py-3 text-right">Deductions</th>
-                      <th className="px-4 py-3 text-right">Net Payable</th>
-                      <th className="px-4 py-3 text-right">Paid So Far</th>
-                      <th className="px-4 py-3 text-center">Status</th>
-                      <th className="px-5 py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-50">
-                    {filtered.map((r) => {
-                      const net = r.baseSalary + r.bonus - r.deduction
-                      const cfg = STATUS_CFG[r.status]
-                      const StatusIcon = cfg.icon
+              <>
+                {/* Mobile Cards View */}
+                <div className="block md:hidden divide-y divide-zinc-100">
+                  {filtered.map((r) => {
+                    const net = r.baseSalary + r.bonus - r.deduction
+                    const cfg = STATUS_CFG[r.status]
+                    const StatusIcon = cfg.icon
 
-                      return (
-                        <tr key={r.id} className="hover:bg-zinc-50/60 transition-colors">
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
-                                {r.teacherName.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="font-bold text-zinc-900">{r.teacherName}</p>
-                                <p className="text-[11px] text-zinc-500">{r.designation}</p>
-                              </div>
+                    return (
+                      <div key={r.id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
+                              {r.teacherName.charAt(0)}
                             </div>
-                          </td>
+                            <div className="min-w-0">
+                              <p className="font-bold text-zinc-900 text-sm truncate">{r.teacherName}</p>
+                              <p className="text-[11px] text-zinc-500 truncate">{r.designation}</p>
+                            </div>
+                          </div>
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${cfg.bg}`}>
+                            <StatusIcon size={11} />
+                            {cfg.label}
+                          </span>
+                        </div>
 
-                          <td className="px-4 py-3.5 text-right font-mono text-zinc-700">
-                            {formatCurrency(r.baseSalary)}
-                          </td>
+                        {/* Salary breakdown badges */}
+                        <div className="grid grid-cols-2 gap-2 bg-zinc-50/70 p-2.5 rounded-xl text-xs border border-zinc-100">
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-medium">Net Payable</span>
+                            <p className="font-mono font-bold text-zinc-900 text-sm">{formatCurrency(net)}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-medium">Paid So Far</span>
+                            <p className="font-mono font-bold text-emerald-700 text-sm">
+                              {r.paidAmount > 0 ? formatCurrency(r.paidAmount) : '৳ 0'}
+                            </p>
+                          </div>
+                          <div className="col-span-2 pt-1 border-t border-zinc-200/50 flex flex-wrap items-center justify-between text-[11px] text-zinc-500">
+                            <span>Base: <strong className="font-mono text-zinc-700">{formatCurrency(r.baseSalary)}</strong></span>
+                            {r.bonus > 0 && <span className="text-emerald-600">Bonus: +{formatCurrency(r.bonus)}</span>}
+                            {r.deduction > 0 && <span className="text-rose-600">Ded: -{formatCurrency(r.deduction)}</span>}
+                          </div>
+                        </div>
 
-                          <td className="px-4 py-3.5 text-right font-mono text-emerald-600">
-                            {r.bonus > 0 ? `+${formatCurrency(r.bonus)}` : '—'}
-                          </td>
+                        <div className="flex items-center justify-end pt-1">
+                          {r.status !== 'PAID' ? (
+                            <button
+                              onClick={() => setPayModal(r)}
+                              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 rounded-xl transition-all shadow-xs shadow-emerald-500/20 cursor-pointer"
+                            >
+                              <DollarSign size={14} />
+                              Disburse Salary
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setPayModal(r)}
+                              className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors cursor-pointer"
+                            >
+                              View / Adjust Disbursal
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
 
-                          <td className="px-4 py-3.5 text-right font-mono text-rose-600">
-                            {r.deduction > 0 ? `-${formatCurrency(r.deduction)}` : '—'}
-                          </td>
+                {/* Desktop View: Full Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-zinc-50 border-b border-zinc-100 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="px-5 py-3">Teacher</th>
+                        <th className="px-4 py-3 text-right">Base Salary</th>
+                        <th className="px-4 py-3 text-right">Bonus / Allowance</th>
+                        <th className="px-4 py-3 text-right">Deductions</th>
+                        <th className="px-4 py-3 text-right">Net Payable</th>
+                        <th className="px-4 py-3 text-right">Paid So Far</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                        <th className="px-5 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50">
+                      {filtered.map((r) => {
+                        const net = r.baseSalary + r.bonus - r.deduction
+                        const cfg = STATUS_CFG[r.status]
+                        const StatusIcon = cfg.icon
 
-                          <td className="px-4 py-3.5 text-right font-mono font-bold text-zinc-900">
-                            {formatCurrency(net)}
-                          </td>
+                        return (
+                          <tr key={r.id} className="hover:bg-zinc-50/60 transition-colors">
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
+                                  {r.teacherName.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-zinc-900">{r.teacherName}</p>
+                                  <p className="text-[11px] text-zinc-500">{r.designation}</p>
+                                </div>
+                              </div>
+                            </td>
 
-                          <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700">
-                            {r.paidAmount > 0 ? formatCurrency(r.paidAmount) : '৳ 0'}
-                          </td>
+                            <td className="px-4 py-3.5 text-right font-mono text-zinc-700">
+                              {formatCurrency(r.baseSalary)}
+                            </td>
 
-                          <td className="px-4 py-3.5 text-center">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg}`}>
-                              <StatusIcon size={11} />
-                              {cfg.label}
-                            </span>
-                          </td>
+                            <td className="px-4 py-3.5 text-right font-mono text-emerald-600">
+                              {r.bonus > 0 ? `+${formatCurrency(r.bonus)}` : '—'}
+                            </td>
 
-                          <td className="px-5 py-3.5 text-right">
-                            {r.status !== 'PAID' ? (
-                              <button
-                                onClick={() => setPayModal(r)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs shadow-emerald-500/20 cursor-pointer"
-                              >
-                                <DollarSign size={13} />
-                                Disburse
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => setPayModal(r)}
-                                className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-800 hover:underline cursor-pointer"
-                              >
-                                View / Adjust
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            <td className="px-4 py-3.5 text-right font-mono text-rose-600">
+                              {r.deduction > 0 ? `-${formatCurrency(r.deduction)}` : '—'}
+                            </td>
+
+                            <td className="px-4 py-3.5 text-right font-mono font-bold text-zinc-900">
+                              {formatCurrency(net)}
+                            </td>
+
+                            <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700">
+                              {r.paidAmount > 0 ? formatCurrency(r.paidAmount) : '৳ 0'}
+                            </td>
+
+                            <td className="px-4 py-3.5 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg}`}>
+                                <StatusIcon size={11} />
+                                {cfg.label}
+                              </span>
+                            </td>
+
+                            <td className="px-5 py-3.5 text-right">
+                              {r.status !== 'PAID' ? (
+                                <button
+                                  onClick={() => setPayModal(r)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs shadow-emerald-500/20 cursor-pointer"
+                                >
+                                  <DollarSign size={13} />
+                                  Disburse
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setPayModal(r)}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-800 hover:underline cursor-pointer"
+                                >
+                                  View / Adjust
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>

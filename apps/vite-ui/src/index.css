@@ -38,6 +38,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   body {
@@ -46,6 +48,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   /* Hide scrollbars globally but keep functionality */
@@ -136,7 +140,7 @@
   }
 
   .filter-container {
-    @apply bg-white border border-zinc-200/80 rounded-2xl p-3.5 shadow-xs flex flex-wrap items-center gap-3;
+    @apply bg-white border border-zinc-200/80 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-wrap items-center gap-2.5 sm:gap-3 max-w-full;
   }
 
   /* Form Controls */
@@ -150,13 +154,18 @@
 
   /* Segmented Controls / Pill Tabs */
   .pill-tab-container {
-    @apply bg-zinc-100/80 p-1 rounded-xl flex items-center gap-1;
+    @apply bg-zinc-100/80 p-1 rounded-xl flex items-center gap-1 max-w-full overflow-x-auto flex-nowrap shrink-0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .pill-tab-container::-webkit-scrollbar {
+    display: none;
   }
   .pill-tab-active {
-    @apply bg-white text-zinc-900 font-semibold shadow-xs rounded-lg px-3.5 py-1.5 text-xs transition-all;
+    @apply bg-white text-zinc-900 font-semibold shadow-xs rounded-lg px-3 sm:px-3.5 py-1.5 text-xs transition-all shrink-0 whitespace-nowrap;
   }
   .pill-tab-inactive {
-    @apply text-zinc-500 hover:text-zinc-800 font-medium px-3.5 py-1.5 text-xs transition-all;
+    @apply text-zinc-500 hover:text-zinc-800 font-medium px-3 sm:px-3.5 py-1.5 text-xs transition-all shrink-0 whitespace-nowrap;
   }
 
   /* Table Standards */

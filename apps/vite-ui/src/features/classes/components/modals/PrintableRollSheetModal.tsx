@@ -52,10 +52,10 @@ export function PrintableRollSheetModal({
         </div>
 
         {/* Printable Area (Scrollable in modal, clean print layout) */}
-        <div className="p-8 overflow-y-auto flex-1 bg-zinc-100 flex justify-center">
+        <div className="p-2 sm:p-8 overflow-y-auto flex-1 bg-zinc-100 flex justify-center">
           <div
             ref={printAreaRef}
-            className="bg-white p-8 rounded-2xl border border-zinc-300 shadow-xs w-full max-w-3xl text-zinc-900 print:p-0 print:border-none print:shadow-none"
+            className="bg-white p-4 sm:p-8 rounded-2xl border border-zinc-300 shadow-xs w-full max-w-3xl text-zinc-900 print:p-0 print:border-none print:shadow-none"
           >
             {/* Institution Header */}
             <div className="text-center border-b-2 border-zinc-900 pb-4 mb-6">
@@ -71,7 +71,7 @@ export function PrintableRollSheetModal({
               <p className="text-xs text-zinc-700 mt-1 font-medium">
                 Academic Session: {section.academicYear || inst.session} · Section Master Roll Register
               </p>
-              <div className="flex items-center justify-center gap-6 mt-3 text-xs font-semibold text-zinc-800 bg-zinc-50 py-1.5 px-4 rounded-lg border border-zinc-200">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6 mt-3 text-xs font-semibold text-zinc-800 bg-zinc-50 py-1.5 px-3 sm:px-4 rounded-lg border border-zinc-200">
                 <span>Class: <strong>{section.className}</strong></span>
                 <span>•</span>
                 <span>Section: <strong>{section.name}</strong></span>
@@ -86,7 +86,7 @@ export function PrintableRollSheetModal({
 
             {/* Students Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse border border-zinc-300">
+              <table className="w-full text-xs border-collapse border border-zinc-300 min-w-[580px] sm:min-w-full">
                 <thead>
                   <tr className="bg-zinc-100 border-b border-zinc-300 text-zinc-800">
                     <th className="border border-zinc-300 px-2 py-2 text-center w-12 font-bold">Roll</th>

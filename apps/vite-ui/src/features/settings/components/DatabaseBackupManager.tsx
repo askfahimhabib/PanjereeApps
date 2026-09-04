@@ -5,8 +5,12 @@ import {
   Database,
   CheckCircle2,
   AlertTriangle,
+  Trash2,
+  ShieldAlert,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useAuthStore } from '@/store/auth'
+import { AdminDatabaseResetModal } from './AdminDatabaseResetModal'
 
 const ALL_STORE_KEYS = [
   'students',
@@ -37,8 +41,10 @@ const ALL_STORE_KEYS = [
 ]
 
 export function DatabaseBackupManager() {
+  const { user } = useAuthStore()
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [resetModalOpen, setResetModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── 1. Export Database to JSON ──
@@ -57,7 +63,7 @@ export function DatabaseBackupManager() {
 
       const storesObj: Record<string, unknown> = {}
       for (const key of ALL_STORE_KEYS) {
-        const raw = localStorage.getItem(`store_${key}`) || localStorage.getItem(key)
+        const raw = localStorage.getItem(`lms_store_${key}`) || localStorage.getItem(`store_${key}`) || localStorage.getItem(key)
         if (raw) {
           try {
             storesObj[key] = JSON.parse(raw)
@@ -116,8 +122,10 @@ export function DatabaseBackupManager() {
         for (const [key, value] of Object.entries(stores)) {
           if (value) {
             const rawVal = typeof value === 'string' ? value : JSON.stringify(value)
+            localStorage.setItem(`lms_store_${key}`, rawVal)
             localStorage.setItem(`store_${key}`, rawVal)
             localStorage.setItem(key, rawVal)
+            window.dispatchEvent(new CustomEvent('lms_store_updated', { detail: { key } }))
             restoredCount++
           }
         }
@@ -232,6 +240,43 @@ export function DatabaseBackupManager() {
           </div>
         </div>
       </div>
+
+      {/* ── Admin Exclusive: Master Database Reset & Purge ───────── */}
+      {user?.role === 'ADMIN' && (
+        <div className="mt-8 p-6 rounded-3xl border border-rose-200 bg-rose-50/60 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-2xl bg-rose-600 text-white shrink-0 shadow-sm">
+              <Trash2 size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-black text-rose-950">Master Database Reset & Purge</h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-200 text-rose-800 tracking-wider">
+                  ADMIN ONLY
+                </span>
+              </div>
+              <p className="text-xs text-rose-700 mt-1 leading-relaxed max-w-xl">
+                Wipe all records across all 25 modules to create a clean blank database for real school onboarding, or restore fresh factory demo records.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setResetModalOpen(true)}
+            className="shrink-0 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ShieldAlert size={14} />
+            <span>Reset Database...</span>
+          </button>
+        </div>
+      )}
+
+      {/* Admin Reset Modal */}
+      <AdminDatabaseResetModal
+        isOpen={resetModalOpen}
+        onClose={() => setResetModalOpen(false)}
+      />
     </div>
   )
 }

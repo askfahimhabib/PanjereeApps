@@ -153,7 +153,7 @@ export function SectionAttendanceTab({ section, students }: SectionAttendanceTab
         </div>
       )}
 
-      {/* Full Roster Attendance Table */}
+      {/* Full Roster Attendance Table & Mobile Cards */}
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-xs">
         <div className="px-5 py-3.5 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
           <h4 className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
@@ -161,7 +161,64 @@ export function SectionAttendanceTab({ section, students }: SectionAttendanceTab
           </h4>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View */}
+        <div className="block sm:hidden divide-y divide-zinc-100">
+          {students.map(student => {
+            const rate = student.attendanceRate ?? 80
+            const isWarning = rate < 75
+            return (
+              <div key={student.id} className="p-3.5 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-100">
+                      #{String(student.roll).padStart(2, '0')}
+                    </span>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/students/${student.id}`}
+                        className="font-semibold text-zinc-900 hover:text-indigo-600 block text-xs truncate"
+                      >
+                        {student.fullNameEn}
+                      </Link>
+                      <p className="font-mono text-[10px] text-zinc-400">{student.studentId}</p>
+                    </div>
+                  </div>
+
+                  {isWarning ? (
+                    <span className="px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-md text-[10px] shrink-0">
+                      &lt;75% Risk
+                    </span>
+                  ) : rate >= 90 ? (
+                    <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-md text-[10px] shrink-0">
+                      Collegiate
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-zinc-100 border border-zinc-200 text-zinc-700 font-medium rounded-md text-[10px] shrink-0">
+                      Regular
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex-1 bg-zinc-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        rate >= 85 ? 'bg-emerald-500' : rate >= 75 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${rate}%` }}
+                    />
+                  </div>
+                  <span className={`font-bold font-mono text-xs ${rate >= 75 ? 'text-zinc-800' : 'text-rose-600'}`}>
+                    {rate}%
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600">
               <tr>

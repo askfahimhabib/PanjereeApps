@@ -89,69 +89,126 @@ export function StudentWaiversTab() {
               <p className="text-xs text-zinc-400">Add merit or sibling scholarships for specific students</p>
             </div>
           ) : (
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="px-5 py-3">Student</th>
-                  <th className="px-4 py-3">Waiver / Discount</th>
-                  <th className="px-4 py-3">Applicable On</th>
-                  <th className="px-4 py-3">Scholarship Category / Reason</th>
-                  <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-50">
+            <>
+              {/* ── Mobile Card List View ── */}
+              <div className="block sm:hidden divide-y divide-zinc-100">
                 {filtered.map((w) => (
-                  <tr key={w.id} className="hover:bg-zinc-50/70 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
+                  <div key={w.id} className="p-3.5 space-y-2.5 hover:bg-zinc-50/80 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0">
                           {w.roll_number}
                         </div>
-                        <div>
-                          <p className="font-bold text-zinc-900">{w.student_name}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-zinc-900 text-xs truncate">{w.student_name}</p>
                           <p className="text-[11px] text-zinc-500">{w.class_name || 'Class'}</p>
                         </div>
                       </div>
-                    </td>
 
-                    <td className="px-4 py-3.5 font-bold text-purple-700 font-mono text-sm">
-                      {w.waiver_type === 'PERCENTAGE' ? `${w.value}% OFF` : `৳ ${w.value.toLocaleString('en-BD')} FLAT`}
-                    </td>
+                      <span className="font-bold text-purple-700 font-mono text-xs bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded-lg shrink-0">
+                        {w.waiver_type === 'PERCENTAGE' ? `${w.value}% OFF` : `৳ ${w.value.toLocaleString('en-BD')} FLAT`}
+                      </span>
+                    </div>
 
-                    <td className="px-4 py-3.5">
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[11px] font-semibold">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[10px] font-semibold">
                         {w.fee_type === 'ALL' ? 'All Fee Items' : FEE_TYPE_LABELS[w.fee_type]}
                       </span>
-                    </td>
+                      {w.reason && (
+                        <span className="text-zinc-500 text-[11px] truncate max-w-[180px]">
+                          • {w.reason}
+                        </span>
+                      )}
+                    </div>
 
-                    <td className="px-4 py-3.5 text-zinc-700 font-medium">
-                      {w.reason}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <div className="flex items-center justify-between pt-1.5 border-t border-zinc-100">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <CheckCircle2 size={10} /> Active
                       </span>
-                    </td>
 
-                    <td className="px-4 py-3.5 text-right">
                       <button
                         onClick={() => {
                           if (confirm(`Delete waiver for ${w.student_name}?`)) {
                             deleteWaiver.mutate(w.id)
                           }
                         }}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                         title="Delete Waiver"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              {/* ── Desktop Table View ── */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="px-5 py-3">Student</th>
+                      <th className="px-4 py-3">Waiver / Discount</th>
+                      <th className="px-4 py-3">Applicable On</th>
+                      <th className="px-4 py-3">Scholarship Category / Reason</th>
+                      <th className="px-4 py-3 text-center">Status</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-50">
+                    {filtered.map((w) => (
+                      <tr key={w.id} className="hover:bg-zinc-50/70 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
+                              {w.roll_number}
+                            </div>
+                            <div>
+                              <p className="font-bold text-zinc-900">{w.student_name}</p>
+                              <p className="text-[11px] text-zinc-500">{w.class_name || 'Class'}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-3.5 font-bold text-purple-700 font-mono text-sm">
+                          {w.waiver_type === 'PERCENTAGE' ? `${w.value}% OFF` : `৳ ${w.value.toLocaleString('en-BD')} FLAT`}
+                        </td>
+
+                        <td className="px-4 py-3.5">
+                          <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[11px] font-semibold">
+                            {w.fee_type === 'ALL' ? 'All Fee Items' : FEE_TYPE_LABELS[w.fee_type]}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-zinc-700 font-medium">
+                          {w.reason}
+                        </td>
+
+                        <td className="px-4 py-3.5 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 size={10} /> Active
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-right">
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete waiver for ${w.student_name}?`)) {
+                                deleteWaiver.mutate(w.id)
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Waiver"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

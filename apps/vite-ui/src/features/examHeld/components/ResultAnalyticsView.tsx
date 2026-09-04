@@ -289,7 +289,7 @@ export function ResultAnalyticsView({ exam, students }: Props) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full min-w-[540px] sm:min-w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/70 border-b border-zinc-200/80 text-[11px] text-zinc-500 uppercase font-semibold">
                 <th className="py-3 px-4">Subject</th>

@@ -49,7 +49,7 @@ export function StudentFeeStatementModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-zinc-200 print:border-none print:shadow-none animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/70 print:bg-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-zinc-100 bg-zinc-50/70 print:bg-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center print:hidden">
               <FileText size={20} />
@@ -79,7 +79,7 @@ export function StudentFeeStatementModal({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-5 text-xs max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 text-xs max-h-[80vh] overflow-y-auto">
           {/* Year Navigator */}
           <div className="flex items-center justify-between bg-zinc-50 rounded-2xl p-3 border border-zinc-100">
             <div className="flex items-center gap-2">
@@ -147,8 +147,8 @@ export function StudentFeeStatementModal({
           )}
 
           {/* 12-Month Grid Table */}
-          <div className="border border-zinc-200 rounded-2xl overflow-hidden shadow-xs bg-white">
-            <table className="w-full text-left text-xs">
+          <div className="border border-zinc-200 rounded-2xl overflow-x-auto shadow-xs bg-white">
+            <table className="w-full min-w-[580px] sm:min-w-full text-left text-xs">
               <thead className="bg-zinc-50 text-zinc-500 font-semibold border-b border-zinc-100 uppercase text-[9px] tracking-wider">
                 <tr>
                   <th className="px-4 py-2.5">Month</th>

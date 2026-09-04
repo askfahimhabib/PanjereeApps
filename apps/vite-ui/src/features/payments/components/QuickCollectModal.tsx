@@ -542,8 +542,8 @@ export function QuickCollectModal({
                 </div>
 
                 {/* Items Table */}
-                <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-                  <table className="w-full text-left text-xs">
+                <div className="border border-zinc-200 rounded-2xl overflow-x-auto bg-white shadow-xs">
+                  <table className="w-full min-w-[480px] sm:min-w-full text-left text-xs">
                     <thead className="bg-zinc-50 text-zinc-500 font-semibold border-b border-zinc-100 uppercase text-[9px] tracking-wider">
                       <tr>
                         <th className="px-3 py-2">Item / Purpose</th>

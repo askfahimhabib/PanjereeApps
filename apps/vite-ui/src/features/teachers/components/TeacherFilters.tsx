@@ -29,7 +29,7 @@ export function TeacherFilters({ filters, updateFilter, resetFilters, totalResul
     <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-2xs space-y-3.5">
       {/* ── Segmented Track Tabs ──────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-100">
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-100/80 rounded-xl overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-100/80 rounded-xl max-w-full overflow-x-auto flex-nowrap shrink-0 scrollbar-none">
           <button
             type="button"
             onClick={() => updateFilter('teacherCategory', 'ALL')}

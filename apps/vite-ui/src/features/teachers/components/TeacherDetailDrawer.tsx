@@ -189,7 +189,7 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
               </div>
 
               {/* ── KPI Summary Strip ──────────────────────────────── */}
-              <div className="grid grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-indigo-100 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-indigo-100 text-center">
                 <div className="bg-white/80 p-2 rounded-xl border border-indigo-100 shadow-xs">
                   <p className="text-[10px] font-semibold text-zinc-500 uppercase">Monthly Base</p>
                   <p className="text-xs font-black text-indigo-900 font-mono mt-0.5">
@@ -244,8 +244,8 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
             </div>
 
             {/* ── Tab Navigation Bar ─────────────────────────────── */}
-            <div className="shrink-0 border-b border-zinc-200 bg-white px-4 pt-2">
-              <div className="flex items-stretch gap-0.5 overflow-x-auto">
+            <div className="shrink-0 border-b border-zinc-200 bg-white px-3 sm:px-4 pt-2">
+              <div className="flex items-stretch gap-0.5 overflow-x-auto scrollbar-none">
                 {TABS.map(tab => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.id

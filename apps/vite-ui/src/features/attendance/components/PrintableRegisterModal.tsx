@@ -20,6 +20,13 @@ interface PrintableRegisterModalProps {
   draft: Record<string, AttendanceStatus>
 }
 
+const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
+  PRESENT: { label: 'P (Present)', style: 'text-emerald-700 font-bold' },
+  LATE:    { label: 'L (Late)',    style: 'text-amber-700 font-bold' },
+  ABSENT:  { label: 'A (Absent)',  style: 'text-rose-700 font-bold' },
+  LEAVE:   { label: 'LV (Leave)',  style: 'text-blue-700 font-bold' },
+}
+
 export function PrintableRegisterModal({
   isOpen,
   onClose,
@@ -74,10 +81,10 @@ export function PrintableRegisterModal({
         </div>
 
         {/* Printable Area */}
-        <div className="p-8 overflow-y-auto flex-1 bg-zinc-100 flex justify-center">
+        <div className="p-2 sm:p-8 overflow-y-auto flex-1 bg-zinc-100 flex justify-center">
           <div
             ref={printAreaRef}
-            className="bg-white p-8 rounded-2xl border border-zinc-300 shadow-xs w-full max-w-3xl text-zinc-900 print:p-0 print:border-none print:shadow-none"
+            className="bg-white p-4 sm:p-8 rounded-2xl border border-zinc-300 shadow-xs w-full max-w-3xl text-zinc-900 print:p-0 print:border-none print:shadow-none"
           >
             {/* Header */}
             <div className="text-center border-b-2 border-zinc-900 pb-4 mb-6">
@@ -93,7 +100,7 @@ export function PrintableRegisterModal({
               <p className="text-xs text-zinc-700 mt-1 font-bold">
                 Daily Class Attendance Master Register · Academic Session {inst.session}
               </p>
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs font-bold text-zinc-800 bg-zinc-50 py-1.5 px-4 rounded-xl border border-zinc-200">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-3 text-xs font-bold text-zinc-800 bg-zinc-50 py-1.5 px-3 sm:px-4 rounded-xl border border-zinc-200">
                 <span>Class: {className}</span>
                 <span>•</span>
                 <span>Section: {sectionName}</span>
@@ -105,7 +112,7 @@ export function PrintableRegisterModal({
             </div>
 
             {/* Summary Statistics Bar */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
               <div className="border border-emerald-300 bg-emerald-50/50 p-2.5 rounded-xl text-center">
                 <span className="text-[10px] font-bold uppercase text-emerald-800 tracking-wider">Present</span>
                 <p className="text-lg font-black text-emerald-700">{counts.P}</p>
@@ -125,51 +132,48 @@ export function PrintableRegisterModal({
             </div>
 
             {/* Attendance Table */}
-            <table className="w-full text-left text-xs border-collapse border border-zinc-300">
-              <thead>
-                <tr className="bg-zinc-100 border-b border-zinc-300 text-zinc-900">
-                  <th className="p-2 border-r border-zinc-300 w-12 text-center font-bold">Roll</th>
-                  <th className="p-2 border-r border-zinc-300 font-bold">Student Full Name</th>
-                  <th className="p-2 border-r border-zinc-300 w-24 text-center font-bold">Gender</th>
-                  <th className="p-2 border-r border-zinc-300 w-28 text-center font-bold">Status</th>
-                  <th className="p-2 w-32 text-center font-bold">Remarks</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200">
-                {students.map((student) => {
-                  const status = draft[student.id] || 'PRESENT'
-                  const statusConfig = {
-                    PRESENT: { label: 'P (Present)', style: 'text-emerald-700 font-bold' },
-                    LATE:    { label: 'L (Late)',    style: 'text-amber-700 font-bold' },
-                    ABSENT:  { label: 'A (Absent)',  style: 'text-rose-700 font-bold' },
-                    LEAVE:   { label: 'LV (Leave)',  style: 'text-blue-700 font-bold' },
-                  }[status]
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse border border-zinc-300 min-w-[520px] sm:min-w-full">
+                <thead>
+                  <tr className="bg-zinc-100 border-b border-zinc-300 text-zinc-900">
+                    <th className="p-2 border-r border-zinc-300 w-12 text-center font-bold">Roll</th>
+                    <th className="p-2 border-r border-zinc-300 font-bold">Student Full Name</th>
+                    <th className="p-2 border-r border-zinc-300 w-24 text-center font-bold">Gender</th>
+                    <th className="p-2 border-r border-zinc-300 w-28 text-center font-bold">Status</th>
+                    <th className="p-2 w-32 text-center font-bold">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200">
+                  {students.map((student) => {
+                    const status = draft[student.id] || 'PRESENT'
+                    const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.PRESENT
 
-                  return (
-                    <tr key={student.id} className="hover:bg-zinc-50">
-                      <td className="p-2 border-r border-zinc-300 text-center font-mono font-bold text-zinc-800">
-                        {student.roll}
-                      </td>
-                      <td className="p-2 border-r border-zinc-300 font-medium text-zinc-900">
-                        <div>{student.name}</div>
-                        {student.nameBn && (
-                          <div className="text-[10px] text-zinc-500 font-normal">{student.nameBn}</div>
-                        )}
-                      </td>
-                      <td className="p-2 border-r border-zinc-300 text-center text-zinc-600 capitalize">
-                        {student.gender?.toLowerCase() || '—'}
-                      </td>
-                      <td className={`p-2 border-r border-zinc-300 text-center ${statusConfig.style}`}>
-                        {statusConfig.label}
-                      </td>
-                      <td className="p-2 text-center text-zinc-400 text-[10px]">
-                        _______________
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={student.id} className="hover:bg-zinc-50">
+                        <td className="p-2 border-r border-zinc-300 text-center font-mono font-bold text-zinc-800">
+                          {student.roll}
+                        </td>
+                        <td className="p-2 border-r border-zinc-300 font-bold text-zinc-900">
+                          {student.name}
+                          {student.nameBn && (
+                            <div className="text-[10px] text-zinc-500 font-normal">{student.nameBn}</div>
+                          )}
+                        </td>
+                        <td className="p-2 border-r border-zinc-300 text-center text-zinc-600 capitalize">
+                          {student.gender?.toLowerCase() || '—'}
+                        </td>
+                        <td className={`p-2 border-r border-zinc-300 text-center ${statusConfig.style}`}>
+                          {statusConfig.label}
+                        </td>
+                        <td className="p-2 text-center text-zinc-400 text-[10px]">
+                          _______________
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Footer Signatures */}
             <div className="mt-14 pt-4 flex justify-between items-center text-xs font-bold text-zinc-700">

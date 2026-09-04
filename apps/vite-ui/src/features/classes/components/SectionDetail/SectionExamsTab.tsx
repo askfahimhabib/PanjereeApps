@@ -208,7 +208,7 @@ export function SectionExamsTab({ students, classExams }: SectionExamsTabProps) 
         <h4 className="text-xs font-bold text-zinc-700 uppercase tracking-wider mb-3">
           BD Board Grade Distribution
         </h4>
-        <div className="grid grid-cols-7 gap-2 text-center">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 text-center">
           {Object.entries(gradeCounts).map(([grade, count]) => {
             const isF = grade === 'F'
             return (
@@ -229,16 +229,79 @@ export function SectionExamsTab({ students, classExams }: SectionExamsTabProps) 
         </div>
       </div>
 
-      {/* Merit List Table */}
+      {/* Merit List Table & Mobile Cards */}
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-xs">
         <div className="px-5 py-3.5 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
           <h4 className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-            Section Merit Ranking List ({sectionMeritList.length} Students)
+            Section Merit Ranking List ({sectionMeritList.length})
           </h4>
-          <span className="text-xs text-zinc-500">Ranked by GPA & Total Marks</span>
+          <span className="text-[11px] text-zinc-500">Ranked by GPA & Marks</span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Merit List Cards */}
+        <div className="block sm:hidden divide-y divide-zinc-100">
+          {sectionMeritList.map((row, index) => {
+            const rank = index + 1
+            return (
+              <div key={row.student.id} className="p-3.5 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-xs shrink-0 ${
+                        rank === 1
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : rank === 2
+                          ? 'bg-slate-200 text-zinc-700 border border-zinc-300'
+                          : rank === 3
+                          ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                          : 'bg-zinc-100 text-zinc-600'
+                      }`}
+                    >
+                      {rank}
+                    </span>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/students/${row.student.id}`}
+                        className="font-bold text-zinc-900 hover:text-indigo-600 block text-xs truncate"
+                      >
+                        {row.student.fullNameEn}
+                      </Link>
+                      <p className="text-[10px] text-zinc-400 font-mono">
+                        Roll #{String(row.student.roll).padStart(2, '0')} • {row.student.studentId}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-md font-bold text-[11px] shrink-0 ${
+                      row.grade === 'A+'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : row.grade === 'F'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    }`}
+                  >
+                    {row.grade} ({row.gpa > 0 ? row.gpa.toFixed(2) : '0.00'})
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-zinc-50">
+                  <span className="text-zinc-500">
+                    Marks: <strong className="font-mono text-zinc-800">{row.totalMarks > 0 ? row.totalMarks : '—'}</strong>
+                  </span>
+                  {row.isPass ? (
+                    <span className="text-emerald-700 font-bold text-[11px]">Passed</span>
+                  ) : (
+                    <span className="text-rose-600 font-bold text-[11px]">Failed</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600">
               <tr>

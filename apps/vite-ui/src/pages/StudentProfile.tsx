@@ -6,63 +6,45 @@ import {
   CalendarCheck,
   Wallet,
   Award,
-  AlertTriangle,
-  History,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  Edit,
-  Trash2,
-  Zap,
   CreditCard,
-  MessageCircle,
   Printer,
-  Sparkles,
+  Zap,
+  Edit,
+  GraduationCap,
+  BookOpen,
+  School,
+  ShieldCheck,
 } from 'lucide-react'
-import { createStore } from '@/lib/localStore'
-import type { Student } from '../features/students/types'
-import { STATUS_LABELS, STATUS_COLORS, GROUP_LABELS } from '../features/students/types'
+import { studentStore } from '@/data/stores'
+import { STATUS_LABELS, GROUP_LABELS } from '../features/students/types'
 import { ProfileTab } from '../features/students/components/drawer-tabs/ProfileTab'
 import { AttendanceTab } from '../features/students/components/drawer-tabs/AttendanceTab'
 import { FeesTab } from '../features/students/components/drawer-tabs/FeesTab'
 import { ResultsTab } from '../features/students/components/drawer-tabs/ResultsTab'
-import { DisciplinaryTab } from '../features/students/components/drawer-tabs/DisciplinaryTab'
-import { CommunicationTab } from '../features/students/components/drawer-tabs/CommunicationTab'
 import { StudentIdCardModal } from '../features/students/components/modals/StudentIdCardModal'
 import { StudentReportCardModal } from '../features/students/components/modals/StudentReportCardModal'
 import { QuickCollectModal } from '@/features/payments/components/QuickCollectModal'
 import { useStudents } from '../features/students/useStudents'
 import { AddStudentModal } from '../features/students/components/AddStudentModal'
-import { manualDueStore } from '@/data/stores'
+import { ProfileHeroBanner } from '@/features/profile/components/ProfileHeroBanner'
+import { ProfileKpiGrid, type ProfileKpiItem } from '@/features/profile/components/ProfileKpiGrid'
+import { getStudentFinancialMetrics } from '@/features/profile/utils/userProfileData'
 
-const studentStore = createStore<Student>('students')
-
-type TabKey = 'profile' | 'attendance' | 'fees' | 'results' | 'disciplinary' | 'logs'
+type TabKey = 'profile' | 'results' | 'attendance' | 'fees' | 'idcard'
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: 'profile',      label: 'Overview & Bio', icon: User },
-  { key: 'fees',         label: 'Fees & Ledger',  icon: Wallet },
-  { key: 'attendance',   label: 'Attendance',     icon: CalendarCheck },
-  { key: 'results',      label: 'Academic Results', icon: Award },
-  { key: 'disciplinary', label: 'Discipline',     icon: AlertTriangle },
-  { key: 'logs',         label: 'Activity Logs',  icon: History },
+  { key: 'profile',    label: 'Overview & Bio', icon: User },
+  { key: 'results',    label: 'Academic Results', icon: Award },
+  { key: 'attendance', label: 'Attendance & Log', icon: CalendarCheck },
+  { key: 'fees',       label: 'Fees & Invoices', icon: Wallet },
+  { key: 'idcard',     label: 'Digital ID Card', icon: CreditCard },
 ]
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function getAvatarGradient(id: string) {
-  const gradients = [
-    'from-emerald-600 to-teal-600',
-    'from-indigo-600 to-blue-600',
-    'from-purple-600 to-pink-600',
-    'from-amber-600 to-orange-600',
-    'from-rose-600 to-red-600',
-    'from-cyan-600 to-blue-600',
-  ]
-  return gradients[id.charCodeAt(id.length - 1) % gradients.length]
+function getInitials(name?: string, fallback = 'ST'): string {
+  if (!name) return fallback
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const inits = parts.map(p => p[0]).slice(0, 2).join('').toUpperCase()
+  return inits || fallback
 }
 
 export function StudentProfile() {
@@ -96,6 +78,11 @@ export function StudentProfile() {
     )
   }, [studentId, refreshKey])
 
+  // Financial status directly from stores
+  const financialMetrics = useMemo(() => {
+    return student ? getStudentFinancialMetrics(student.id) : null
+  }, [student, refreshKey])
+
   const handleEditSubmit = useCallback(() => {
     submitStudent()
     setRefreshKey(k => k + 1)
@@ -108,25 +95,6 @@ export function StudentProfile() {
       navigate('/students')
     }
   }, [student, deleteStudent, navigate])
-
-  // Live total dues
-  const totalDue = useMemo(() => {
-    if (!student) return 0
-    const dues = manualDueStore.getAll().filter(d => d.student_id === student.id && !d.is_paid)
-    return dues.reduce((sum, d) => sum + d.amount, 0)
-  }, [student, refreshKey])
-
-  const guardianPhone = student?.father?.mobile || student?.mobile
-
-  const handleWhatsApp = () => {
-    if (!guardianPhone) {
-      alert('No guardian phone number available.')
-      return
-    }
-    const cleanNumber = guardianPhone.replace(/[^0-9]/g, '')
-    const url = `https://wa.me/${cleanNumber.startsWith('88') ? cleanNumber : `88${cleanNumber}`}?text=Assalamu%20Alaikum,%20regarding%20student%20${encodeURIComponent(student?.fullNameEn ?? '')}%20from%20Estudy%20Academy.`
-    window.open(url, '_blank')
-  }
 
   if (!student) {
     return (
@@ -143,13 +111,44 @@ export function StudentProfile() {
     )
   }
 
-  const academicLabel = student.type === 'REGULAR'
-    ? [student.className, student.sectionName && `Section ${student.sectionName}`, student.groupId && GROUP_LABELS[student.groupId]].filter(Boolean).join(' · ')
-    : [student.batchName, student.targetExam && `Target: ${student.targetExam}`, student.schoolName && `School: ${student.schoolName}`].filter(Boolean).join(' · ')
+  const academicLabel =
+    student.type === 'REGULAR'
+      ? [student.className, student.sectionName && `Section ${student.sectionName}`, student.groupId && GROUP_LABELS[student.groupId]].filter(Boolean).join(' · ')
+      : [student.batchName, student.targetExam && `Target: ${student.targetExam}`, student.schoolName && `School: ${student.schoolName}`].filter(Boolean).join(' · ')
+
+  // 4 Executive State Cards directly from this student's actual student list data
+  const studentKpis: ProfileKpiItem[] = [
+    {
+      title: 'Class & Section',
+      value: `${student.className || 'Class 10'} · Sec ${student.sectionName || 'A'}`,
+      subtitle: `Roll: ${student.rollNumber} · ${student.type === 'REGULAR' ? 'Regular Track' : 'Exam Batch'}`,
+      icon: GraduationCap,
+      badge: student.status === 'ACTIVE' ? 'Active' : undefined,
+    },
+    {
+      title: 'Curriculum & Shift',
+      value: `${student.groupId ? (GROUP_LABELS[student.groupId] || student.groupId) : 'General'}`,
+      subtitle: `${student.shift ? student.shift.charAt(0) + student.shift.slice(1).toLowerCase() : 'Morning'} Shift · ${student.version ? student.version.charAt(0) + student.version.slice(1).toLowerCase() + ' Medium' : 'Bangla'}`,
+      icon: BookOpen,
+    },
+    {
+      title: 'Student ID & Reg',
+      value: student.studentId || student.id,
+      subtitle: `Reg: ${student.registrationNumber || student.studentId} · Session ${student.session || '2024'}`,
+      icon: CreditCard,
+    },
+    {
+      title: 'Account Ledger',
+      value: financialMetrics?.status === 'CLEARED' ? 'Cleared ✓' : `৳${financialMetrics?.totalDue.toLocaleString()} Due`,
+      subtitle: financialMetrics?.status === 'CLEARED' ? 'No pending dues' : 'Tuition payment pending',
+      icon: Wallet,
+      badge: financialMetrics?.status === 'CLEARED' ? 'Cleared' : 'Due',
+    },
+  ]
 
   return (
     <>
-      <div className="space-y-6 pb-12">
+      <div className="space-y-6 pb-14">
         {/* ── Top Back & Breadcrumb Bar ─────────────────── */}
         <div className="flex items-center justify-between">
           <button
@@ -168,154 +167,68 @@ export function StudentProfile() {
           </div>
         </div>
 
-        {/* ── Hero Profile Master Card ──────────────────── */}
-        <div className="bg-white border border-zinc-200/90 rounded-3xl overflow-hidden shadow-sm">
-          {/* Header Banner */}
-          <div className={`h-36 bg-gradient-to-r ${getAvatarGradient(student.id)} relative overflow-hidden flex items-end p-6`}>
-            <div className="absolute inset-0 bg-black/15 backdrop-blur-[1px]" />
-            <div className="relative z-10 flex items-center justify-between w-full text-white">
-              <div className="flex items-center gap-2">
-                <Sparkles size={18} className="text-amber-300" />
-                <span className="text-xs font-extrabold uppercase tracking-widest opacity-90">
-                  Estudy International Model Academy • Profile Hub
-                </span>
-              </div>
-              <span className="text-xs font-mono font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-                Session: {student.session || '2024-2025'}
-              </span>
-            </div>
-          </div>
+        {/* ── Hero Profile Master Card (Fixed Avatar Overlap via ProfileHeroBanner) ── */}
+        <ProfileHeroBanner
+          fullName={student.fullNameEn}
+          banglaName={student.fullNameBn}
+          subtitle={`${academicLabel} · Session: ${student.session || '2024'}`}
+          avatarUrl={student.profilePhoto}
+          initials={getInitials(student.fullNameEn, 'ST')}
+          roleBadgeText={`Student · ${student.className || 'Class 10'}`}
+          roleColor="bg-emerald-50 text-emerald-800 border-emerald-200"
+          statusText={STATUS_LABELS[student.status] || 'Active'}
+          statusVariant={student.status === 'ACTIVE' ? 'success' : 'warning'}
+          sessionText={`Session: ${student.session || '2024'}`}
+          metaChips={[
+            { label: 'Class', value: student.className || 'Class 10', highlight: true },
+            { label: 'Section', value: student.sectionName || 'A' },
+            { label: 'Roll No', value: student.rollNumber, isMono: true },
+            { label: 'Student ID', value: student.studentId || student.id, isMono: true },
+            { label: 'Blood Group', value: student.bloodGroup || 'Not Specified' },
+            { label: 'Shift', value: student.shift || 'Morning' },
+          ]}
+          contacts={{
+            mobile: student.mobile || student.father?.mobile,
+            email: student.email,
+            whatsapp: student.whatsapp || student.father?.mobile || student.mobile,
+            location: student.presentAddress,
+          }}
+          primaryAction={{
+            label: 'Collect Fee',
+            icon: Zap,
+            onClick: () => setQuickCollectOpen(true),
+          }}
+          secondaryActions={[
+            {
+              label: 'Student ID Card',
+              icon: CreditCard,
+              onClick: () => setActiveTab('idcard'),
+              color: 'text-indigo-600',
+            },
+            {
+              label: 'Report Card',
+              icon: Printer,
+              onClick: () => setReportCardOpen(true),
+              color: 'text-zinc-700',
+            },
+            {
+              label: 'Edit',
+              icon: Edit,
+              onClick: () => openEditModal(student),
+              color: 'text-zinc-600',
+            },
+          ]}
+          dangerAction={{
+            label: 'Delete Student Record',
+            onClick: handleDelete,
+          }}
+        />
 
-          <div className="px-8 pb-6">
-            {/* Avatar & Quick Action Bar Row */}
-            <div className="flex flex-wrap items-end justify-between -mt-12 mb-6 gap-4">
-              {/* Avatar */}
-              <div className="flex items-end gap-5">
-                <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${getAvatarGradient(student.id)} flex items-center justify-center text-white text-3xl font-black shadow-xl ring-4 ring-white shrink-0 overflow-hidden`}>
-                  {student.profilePhoto ? (
-                    <img src={student.profilePhoto} alt={student.fullNameEn} className="w-full h-full object-cover" />
-                  ) : (
-                    getInitials(student.fullNameEn)
-                  )}
-                </div>
+        {/* ── Executive State Cards directly from Student List ── */}
+        <ProfileKpiGrid items={studentKpis} />
 
-                <div className="mb-1">
-                  <div className="flex items-center gap-2.5">
-                    <h1 className="text-2xl font-black text-zinc-900">{student.fullNameEn}</h1>
-                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${STATUS_COLORS[student.status]}`}>
-                      {STATUS_LABELS[student.status]}
-                    </span>
-                  </div>
-                  {student.fullNameBn && (
-                    <p className="text-xs text-zinc-500 font-medium mt-0.5">{student.fullNameBn}</p>
-                  )}
-                  <p className="text-xs text-emerald-800 font-bold mt-1">
-                    {academicLabel} • Roll: <span className="font-mono text-zinc-900">{student.rollNumber}</span> • ID: <span className="font-mono text-zinc-600">{student.studentId}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* 1-Click Fast Action Speed Bar */}
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <button
-                  onClick={() => setQuickCollectOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-sm cursor-pointer"
-                >
-                  <Zap size={14} /> Collect Fee
-                </button>
-
-                <button
-                  onClick={() => setIdCardOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer"
-                >
-                  <CreditCard size={14} className="text-indigo-600" /> Student ID Card
-                </button>
-
-                <button
-                  onClick={() => setReportCardOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer"
-                >
-                  <Printer size={14} /> Report Card
-                </button>
-
-                <button
-                  onClick={handleWhatsApp}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer"
-                  title="WhatsApp Guardian"
-                >
-                  <MessageCircle size={14} className="text-emerald-600" /> WhatsApp
-                </button>
-
-                <button
-                  onClick={() => openEditModal(student)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-all text-xs font-bold cursor-pointer"
-                >
-                  <Edit size={13} /> Edit
-                </button>
-
-                <button
-                  onClick={handleDelete}
-                  className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                  title="Delete Student"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-
-            {/* ── Live KPI Summary Strip ───────────────────── */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-zinc-100">
-              <div className="bg-zinc-50/80 p-3 rounded-2xl border border-zinc-200/80 shadow-xs">
-                <p className="text-[10px] font-semibold uppercase text-zinc-500">Attendance Standing</p>
-                <p className="text-sm font-extrabold text-emerald-700 font-mono mt-0.5">96% Present</p>
-              </div>
-
-              <div className="bg-zinc-50/80 p-3 rounded-2xl border border-zinc-200/80 shadow-xs">
-                <p className="text-[10px] font-semibold uppercase text-zinc-500">Account Dues</p>
-                <p className={`text-sm font-extrabold font-mono mt-0.5 ${totalDue > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
-                  {totalDue > 0 ? `৳${totalDue} Pending` : 'Cleared ✓'}
-                </p>
-              </div>
-
-              <div className="bg-zinc-50/80 p-3 rounded-2xl border border-zinc-200/80 shadow-xs">
-                <p className="text-[10px] font-semibold uppercase text-zinc-500">Academic Standing</p>
-                <p className="text-sm font-extrabold text-indigo-700 font-mono mt-0.5">GPA 4.93 (A+)</p>
-              </div>
-
-              <div className="bg-zinc-50/80 p-3 rounded-2xl border border-zinc-200/80 shadow-xs">
-                <p className="text-[10px] font-semibold uppercase text-zinc-500">Blood Group</p>
-                <p className="text-sm font-extrabold text-rose-600 mt-0.5">{student.bloodGroup || 'B+'}</p>
-              </div>
-            </div>
-
-            {/* Contact Details Quick Row */}
-            <div className="flex flex-wrap items-center gap-5 mt-4 pt-4 border-t border-zinc-100 text-xs text-zinc-600">
-              {student.mobile && (
-                <a href={`tel:${student.mobile}`} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors font-medium">
-                  <Phone size={13} className="text-zinc-400" /> {student.mobile}
-                </a>
-              )}
-              {student.email && (
-                <a href={`mailto:${student.email}`} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors font-medium">
-                  <Mail size={13} className="text-zinc-400" /> {student.email}
-                </a>
-              )}
-              {student.presentAddress && (
-                <span className="flex items-center gap-1.5 font-medium">
-                  <MapPin size={13} className="text-zinc-400" /> {student.presentAddress}
-                </span>
-              )}
-              {student.admissionDate && (
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Calendar size={13} className="text-zinc-400" /> Admitted: {student.admissionDate}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Segmented Tab Navigation ───────────────────── */}
-        <div className="flex items-center gap-1.5 bg-white border border-zinc-200/80 rounded-2xl p-1.5 shadow-xs overflow-x-auto">
+        {/* ── Tab Navigation Bar ──────────────────────────── */}
+        <div className="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs flex items-center overflow-x-auto scrollbar-none gap-1">
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = activeTab === tab.key
@@ -323,31 +236,97 @@ export function StudentProfile() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-400'} />
                 {tab.label}
               </button>
             )
           })}
         </div>
 
-        {/* ── Active Tab Content Container ───────────────── */}
-        <div className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-xs">
-          {activeTab === 'profile'      && <ProfileTab student={student} />}
-          {activeTab === 'fees'         && <FeesTab student={student} />}
-          {activeTab === 'attendance'   && <AttendanceTab student={student} />}
-          {activeTab === 'results'      && <ResultsTab student={student} />}
-          {activeTab === 'disciplinary' && <DisciplinaryTab student={student} />}
-          {activeTab === 'logs'         && <CommunicationTab student={student} />}
+        {/* ── Tab Content Panels ──────────────────────────── */}
+        <div className="bg-white border border-zinc-200/90 rounded-3xl p-4 sm:p-6 shadow-sm">
+          {activeTab === 'profile' && <ProfileTab student={student} />}
+          {activeTab === 'results' && <ResultsTab student={student} />}
+          {activeTab === 'attendance' && <AttendanceTab student={student} />}
+          {activeTab === 'fees' && <FeesTab student={student} />}
+          {activeTab === 'idcard' && (
+            <div className="py-6 flex flex-col items-center justify-center">
+              <div className="max-w-md w-full bg-zinc-50 border border-zinc-200 rounded-3xl p-6 shadow-sm flex flex-col items-center">
+                {/* ID Card Front Preview */}
+                <div className="w-full max-w-[320px] rounded-2xl border-2 border-slate-900 overflow-hidden bg-white shadow-md mb-6">
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-4 text-center">
+                    <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                      <School size={16} />
+                      <h4 className="text-xs font-black uppercase tracking-wider">Estudy Model Academy</h4>
+                    </div>
+                    <p className="text-[9px] text-emerald-200 uppercase tracking-widest font-semibold">Official Student Identity Card</p>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-4 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-full border-3 border-emerald-700 bg-zinc-100 flex items-center justify-center text-emerald-800 text-xl font-black shadow-sm overflow-hidden mb-2">
+                      {student.profilePhoto ? (
+                        <img src={student.profilePhoto} alt={student.fullNameEn} className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials(student.fullNameEn)
+                      )}
+                    </div>
+
+                    <h5 className="text-sm font-black text-zinc-900">{student.fullNameEn}</h5>
+                    <span className="px-3 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 my-1">
+                      {student.className} · Roll {student.rollNumber}
+                    </span>
+
+                    <table className="w-full text-[11px] text-left mt-2 border-t border-zinc-100 pt-2">
+                      <tbody>
+                        <tr>
+                          <td className="py-0.5 text-zinc-500 font-medium">Student ID:</td>
+                          <td className="py-0.5 font-bold font-mono text-zinc-900 text-right">{student.studentId}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-0.5 text-zinc-500 font-medium">Blood Group:</td>
+                          <td className="py-0.5 font-bold font-mono text-rose-600 text-right">{student.bloodGroup || 'Not Specified'}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-0.5 text-zinc-500 font-medium">Guardian Phone:</td>
+                          <td className="py-0.5 font-bold font-mono text-zinc-900 text-right">{student.father?.mobile || student.mobile}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-0.5 text-zinc-500 font-medium">Academic Session:</td>
+                          <td className="py-0.5 font-bold font-mono text-zinc-900 text-right">{student.session || '2024'}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="bg-zinc-100 px-4 py-2 text-[10px] text-zinc-500 flex items-center justify-between border-t border-zinc-200">
+                    <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-600" /> Verified Record</span>
+                    <span className="font-mono">VALID 2024-2025</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIdCardOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer"
+                  >
+                    <Printer size={15} /> Print High-Res Card
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Modals & Document Generators ───────────────── */}
+      {/* Action Modals */}
       <StudentIdCardModal
         open={idCardOpen}
         student={student}
@@ -363,20 +342,22 @@ export function StudentProfile() {
       <QuickCollectModal
         open={quickCollectOpen}
         preselectedStudent={student}
-        onClose={() => setQuickCollectOpen(false)}
+        onClose={() => {
+          setQuickCollectOpen(false)
+          setRefreshKey(k => k + 1)
+        }}
       />
 
-      {/* Edit Student Modal */}
       <AddStudentModal
         isOpen={isModalOpen}
         isEdit={!!editingStudentId}
         onClose={closeModal}
-        currentStep={currentStep}
+        onSubmit={handleEditSubmit}
         formData={formData}
         onChange={updateFormData}
+        currentStep={currentStep}
         onNext={nextStep}
         onPrev={prevStep}
-        onSubmit={handleEditSubmit}
       />
     </>
   )

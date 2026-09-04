@@ -1,4 +1,4 @@
-import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, MessageSquare, ExternalLink, Star, Copy, Check, CreditCard } from 'lucide-react'
+import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, MessageSquare, ExternalLink, Star, Copy, Check, CreditCard, CheckCircle2, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Teacher } from '../types'
@@ -84,7 +84,180 @@ export function TeacherTable({
 
   return (
     <div className="bg-white border border-zinc-200/90 rounded-2xl shadow-2xs overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* ── Mobile Card List View (Phones & Small Devices: Native App Style) ── */}
+      <div className="block md:hidden divide-y divide-zinc-100">
+        {teachers.map((teacher) => {
+          const workload = getTeacherWorkload(teacher.id)
+          const leaveStatus = getTeacherTodayLeaveStatus(teacher.id)
+          const ctAssignment = getTeacherClassTeacherAssignment(teacher)
+          const salaryStatus = getTeacherCurrentMonthSalary(teacher.id)
+
+          return (
+            <div
+              key={teacher.id}
+              onClick={() => onView(teacher)}
+              className="p-3.5 hover:bg-zinc-50/90 active:bg-zinc-100 transition-colors cursor-pointer space-y-2.5"
+            >
+              {/* Top Row: Avatar, Name, Workload & Leave Status */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-10 h-10 rounded-xl ${getAvatarColor(teacher.id)} flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs`}
+                  >
+                    {teacher.profilePhoto ? (
+                      <img
+                        src={teacher.profilePhoto}
+                        alt={teacher.fullName}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      getInitials(teacher.fullName)
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        navigate(`/teachers/${teacher.id}`)
+                      }}
+                      className="font-bold text-zinc-900 hover:text-indigo-600 transition-colors truncate text-xs text-left"
+                    >
+                      {teacher.fullName}
+                    </button>
+                    {teacher.nameBangla && (
+                      <p className="text-[10px] text-zinc-400 font-medium truncate leading-tight">
+                        {teacher.nameBangla}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        ID: {teacher.teacherId}
+                      </span>
+                      <button
+                        onClick={e => copyToClipboard(teacher.teacherId, teacher.id, e)}
+                        className="p-0.5 text-zinc-400 hover:text-zinc-600"
+                        title="Copy ID"
+                      >
+                        {copiedId === teacher.id ? (
+                          <Check size={10} className="text-emerald-600" />
+                        ) : (
+                          <Copy size={10} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status & Workload Badge */}
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {leaveStatus.isOnLeave ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      On Leave
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Present
+                    </span>
+                  )}
+                  <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                    {workload.weeklyClasses} classes/wk
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle Row: Designation, Dept, Class Teacher assignment */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 font-medium">
+                  {DESIGNATION_LABELS[teacher.designation] || teacher.designation}
+                </span>
+
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-50 border border-zinc-200 text-zinc-600 font-medium">
+                  {(teacher.department && DEPARTMENT_LABELS[teacher.department]) || teacher.department || 'General'}
+                </span>
+
+                {ctAssignment.isClassTeacher && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">
+                    Class Teacher: {ctAssignment.classLabel}
+                  </span>
+                )}
+
+                {salaryStatus === 'PAID' ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold ml-auto">
+                    <CheckCircle2 size={10} /> Salary Paid
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold ml-auto">
+                    <Clock size={10} /> Salary Due
+                  </span>
+                )}
+              </div>
+
+              {/* Bottom Row: Contact & Actions Strip */}
+              <div
+                className="flex items-center justify-between pt-2 border-t border-zinc-100"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-2">
+                  {teacher.phone && (
+                    <a
+                      href={`tel:${teacher.phone}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-700 hover:text-indigo-600 text-xs font-mono font-medium"
+                    >
+                      <Phone size={11} className="text-zinc-400" />
+                      {teacher.phone}
+                    </a>
+                  )}
+                  {teacher.phone && (
+                    <a
+                      href={`https://wa.me/${teacher.phone.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                      title="WhatsApp"
+                    >
+                      <MessageSquare size={13} />
+                    </a>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onView(teacher)}
+                    className="p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    title="View Profile"
+                  >
+                    <Eye size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/teachers/salary?search=${encodeURIComponent(teacher.fullName)}`)}
+                    className="p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                    title="View Salary Desk"
+                  >
+                    <CreditCard size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete faculty record for ${teacher.fullName}?`)) {
+                        onDelete(teacher.id)
+                      }
+                    }}
+                    className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Desktop Table View (Kept 100% Intact for Large Screens) ── */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-xs text-left min-w-[780px]">
           <thead className="bg-zinc-50/80 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
             <tr>
@@ -111,12 +284,10 @@ export function TeacherTable({
                   onClick={() => onView(teacher)}
                   className="hover:bg-zinc-50/80 transition-colors group cursor-pointer"
                 >
-                  {/* # */}
                   <td className="px-3.5 py-2.5 text-center text-zinc-400 font-mono font-medium align-top pt-3">
                     {rowNum}
                   </td>
 
-                  {/* Faculty Member & Workload */}
                   <td className="px-3.5 py-2.5">
                     <div className="flex items-start gap-2.5">
                       <div
@@ -139,7 +310,6 @@ export function TeacherTable({
                             navigate(`/teachers/${teacher.id}`)
                           }}
                           className="font-bold text-zinc-900 hover:text-indigo-600 transition-colors truncate flex items-center gap-1 group/link text-xs max-w-[180px]"
-                          title="View Full 360° Profile"
                         >
                           {teacher.fullName}
                           <ExternalLink size={11} className="opacity-0 group-hover/link:opacity-70 transition-opacity" />
@@ -157,7 +327,6 @@ export function TeacherTable({
                           <button
                             onClick={e => copyToClipboard(teacher.teacherId, teacher.id, e)}
                             className="p-0.5 text-zinc-300 hover:text-zinc-600 rounded transition-colors cursor-pointer"
-                            title="Copy Teacher ID"
                           >
                             {copiedId === teacher.id ? (
                               <Check size={10} className="text-emerald-600" />
@@ -339,13 +508,13 @@ export function TeacherTable({
         </table>
       </div>
 
-      {/* ── Pagination ────────────────────────────────────────── */}
+      {/* ── Responsive Pagination ────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
-          <p className="text-xs text-zinc-500 font-medium">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
+          <p className="text-xs text-zinc-500 font-medium text-center sm:text-left">
             Page <strong className="text-zinc-800 font-bold">{currentPage}</strong> of <strong className="text-zinc-800 font-bold">{totalPages}</strong> · <span className="font-mono">{totalResults}</span> total faculty members
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}

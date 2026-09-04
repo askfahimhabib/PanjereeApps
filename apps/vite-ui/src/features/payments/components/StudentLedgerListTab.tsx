@@ -148,7 +148,89 @@ export function StudentLedgerListTab({ onQuickCollect }: StudentLedgerListTabPro
 
       {/* Student Ledger List */}
       <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ── Mobile Card List View ── */}
+        <div className="block sm:hidden divide-y divide-zinc-100">
+          {filtered.map(({ student, totalDue, totalPaid, unpaidCount, isCurrentMonthCleared }) => (
+            <div key={student.id} className="p-3.5 space-y-2.5 hover:bg-zinc-50/80 transition-colors">
+              {/* Header: Roll, Name & Status */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0">
+                    {student.rollNumber}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-zinc-900 text-xs truncate">{student.fullNameEn}</p>
+                    <p className="text-[11px] text-zinc-500 truncate">
+                      {student.className || 'Class'} {student.sectionName ? `• Sec ${student.sectionName}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {totalDue > 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                      <AlertCircle size={10} /> {unpaidCount} Due
+                    </span>
+                  ) : isCurrentMonthCleared ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 size={10} /> Paid ✓
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-600 border border-zinc-200">
+                      Cleared
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Financial Balance Strip */}
+              <div className="grid grid-cols-2 gap-2 bg-zinc-50 p-2.5 rounded-xl text-xs font-mono">
+                <div>
+                  <span className="text-[10px] font-sans text-zinc-500 block">Lifetime Collected</span>
+                  <span className="font-bold text-emerald-700">{formatCurrency(totalPaid)}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-sans text-zinc-500 block">Current Dues</span>
+                  <span className={`font-black ${totalDue > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    {totalDue > 0 ? formatCurrency(totalDue) : '৳ 0'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setStatementStudent(student)}
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs font-semibold transition-colors"
+                >
+                  <FileText size={12} className="text-indigo-600" />
+                  <span>Statement</span>
+                </button>
+
+                {isCurrentMonthCleared ? (
+                  <span
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold select-none cursor-default"
+                  >
+                    <CheckCircle2 size={12} className="text-emerald-600" />
+                    <span>{currentMonthName} Paid</span>
+                    <Lock size={10} className="text-emerald-500 opacity-70 ml-0.5" />
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => onQuickCollect(student)}
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-xs"
+                  >
+                    <DollarSign size={13} />
+                    <span>{totalDue > 0 ? 'Collect' : `Collect (${currentMonthName})`}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Desktop Table View ── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
               <tr>

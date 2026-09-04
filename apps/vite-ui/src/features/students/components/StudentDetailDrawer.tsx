@@ -181,7 +181,7 @@ export function StudentDetailDrawer({
               </div>
 
               {/* ── KPI Summary Strip ──────────────────────────────── */}
-              <div className="grid grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-emerald-100 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-emerald-100 text-center">
                 <div className="bg-white/80 p-2 rounded-xl border border-emerald-100 shadow-xs">
                   <p className="text-[10px] font-semibold text-zinc-500 uppercase">Attendance</p>
                   <p className="text-xs font-black text-emerald-700 font-mono mt-0.5">96% Present</p>
@@ -236,8 +236,8 @@ export function StudentDetailDrawer({
             </div>
 
             {/* ── Tab Navigation Bar ─────────────────────────────── */}
-            <div className="shrink-0 border-b border-zinc-200 bg-white px-5 pt-2">
-              <div className="flex items-stretch gap-1">
+            <div className="shrink-0 border-b border-zinc-200 bg-white px-3 sm:px-5 pt-2">
+              <div className="flex items-stretch gap-1 overflow-x-auto scrollbar-none">
                 {TABS.map(tab => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.key
@@ -245,7 +245,7 @@ export function StudentDetailDrawer({
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative ${
+                      className={`flex-1 min-w-[62px] shrink-0 flex flex-col items-center gap-1 py-2 px-1.5 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${
                         isActive
                           ? 'text-emerald-700 bg-emerald-50/80 border-b-2 border-emerald-600'
                           : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'

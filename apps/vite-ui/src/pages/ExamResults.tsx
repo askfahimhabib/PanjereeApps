@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   CheckCircle2,
@@ -42,13 +42,7 @@ export function ExamResultsPage() {
   const publishMutation = usePublishResults()
   const updateStatusMutation = useUpdateExamHeldStatus()
 
-  // Sync URL search params on mount or param change
-  useEffect(() => {
-    const urlExamId = searchParams.get('examId')
-    const urlTab = searchParams.get('tab') as ActiveViewTab
-    if (urlExamId) setSelectedExamId(urlExamId)
-    if (urlTab) setActiveTab(urlTab)
-  }, [searchParams])
+
 
   // Filter exams by status
   const filteredExams = useMemo(() => {

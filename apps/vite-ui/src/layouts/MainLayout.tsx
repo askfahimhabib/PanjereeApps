@@ -252,20 +252,20 @@ export function MainLayout() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 bg-[var(--color-dark-bg)]">
 
         {/* ── Top Header ─────────────────────────────────── */}
-        <header className="h-16 flex items-center justify-between px-6 lg:px-8 shrink-0 bg-white border-b border-zinc-100 shadow-sm">
-          <div className="flex items-center gap-3">
+        <header className="h-16 flex items-center justify-between px-3.5 sm:px-6 lg:px-8 shrink-0 bg-white border-b border-zinc-100 shadow-sm">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Mobile hamburger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+              className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors shrink-0"
             >
               <Menu size={20} />
             </button>
 
             {/* Page title + breadcrumb */}
-            <div>
+            <div className="min-w-0">
               {currentPage.breadcrumb && (
-                <div className="flex items-center gap-1 mb-0.5">
+                <div className="hidden sm:flex items-center gap-1 mb-0.5">
                   {currentPage.breadcrumb.map((crumb, i) => (
                     <span key={i} className="flex items-center gap-1">
                       {i > 0 && <ChevronRight size={10} className="text-zinc-300" />}
@@ -276,14 +276,14 @@ export function MainLayout() {
                   ))}
                 </div>
               )}
-              <h2 className="text-lg font-bold text-zinc-900 leading-none">
+              <h2 className="text-base sm:text-lg font-bold text-zinc-900 leading-tight truncate">
                 {currentPage.title}
               </h2>
             </div>
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
             {/* Notification Bell */}
             <div className="relative" ref={noticeRef}>
@@ -300,7 +300,7 @@ export function MainLayout() {
 
               {/* Dropdown */}
               {showNotices && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-zinc-100 overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-2 w-[calc(100vw-24px)] max-w-sm sm:w-80 bg-white rounded-2xl shadow-xl border border-zinc-100 overflow-hidden z-50">
                   <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
                     <h3 className="font-bold text-zinc-900 text-sm">Notifications</h3>
                     {unreadCount > 0 && (
@@ -367,9 +367,9 @@ export function MainLayout() {
             {/* User avatar (header only — no sidebar duplication) */}
             <button
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2.5 pl-3 border-l border-zinc-100 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l sm:border-zinc-100 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs shrink-0">
                 {initials}
               </div>
               <div className="hidden sm:block text-left">
@@ -381,8 +381,8 @@ export function MainLayout() {
         </header>
 
         {/* ── Page Content ─────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
-          <div className="page-enter">
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-full">
+          <div className="page-enter max-w-full">
             <Outlet />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, CheckCircle2, Clock, XCircle, ExternalLink, Award, Copy, Check } from 'lucide-react'
+import { Eye, Trash2, ChevronLeft, ChevronRight, Phone, CheckCircle2, Clock, XCircle, ExternalLink, Award, Copy, Check, GraduationCap, BookOpen } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Student } from '../types'
@@ -69,7 +69,173 @@ export function StudentTable({
 
   return (
     <div className="bg-white border border-zinc-200/90 rounded-2xl shadow-2xs overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* ── Mobile Card List View (Phones & Small Devices: Native App Style) ── */}
+      <div className="block sm:hidden divide-y divide-zinc-100">
+        {students.map((student, idx) => {
+          const rowNum = (currentPage - 1) * 10 + idx + 1
+          const feeStatus = deriveStudentFeeStatus(student.id)
+
+          return (
+            <div
+              key={student.id}
+              onClick={() => onView(student)}
+              className="p-3.5 hover:bg-zinc-50/90 active:bg-zinc-100 transition-colors cursor-pointer space-y-2.5"
+            >
+              {/* Header: Avatar, Name & Roll/Status Badges */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-10 h-10 rounded-xl ${getAvatarColor(student.id)} flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs`}
+                  >
+                    {student.profilePhoto ? (
+                      <img
+                        src={student.profilePhoto}
+                        alt={student.fullNameEn}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      getInitials(student.fullNameEn)
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          navigate(`/students/${student.id}`)
+                        }}
+                        className="font-bold text-zinc-900 hover:text-indigo-600 transition-colors truncate text-xs text-left"
+                      >
+                        {student.fullNameEn}
+                      </button>
+                    </div>
+                    {student.fullNameBn && (
+                      <p className="text-[10px] text-zinc-400 font-medium truncate leading-tight">
+                        {student.fullNameBn}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        ID: {student.studentId}
+                      </span>
+                      <button
+                        onClick={e => copyToClipboard(student.studentId, student.id, e)}
+                        className="p-0.5 text-zinc-400 hover:text-zinc-600"
+                        title="Copy ID"
+                      >
+                        {copiedId === student.id ? (
+                          <Check size={10} className="text-emerald-600" />
+                        ) : (
+                          <Copy size={10} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Roll & Status Badges */}
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className="font-mono font-bold text-[11px] bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded-lg border border-zinc-200">
+                    #{student.rollNumber || rowNum}
+                  </span>
+                  <span
+                    className={`px-2 py-0.2 text-[9px] font-bold rounded-full border ${
+                      STATUS_COLORS[student.status] || 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                    }`}
+                  >
+                    {STATUS_LABELS[student.status] || student.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle Row: Academic Track & Fee Status Badges */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                {student.type === 'REGULAR' ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 font-medium">
+                    <GraduationCap size={11} className="text-indigo-600" />
+                    {student.className || 'Class'} {student.sectionName ? `· Sec ${student.sectionName}` : ''}
+                    {student.groupId ? ` (${student.groupId})` : ''}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200/60 font-medium">
+                    <BookOpen size={11} className="text-purple-600" />
+                    {student.batchName || 'Batch'} {student.targetExam ? `· ${student.targetExam}` : ''}
+                  </span>
+                )}
+
+                {student.status === 'ACTIVE' && (
+                  feeStatus === 'PAID' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
+                      <CheckCircle2 size={10} /> Paid
+                    </span>
+                  ) : feeStatus === 'PARTIAL' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px]">
+                      <Clock size={10} /> Partial
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-bold text-[10px]">
+                      <XCircle size={10} /> Fee Due
+                    </span>
+                  )
+                )}
+
+                {student.mobile && (
+                  <a
+                    href={`tel:${student.mobile}`}
+                    onClick={e => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-50 border border-zinc-200 text-zinc-600 hover:text-indigo-600 text-[10px] font-mono ml-auto"
+                  >
+                    <Phone size={10} className="text-zinc-400" />
+                    {student.mobile}
+                  </a>
+                )}
+              </div>
+
+              {/* Bottom Quick Action Strip */}
+              <div
+                className="flex items-center justify-between pt-2 border-t border-zinc-100"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => onView(student)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800"
+                >
+                  <Eye size={12} /> View Profile
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {onCertificate && (
+                    <button
+                      type="button"
+                      onClick={() => onCertificate(student)}
+                      className="p-1.5 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Certificate"
+                    >
+                      <Award size={13} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete ${student.fullNameEn}?`)) {
+                        onDelete(student.id)
+                      }
+                    }}
+                    className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Desktop Table View (Kept 100% Intact for Large Screens) ── */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-xs text-left">
           <thead className="bg-zinc-50/80 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
             <tr>
@@ -299,13 +465,13 @@ export function StudentTable({
         </table>
       </div>
 
-      {/* ── Pagination ────────────────────────────────────────── */}
+      {/* ── Responsive Pagination ────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
-          <p className="text-xs text-zinc-500 font-medium">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-zinc-100 bg-zinc-50/50">
+          <p className="text-xs text-zinc-500 font-medium text-center sm:text-left">
             Page <strong className="text-zinc-800 font-bold">{currentPage}</strong> of <strong className="text-zinc-800 font-bold">{totalPages}</strong> · <span className="font-mono">{totalResults}</span> total students
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}

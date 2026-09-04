@@ -106,70 +106,58 @@ export function TransactionHistoryTable({
         </div>
       </div>
 
-      {/* ── Transactions Table ─────────────────────────────────── */}
-      <div className="overflow-x-auto">
-        {isLoading ? (
-          <div className="py-16 text-center text-zinc-400">
-            <p className="text-sm font-semibold text-zinc-600">Loading transactions...</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-zinc-400">
-            <Receipt size={40} className="mx-auto mb-3 opacity-30 text-zinc-400" />
-            <p className="text-sm font-semibold text-zinc-700">No Transactions Found</p>
-            <p className="text-xs text-zinc-400 mt-1">Try adjusting your search or filter options</p>
-          </div>
-        ) : (
-          <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-5 py-3">Transaction / Purpose</th>
-                <th className="px-4 py-3">Party / Recipient</th>
-                <th className="px-4 py-3 text-center">Category</th>
-                <th className="px-4 py-3 text-center">Method</th>
-                <th className="px-4 py-3 text-right">Date</th>
-                <th className="px-5 py-3 text-right">Amount</th>
-                <th className="px-4 py-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
-              {filtered.map((tx) => {
-                const isIncome = tx.type === 'INCOME'
-                return (
-                  <tr
-                    key={tx.id}
-                    className="hover:bg-zinc-50/70 transition-colors group cursor-pointer"
-                    onClick={() => setSelectedTx(tx)}
-                  >
-                    {/* Title & Memo */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            isIncome
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                              : 'bg-rose-50 text-rose-600 border border-rose-100'
-                          }`}
-                        >
-                          {isIncome ? <ArrowDownRight size={15} /> : <ArrowUpRight size={15} />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-zinc-900 truncate max-w-xs">{tx.title}</p>
-                          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-0.5">
-                            <span className="font-mono text-zinc-500">{tx.invoice_no ?? tx.id.slice(0, 8)}</span>
-                            {tx.notes && <span>• {tx.notes}</span>}
-                          </div>
-                        </div>
+      {/* ── Transactions Table & Mobile Cards ────────────────── */}
+      {isLoading ? (
+        <div className="py-16 text-center text-zinc-400">
+          <p className="text-sm font-semibold text-zinc-600">Loading transactions...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-16 text-center text-zinc-400">
+          <Receipt size={40} className="mx-auto mb-3 opacity-30 text-zinc-400" />
+          <p className="text-sm font-semibold text-zinc-700">No Transactions Found</p>
+          <p className="text-xs text-zinc-400 mt-1">Try adjusting your search or filter options</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile Card List */}
+          <div className="block sm:hidden divide-y divide-zinc-100">
+            {filtered.map((tx) => {
+              const isIncome = tx.type === 'INCOME'
+              return (
+                <div
+                  key={tx.id}
+                  className="p-4 space-y-2.5 active:bg-zinc-50/80 transition-colors cursor-pointer"
+                  onClick={() => setSelectedTx(tx)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          isIncome
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : 'bg-rose-50 text-rose-600 border border-rose-100'
+                        }`}
+                      >
+                        {isIncome ? <ArrowDownRight size={15} /> : <ArrowUpRight size={15} />}
                       </div>
-                    </td>
+                      <div className="min-w-0">
+                        <p className="font-bold text-zinc-900 text-sm truncate">{tx.title}</p>
+                        <p className="text-[11px] text-zinc-500 truncate">
+                          {tx.party_name}
+                          {tx.party_role && <span className="text-zinc-400"> • {tx.party_role}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className={`font-mono font-bold text-sm ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </span>
+                      <p className="text-[10px] text-zinc-400 font-medium">{tx.date}</p>
+                    </div>
+                  </div>
 
-                    {/* Party Name */}
-                    <td className="px-4 py-3.5">
-                      <p className="font-semibold text-zinc-800">{tx.party_name}</p>
-                      {tx.party_role && <p className="text-[11px] text-zinc-400">{tx.party_role}</p>}
-                    </td>
-
-                    {/* Category */}
-                    <td className="px-4 py-3.5 text-center">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] pt-1 border-t border-zinc-50">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold ${
                           tx.category === 'STUDENT_FEE'
@@ -185,59 +173,160 @@ export function TransactionHistoryTable({
                           ? 'Teacher Salary'
                           : 'Operational'}
                       </span>
-                    </td>
-
-                    {/* Payment Method */}
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-block px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 font-mono font-medium text-[11px]">
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 font-mono font-medium text-[10px]">
                         {tx.payment_method}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Date */}
-                    <td className="px-4 py-3.5 text-right font-medium text-zinc-600">
-                      {tx.date}
-                    </td>
-
-                    {/* Amount (+/-) */}
-                    <td className="px-5 py-3.5 text-right font-mono font-bold text-sm">
-                      <span className={isIncome ? 'text-emerald-600' : 'text-rose-600'}>
-                        {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setSelectedTx(tx)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-colors"
+                      >
+                        <Receipt size={12} />
+                        Voucher
+                      </button>
+                      {onDelete && (
                         <button
-                          onClick={() => setSelectedTx(tx)}
-                          title="View / Print Voucher Memo"
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                          onClick={() => {
+                            if (confirm('Delete this transaction record?')) {
+                              onDelete(tx.id)
+                            }
+                          }}
+                          className="p-1 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                         >
-                          <Receipt size={14} />
+                          <Trash2 size={13} />
                         </button>
-                        {onDelete && (
-                          <button
-                            onClick={() => {
-                              if (confirm('Delete this transaction record?')) {
-                                onDelete(tx.id)
-                              }
-                            }}
-                            title="Delete"
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="px-5 py-3">Transaction / Purpose</th>
+                  <th className="px-4 py-3">Party / Recipient</th>
+                  <th className="px-4 py-3 text-center">Category</th>
+                  <th className="px-4 py-3 text-center">Method</th>
+                  <th className="px-4 py-3 text-right">Date</th>
+                  <th className="px-5 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-50">
+                {filtered.map((tx) => {
+                  const isIncome = tx.type === 'INCOME'
+                  return (
+                    <tr
+                      key={tx.id}
+                      className="hover:bg-zinc-50/70 transition-colors group cursor-pointer"
+                      onClick={() => setSelectedTx(tx)}
+                    >
+                      {/* Title & Memo */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                              isIncome
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                : 'bg-rose-50 text-rose-600 border border-rose-100'
+                            }`}
                           >
-                            <Trash2 size={14} />
+                            {isIncome ? <ArrowDownRight size={15} /> : <ArrowUpRight size={15} />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-zinc-900 truncate max-w-xs">{tx.title}</p>
+                            <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-0.5">
+                              <span className="font-mono text-zinc-500">{tx.invoice_no ?? tx.id.slice(0, 8)}</span>
+                              {tx.notes && <span>• {tx.notes}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Party Name */}
+                      <td className="px-4 py-3.5">
+                        <p className="font-semibold text-zinc-800">{tx.party_name}</p>
+                        {tx.party_role && <p className="text-[11px] text-zinc-400">{tx.party_role}</p>}
+                      </td>
+
+                      {/* Category */}
+                      <td className="px-4 py-3.5 text-center">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            tx.category === 'STUDENT_FEE'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                              : tx.category === 'TEACHER_SALARY'
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/50'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                          }`}
+                        >
+                          {tx.category === 'STUDENT_FEE'
+                            ? 'Student Fee'
+                            : tx.category === 'TEACHER_SALARY'
+                            ? 'Teacher Salary'
+                            : 'Operational'}
+                        </span>
+                      </td>
+
+                      {/* Payment Method */}
+                      <td className="px-4 py-3.5 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 font-mono font-medium text-[11px]">
+                          {tx.payment_method}
+                        </span>
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-4 py-3.5 text-right font-medium text-zinc-600">
+                        {tx.date}
+                      </td>
+
+                      {/* Amount (+/-) */}
+                      <td className="px-5 py-3.5 text-right font-mono font-bold text-sm">
+                        <span className={isIncome ? 'text-emerald-600' : 'text-rose-600'}>
+                          {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setSelectedTx(tx)}
+                            title="View / Print Voucher Memo"
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                          >
+                            <Receipt size={14} />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                          {onDelete && (
+                            <button
+                              onClick={() => {
+                                if (confirm('Delete this transaction record?')) {
+                                  onDelete(tx.id)
+                                }
+                              }}
+                              title="Delete"
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {/* Voucher Memo Modal */}
       {selectedTx && (

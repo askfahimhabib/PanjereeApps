@@ -68,93 +68,170 @@ export function SalarySetupTab({ settings, onSaveSetting }: SalarySetupTabProps)
         </span>
       </div>
 
-      {/* Settings Table */}
+      {/* Settings Table & Mobile Cards */}
       <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-5 py-3">Teacher</th>
-                <th className="px-4 py-3 text-right">Base Salary</th>
-                <th className="px-4 py-3 text-right">Allowances</th>
-                <th className="px-4 py-3 text-right">Deductions</th>
-                <th className="px-4 py-3 text-right">Net Salary</th>
-                <th className="px-4 py-3">Disbursal Mode</th>
-                <th className="px-4 py-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
+        {filtered.length === 0 ? (
+          <div className="py-14 text-center text-zinc-400">
+            <p className="text-sm font-semibold text-zinc-700">No Teacher Settings Found</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Cards View */}
+            <div className="block sm:hidden divide-y divide-zinc-100">
               {filtered.map((s) => {
                 const totalAllowances = (s.house_allowance || 0) + (s.medical_allowance || 0) + (s.special_allowance || 0)
                 const totalDeductions = (s.provident_fund_deduction || 0) + (s.tax_deduction || 0) + (s.other_deduction || 0)
                 const net = s.base_salary + totalAllowances - totalDeductions
 
                 return (
-                  <tr key={s.id} className="hover:bg-zinc-50/70 transition-colors">
-                    {/* Teacher Details */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
+                  <div key={s.id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
                           {s.teacher_name.charAt(0)}
                         </div>
-                        <div>
-                          <p className="font-bold text-zinc-900">{s.teacher_name}</p>
-                          <p className="text-[11px] text-zinc-500">
+                        <div className="min-w-0">
+                          <p className="font-bold text-zinc-900 text-sm truncate">{s.teacher_name}</p>
+                          <p className="text-[11px] text-zinc-500 truncate">
                             {s.designation} {s.department ? `• ${s.department}` : ''}
                           </p>
                         </div>
                       </div>
-                    </td>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] text-zinc-400 block font-medium">Net Salary</span>
+                        <span className="font-mono font-bold text-sm text-indigo-900">
+                          {formatCurrency(net)}
+                        </span>
+                      </div>
+                    </div>
 
-                    {/* Base Salary */}
-                    <td className="px-4 py-3.5 text-right font-mono font-semibold text-zinc-800">
-                      {formatCurrency(s.base_salary)}
-                    </td>
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 bg-zinc-50/80 p-2.5 rounded-xl text-[11px] border border-zinc-100">
+                      <span className="text-zinc-600">
+                        Base: <strong className="font-mono text-zinc-800">{formatCurrency(s.base_salary)}</strong>
+                      </span>
+                      {totalAllowances > 0 && (
+                        <span className="text-emerald-600 font-mono font-medium">
+                          +{formatCurrency(totalAllowances)}
+                        </span>
+                      )}
+                      {totalDeductions > 0 && (
+                        <span className="text-rose-600 font-mono font-medium">
+                          -{formatCurrency(totalDeductions)}
+                        </span>
+                      )}
+                    </div>
 
-                    {/* Allowances */}
-                    <td className="px-4 py-3.5 text-right font-mono text-emerald-600 font-medium">
-                      +{formatCurrency(totalAllowances)}
-                    </td>
-
-                    {/* Deductions */}
-                    <td className="px-4 py-3.5 text-right font-mono text-rose-600 font-medium">
-                      -{formatCurrency(totalDeductions)}
-                    </td>
-
-                    {/* Net Salary */}
-                    <td className="px-4 py-3.5 text-right font-mono font-bold text-sm text-indigo-950">
-                      {formatCurrency(net)}
-                    </td>
-
-                    {/* Payment Mode */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5 text-zinc-700">
-                        <span className="font-semibold text-[11px] px-2 py-0.5 bg-zinc-100 rounded-md">
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-50 text-[11px]">
+                      <div className="flex items-center gap-1.5 text-zinc-600">
+                        <span className="font-semibold text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded">
                           {s.payment_method}
                         </span>
                         {s.bank_name && (
-                          <span className="text-[11px] text-zinc-400 truncate max-w-[120px]" title={s.bank_name}>
+                          <span className="text-zinc-400 truncate max-w-[120px] text-[10px]">
                             {s.bank_name}
                           </span>
                         )}
                       </div>
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-4 py-3.5 text-center">
                       <button
                         onClick={() => setEditingSetting(s)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
                       >
                         <Pencil size={12} /> Edit Salary
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 )
               })}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Teacher</th>
+                    <th className="px-4 py-3 text-right">Base Salary</th>
+                    <th className="px-4 py-3 text-right">Allowances</th>
+                    <th className="px-4 py-3 text-right">Deductions</th>
+                    <th className="px-4 py-3 text-right">Net Salary</th>
+                    <th className="px-4 py-3">Disbursal Mode</th>
+                    <th className="px-4 py-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-50">
+                  {filtered.map((s) => {
+                    const totalAllowances = (s.house_allowance || 0) + (s.medical_allowance || 0) + (s.special_allowance || 0)
+                    const totalDeductions = (s.provident_fund_deduction || 0) + (s.tax_deduction || 0) + (s.other_deduction || 0)
+                    const net = s.base_salary + totalAllowances - totalDeductions
+
+                    return (
+                      <tr key={s.id} className="hover:bg-zinc-50/70 transition-colors">
+                        {/* Teacher Details */}
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
+                              {s.teacher_name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-zinc-900">{s.teacher_name}</p>
+                              <p className="text-[11px] text-zinc-500">
+                                {s.designation} {s.department ? `• ${s.department}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Base Salary */}
+                        <td className="px-4 py-3.5 text-right font-mono font-semibold text-zinc-800">
+                          {formatCurrency(s.base_salary)}
+                        </td>
+
+                        {/* Allowances */}
+                        <td className="px-4 py-3.5 text-right font-mono text-emerald-600 font-medium">
+                          +{formatCurrency(totalAllowances)}
+                        </td>
+
+                        {/* Deductions */}
+                        <td className="px-4 py-3.5 text-right font-mono text-rose-600 font-medium">
+                          -{formatCurrency(totalDeductions)}
+                        </td>
+
+                        {/* Net Salary */}
+                        <td className="px-4 py-3.5 text-right font-mono font-bold text-sm text-indigo-950">
+                          {formatCurrency(net)}
+                        </td>
+
+                        {/* Payment Mode */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-1.5 text-zinc-700">
+                            <span className="font-semibold text-[11px] px-2 py-0.5 bg-zinc-100 rounded-md">
+                              {s.payment_method}
+                            </span>
+                            {s.bank_name && (
+                              <span className="text-[11px] text-zinc-400 truncate max-w-[120px]" title={s.bank_name}>
+                                {s.bank_name}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            onClick={() => setEditingSetting(s)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Pencil size={12} /> Edit Salary
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Edit Modal */}

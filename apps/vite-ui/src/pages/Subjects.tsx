@@ -594,30 +594,42 @@ export function Subjects() {
                       </div>
                     ) : (
                       /* Table View for Class 6–8 */
-                      <div className="border border-zinc-200/80 rounded-xl overflow-hidden">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider">
-                            <tr>
-                              <th className="px-4 py-3">Code</th>
-                              <th className="px-4 py-3">Subject Name</th>
-                              <th className="px-4 py-3">Group</th>
-                              <th className="px-4 py-3">Paper</th>
-                              <th className="px-4 py-3">Marks</th>
-                              <th className="px-4 py-3 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-zinc-100 font-medium text-zinc-800">
-                            {subjects.map((s) => (
-                              <SubjectTableRow
-                                key={s.id}
-                                subject={s}
-                                onEdit={openEditModal}
-                                onDelete={deleteSubject}
-                              />
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <>
+                        <div className="block sm:hidden space-y-2.5">
+                          {subjects.map((s) => (
+                            <SubjectCard
+                              key={s.id}
+                              subject={s}
+                              onEdit={openEditModal}
+                              onDelete={deleteSubject}
+                            />
+                          ))}
+                        </div>
+                        <div className="hidden sm:block border border-zinc-200/80 rounded-xl overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-bold uppercase tracking-wider">
+                              <tr>
+                                <th className="px-4 py-3">Code</th>
+                                <th className="px-4 py-3">Subject Name</th>
+                                <th className="px-4 py-3">Group</th>
+                                <th className="px-4 py-3">Paper</th>
+                                <th className="px-4 py-3">Marks</th>
+                                <th className="px-4 py-3 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100 font-medium text-zinc-800">
+                              {subjects.map((s) => (
+                                <SubjectTableRow
+                                  key={s.id}
+                                  subject={s}
+                                  onEdit={openEditModal}
+                                  onDelete={deleteSubject}
+                                />
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
@@ -685,20 +697,27 @@ function SubjectSectionBlock({
           ))}
         </div>
       ) : (
-        <div className="border border-zinc-200/80 rounded-xl overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <tbody className="divide-y divide-zinc-100 font-medium text-zinc-800">
-              {subjects.map((s) => (
-                <SubjectTableRow
-                  key={s.id}
-                  subject={s}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="block sm:hidden space-y-2.5">
+            {subjects.map((s) => (
+              <SubjectCard key={s.id} subject={s} onEdit={onEdit} onDelete={onDelete} />
+            ))}
+          </div>
+          <div className="hidden sm:block border border-zinc-200/80 rounded-xl overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <tbody className="divide-y divide-zinc-100 font-medium text-zinc-800">
+                {subjects.map((s) => (
+                  <SubjectTableRow
+                    key={s.id}
+                    subject={s}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

@@ -393,14 +393,14 @@ export function useCalendar() {
 
   // Upcoming events (starting today onwards, sorted by date)
   const upcomingEvents = useMemo(() => {
-    const todayStr = formatDateStr(now)
+    const todayStr = formatDateStr(new Date())
     return filteredEvents
       .filter((e) => {
         return (e.endDate || e.date) >= todayStr
       })
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 10)
-  }, [filteredEvents, now])
+  }, [filteredEvents])
 
   const getEventsForDay = (day: Date) => {
     return monthEvents.filter((e) => isInRange(day, e.date, e.endDate))

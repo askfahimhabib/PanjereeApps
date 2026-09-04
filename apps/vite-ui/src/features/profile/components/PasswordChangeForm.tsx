@@ -2,6 +2,47 @@ import { useState } from 'react'
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react'
 import { useProfileStore } from '../../../store/profile'
 
+interface PasswordFieldProps {
+  label: string
+  field: 'current' | 'newPass' | 'confirm'
+  value: string
+  placeholder?: string
+  showText: boolean
+  onChange: (val: string) => void
+  onToggleShow: () => void
+}
+
+function PasswordField({
+  label,
+  value,
+  placeholder,
+  showText,
+  onChange,
+  onToggleShow,
+}: PasswordFieldProps) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">{label}</label>
+      <div className="relative">
+        <input
+          type={showText ? 'text' : 'password'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border rounded-2xl px-4 py-2.5 pr-10 text-sm text-zinc-800 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+        />
+        <button
+          type="button"
+          onClick={onToggleShow}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-800 transition-colors"
+        >
+          {showText ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function PasswordChangeForm() {
   const { changePassword } = useProfileStore()
   const [form, setForm] = useState({ current: '', newPass: '', confirm: '' })
@@ -29,35 +70,35 @@ export function PasswordChangeForm() {
     }
   }
 
-  const Field = ({
-    label, field, placeholder,
-  }: { label: string; field: keyof typeof form; placeholder?: string }) => (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">{label}</label>
-      <div className="relative">
-        <input
-          type={show[field] ? 'text' : 'password'}
-          value={form[field]}
-          onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-          placeholder={placeholder}
-          className="w-full bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-zinc-200 border border-zinc-100 rounded-2xl px-4 py-2.5 pr-10 text-sm text-zinc-800 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
-        />
-        <button
-          type="button"
-          onClick={() => setShow(s => ({ ...s, [field]: !s[field] }))}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-800 transition-colors"
-        >
-          {show[field] ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="space-y-4">
-      <Field label="Current Password" field="current" placeholder="Enter current password" />
-      <Field label="New Password" field="newPass" placeholder="Enter new password" />
-      <Field label="Confirm New Password" field="confirm" placeholder="Confirm new password" />
+      <PasswordField
+        label="Current Password"
+        field="current"
+        value={form.current}
+        showText={show.current}
+        placeholder="Enter current password"
+        onChange={val => setForm(f => ({ ...f, current: val }))}
+        onToggleShow={() => setShow(s => ({ ...s, current: !s.current }))}
+      />
+      <PasswordField
+        label="New Password"
+        field="newPass"
+        value={form.newPass}
+        showText={show.newPass}
+        placeholder="Enter new password"
+        onChange={val => setForm(f => ({ ...f, newPass: val }))}
+        onToggleShow={() => setShow(s => ({ ...s, newPass: !s.newPass }))}
+      />
+      <PasswordField
+        label="Confirm New Password"
+        field="confirm"
+        value={form.confirm}
+        showText={show.confirm}
+        placeholder="Confirm new password"
+        onChange={val => setForm(f => ({ ...f, confirm: val }))}
+        onToggleShow={() => setShow(s => ({ ...s, confirm: !s.confirm }))}
+      />
 
       {/* Password rules */}
       {form.newPass.length > 0 && (

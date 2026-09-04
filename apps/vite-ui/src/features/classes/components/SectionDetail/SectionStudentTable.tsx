@@ -192,124 +192,208 @@ export function SectionStudentTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto flex-1">
-        <table className="w-full text-xs">
-          <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600">
-            <tr>
-              <th className="text-center px-3 py-3 font-bold uppercase tracking-wider w-14">Roll</th>
-              <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Student Profile</th>
-              <th className="text-left px-4 py-3 font-bold uppercase tracking-wider hidden md:table-cell">ID & Contact</th>
-              <th className="text-center px-3 py-3 font-bold uppercase tracking-wider hidden lg:table-cell">Gender</th>
-              <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Exam GPA</th>
-              <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Attendance</th>
-              <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Fee</th>
-              <th className="text-right px-4 py-3 font-bold uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <tr
-                  key={student.id}
-                  className="hover:bg-zinc-50/80 transition-colors group"
-                >
-                  {/* Roll number */}
-                  <td className="px-3 py-3 text-center font-mono font-bold text-indigo-700 whitespace-nowrap">
-                    #{String(student.roll).padStart(2, '0')}
-                  </td>
+      {/* Table & Mobile Cards */}
+      {filteredStudents.length === 0 ? (
+        <div className="px-4 py-12 text-center text-zinc-500 text-xs">
+          No students found matching your filters.
+        </div>
+      ) : (
+        <>
+          {/* Mobile Roster Cards */}
+          <div className="block sm:hidden divide-y divide-zinc-100 flex-1">
+            {filteredStudents.map((student) => (
+              <div key={student.id} className="p-3.5 space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-100">
+                      #{String(student.roll).padStart(2, '0')}
+                    </span>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/students/${student.id}`}
+                        className="font-bold text-zinc-900 text-xs hover:text-indigo-600 truncate block leading-tight"
+                      >
+                        {student.fullNameEn}
+                      </Link>
+                      <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        {student.studentId}
+                        {student.gender && <span> • {student.gender.toLowerCase()}</span>}
+                      </p>
+                    </div>
+                  </div>
 
-                  {/* Student Name and Photo (Clickable to open profile directly) */}
-                  <td className="px-4 py-3">
-                    <Link
-                      to={`/students/${student.id}`}
-                      className="flex items-center gap-3 group/profile hover:opacity-90 transition-opacity cursor-pointer"
-                      title="Click to view full student profile"
-                    >
-                      <div className="h-9 w-9 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-indigo-500/30 transition-all">
-                        {student.profilePhoto ? (
-                          <img src={student.profilePhoto} alt={student.fullNameEn} className="h-full w-full object-cover" />
-                        ) : (
-                          <UserCircle className="h-6 w-6 text-zinc-400" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-bold text-zinc-900 group-hover/profile:text-indigo-600 group-hover/profile:underline transition-colors flex items-center gap-1">
-                          <span>{student.fullNameEn}</span>
-                        </div>
-                        <div className="text-[10px] text-zinc-500 font-normal">{student.fullNameBn || '—'}</div>
-                      </div>
-                    </Link>
-                  </td>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    {getFeeStatusBadge(student.feeStatus)}
+                  </div>
+                </div>
 
-                  {/* ID and Guardian Contact */}
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <div className="font-mono font-medium text-zinc-800">{student.studentId}</div>
-                    {student.guardianPhone ? (
-                      <div className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                        <Phone size={10} className="text-zinc-400" />
-                        <span>{student.guardianPhone}</span>
-                      </div>
-                    ) : null}
-                  </td>
+                {/* Metrics Badges Row */}
+                <div className="flex flex-wrap items-center gap-2 text-[11px] bg-zinc-50/70 p-2 rounded-xl border border-zinc-100">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-zinc-400">Attendance:</span>
+                    {getAttendanceBadge(student.attendanceRate)}
+                  </div>
 
-                  {/* Gender */}
-                  <td className="px-3 py-3 text-center text-zinc-700 capitalize hidden lg:table-cell">
-                    {student.gender.toLowerCase()}
-                  </td>
-
-                  {/* Latest Exam GPA & Grade */}
-                  <td className="px-3 py-3 text-center">
-                    {student.latestGpa !== undefined ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-                        <Award size={12} className="text-indigo-600" />
+                  {student.latestGpa !== undefined && (
+                    <div className="flex items-center gap-1 ml-auto">
+                      <span className="text-[10px] text-zinc-400">GPA:</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+                        <Award size={11} className="text-indigo-600" />
                         {student.latestGpa.toFixed(2)} ({student.latestGrade})
                       </span>
-                    ) : (
-                      <span className="text-zinc-400 font-mono">—</span>
-                    )}
-                  </td>
-
-                  {/* Attendance Rate */}
-                  <td className="px-3 py-3 text-center">
-                    {getAttendanceBadge(student.attendanceRate)}
-                  </td>
-
-                  {/* Fee Status */}
-                  <td className="px-3 py-3 text-center">
-                    {getFeeStatusBadge(student.feeStatus)}
-                  </td>
-
-                  {/* Actions: Always visible, clean Transfer Section action */}
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end">
-                      {onTransfer ? (
-                        <button
-                          type="button"
-                          onClick={() => onTransfer(student)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold transition-all shadow-2xs cursor-pointer"
-                          title="Transfer student to another section"
-                        >
-                          <ArrowRightLeft size={12} className="text-purple-600" />
-                          <span>Transfer</span>
-                        </button>
-                      ) : (
-                        <span className="text-zinc-400 text-[11px]">—</span>
-                      )}
                     </div>
-                  </td>
+                  )}
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex items-center justify-between pt-1 border-t border-zinc-50 text-[11px]">
+                  {student.guardianPhone ? (
+                    <a
+                      href={`tel:${student.guardianPhone}`}
+                      className="inline-flex items-center gap-1 text-zinc-600 hover:text-emerald-700 font-medium text-xs"
+                    >
+                      <Phone size={12} className="text-emerald-600" />
+                      <span>{student.guardianPhone}</span>
+                    </a>
+                  ) : (
+                    <span className="text-zinc-300 text-[10px]">No phone</span>
+                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    {onTransfer && (
+                      <button
+                        type="button"
+                        onClick={() => onTransfer(student)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 font-bold text-[11px] hover:bg-purple-100 transition-colors cursor-pointer"
+                      >
+                        <ArrowRightLeft size={11} />
+                        Transfer
+                      </button>
+                    )}
+                    <Link
+                      to={`/students/${student.id}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-700 font-semibold text-[11px] hover:bg-zinc-200 transition-colors"
+                    >
+                      Profile
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block overflow-x-auto flex-1">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-600">
+                <tr>
+                  <th className="text-center px-3 py-3 font-bold uppercase tracking-wider w-14">Roll</th>
+                  <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Student Profile</th>
+                  <th className="text-left px-4 py-3 font-bold uppercase tracking-wider hidden md:table-cell">ID & Contact</th>
+                  <th className="text-center px-3 py-3 font-bold uppercase tracking-wider hidden lg:table-cell">Gender</th>
+                  <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Exam GPA</th>
+                  <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Attendance</th>
+                  <th className="text-center px-3 py-3 font-bold uppercase tracking-wider">Fee</th>
+                  <th className="text-right px-4 py-3 font-bold uppercase tracking-wider">Action</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
-                  No students found matching your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {filteredStudents.map((student) => (
+                  <tr
+                    key={student.id}
+                    className="hover:bg-zinc-50/80 transition-colors group"
+                  >
+                    {/* Roll number */}
+                    <td className="px-3 py-3 text-center font-mono font-bold text-indigo-700 whitespace-nowrap">
+                      #{String(student.roll).padStart(2, '0')}
+                    </td>
+
+                    {/* Student Name and Photo */}
+                    <td className="px-4 py-3">
+                      <Link
+                        to={`/students/${student.id}`}
+                        className="flex items-center gap-3 group/profile hover:opacity-90 transition-opacity cursor-pointer"
+                        title="Click to view full student profile"
+                      >
+                        <div className="h-9 w-9 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-indigo-500/30 transition-all">
+                          {student.profilePhoto ? (
+                            <img src={student.profilePhoto} alt={student.fullNameEn} className="h-full w-full object-cover" />
+                          ) : (
+                            <UserCircle className="h-6 w-6 text-zinc-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-zinc-900 group-hover/profile:text-indigo-600 group-hover/profile:underline transition-colors flex items-center gap-1">
+                            <span>{student.fullNameEn}</span>
+                          </div>
+                          <div className="text-[10px] text-zinc-500 font-normal">{student.fullNameBn || '—'}</div>
+                        </div>
+                      </Link>
+                    </td>
+
+                    {/* ID and Guardian Contact */}
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <div className="font-mono font-medium text-zinc-800">{student.studentId}</div>
+                      {student.guardianPhone ? (
+                        <div className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5">
+                          <Phone size={10} className="text-zinc-400" />
+                          <span>{student.guardianPhone}</span>
+                        </div>
+                      ) : null}
+                    </td>
+
+                    {/* Gender */}
+                    <td className="px-3 py-3 text-center text-zinc-700 capitalize hidden lg:table-cell">
+                      {student.gender.toLowerCase()}
+                    </td>
+
+                    {/* Latest Exam GPA & Grade */}
+                    <td className="px-3 py-3 text-center">
+                      {student.latestGpa !== undefined ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                          <Award size={12} className="text-indigo-600" />
+                          {student.latestGpa.toFixed(2)} ({student.latestGrade})
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400 font-mono">—</span>
+                      )}
+                    </td>
+
+                    {/* Attendance Rate */}
+                    <td className="px-3 py-3 text-center">
+                      {getAttendanceBadge(student.attendanceRate)}
+                    </td>
+
+                    {/* Fee Status */}
+                    <td className="px-3 py-3 text-center">
+                      {getFeeStatusBadge(student.feeStatus)}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end">
+                        {onTransfer ? (
+                          <button
+                            type="button"
+                            onClick={() => onTransfer(student)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold transition-all shadow-2xs cursor-pointer"
+                            title="Transfer student to another section"
+                          >
+                            <ArrowRightLeft size={12} className="text-purple-600" />
+                            <span>Transfer</span>
+                          </button>
+                        ) : (
+                          <span className="text-zinc-400 text-[11px]">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   )
 }

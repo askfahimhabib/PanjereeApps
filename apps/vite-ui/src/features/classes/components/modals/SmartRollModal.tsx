@@ -125,7 +125,7 @@ export function SmartRollModal({
         )}
 
         {/* Content Body */}
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
           {/* Strategy Selection Grid */}
           <div>
             <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider block mb-2.5">
@@ -315,8 +315,8 @@ export function SmartRollModal({
               </span>
             </div>
 
-            <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white max-h-56 overflow-y-auto">
-              <table className="w-full text-xs">
+            <div className="border border-zinc-200 rounded-2xl overflow-x-auto bg-white max-h-56 overflow-y-auto">
+              <table className="w-full min-w-[440px] sm:min-w-full text-xs">
                 <thead className="bg-zinc-50 border-b border-zinc-200 sticky top-0">
                   <tr>
                     <th className="py-2.5 px-3 text-left font-bold text-zinc-600">Proposed Roll</th>

@@ -32,7 +32,7 @@ export function StudentFilters({ filters, updateFilter, resetFilters, totalResul
     <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-2xs space-y-3.5">
       {/* ── Segmented Track Tabs ──────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-100">
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-100/80 rounded-xl">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-100/80 rounded-xl max-w-full overflow-x-auto flex-nowrap shrink-0 scrollbar-none">
           <button
             type="button"
             onClick={() => {
@@ -40,7 +40,7 @@ export function StudentFilters({ filters, updateFilter, resetFilters, totalResul
               updateFilter('classId', '')
               updateFilter('batchId', '')
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               filters.type === 'ALL'
                 ? 'bg-white text-zinc-900 shadow-2xs'
                 : 'text-zinc-500 hover:text-zinc-800'
@@ -61,7 +61,7 @@ export function StudentFilters({ filters, updateFilter, resetFilters, totalResul
               updateFilter('type', 'REGULAR')
               updateFilter('batchId', '')
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               filters.type === 'REGULAR'
                 ? 'bg-white text-indigo-900 shadow-2xs ring-1 ring-indigo-500/20'
                 : 'text-zinc-500 hover:text-zinc-800'
@@ -82,7 +82,7 @@ export function StudentFilters({ filters, updateFilter, resetFilters, totalResul
               updateFilter('type', 'EXAM_BATCH')
               updateFilter('classId', '')
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               filters.type === 'EXAM_BATCH'
                 ? 'bg-white text-purple-900 shadow-2xs ring-1 ring-purple-500/20'
                 : 'text-zinc-500 hover:text-zinc-800'

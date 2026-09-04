@@ -1,4 +1,4 @@
-import type { FeeStructure, StudentWaiver, MonthlyBillingRun, PaymentRecord, ManualDue } from './types'
+import type { FeeStructure, StudentWaiver, MonthlyBillingRun, PaymentRecord, ManualDue, FeeType } from './types'
 
 export const MOCK_FEE_STRUCTURES: FeeStructure[] = [
   {
@@ -163,143 +163,71 @@ const NOW = new Date()
 const THIS_MONTH = NOW.getMonth() + 1
 const THIS_YEAR  = NOW.getFullYear()
 
-export const MOCK_PAYMENTS: PaymentRecord[] = [
-  // Class 10 (cls-10)
-  {
-    id: 'pay-001',
-    invoice_number: `INV-${THIS_YEAR}-0001`,
-    student_id: '1',
-    student_name: 'Rahim Uddin',
-    roll_number: '01',
-    class_id: 'cls-10',
-    batch_id: null,
-    class_name: 'Class 10',
-    fee_structure_id: 'fs-cls-10',
-    items: [
-      { fee_type: 'TUITION', label: 'Monthly Tuition & Coaching Fee', amount: 1800, month: THIS_MONTH, year: THIS_YEAR },
-      { fee_type: 'EXAM', label: 'Model Test & Test Paper Prep', amount: 700, month: THIS_MONTH, year: THIS_YEAR },
-    ],
-    subtotal: 2500,
-    discount_amount: 0,
-    waiver_reason: null,
-    total_amount: 2500,
-    payment_method: 'BKASH',
-    transaction_id: 'TRX987654321',
-    paid_at: new Date(THIS_YEAR, THIS_MONTH - 1, 5, 10, 30).toISOString(),
-    collected_by: 'Admin Office',
-    note: 'Paid via bKash online gateway',
-    status: 'PAID',
-    created_at: new Date(THIS_YEAR, THIS_MONTH - 1, 5, 10, 30).toISOString(),
-    updated_at: new Date(THIS_YEAR, THIS_MONTH - 1, 5, 10, 30).toISOString(),
-  },
-  {
-    id: 'pay-002',
-    invoice_number: `INV-${THIS_YEAR}-0002`,
-    student_id: '2',
-    student_name: 'Sadia Islam',
-    roll_number: '02',
-    class_id: 'cls-10',
-    batch_id: null,
-    class_name: 'Class 10',
-    fee_structure_id: 'fs-cls-10',
-    items: [
-      { fee_type: 'TUITION', label: 'Monthly Tuition & Coaching Fee', amount: 1800, month: THIS_MONTH, year: THIS_YEAR },
-    ],
-    subtotal: 1800,
-    discount_amount: 0,
-    waiver_reason: null,
-    total_amount: 1800,
-    payment_method: 'CASH',
-    transaction_id: null,
-    paid_at: new Date(THIS_YEAR, THIS_MONTH - 1, 7, 11, 15).toISOString(),
-    collected_by: 'Accounts Desk',
-    note: 'Cash received by accounts',
-    status: 'PAID',
-    created_at: new Date(THIS_YEAR, THIS_MONTH - 1, 7, 11, 15).toISOString(),
-    updated_at: new Date(THIS_YEAR, THIS_MONTH - 1, 7, 11, 15).toISOString(),
-  },
-  {
-    id: 'pay-003',
-    invoice_number: `INV-${THIS_YEAR}-0003`,
-    student_id: '22',
-    student_name: 'Nusrat Jahan',
-    roll_number: '05',
-    class_id: 'cls-10',
-    batch_id: null,
-    class_name: 'Class 10',
-    fee_structure_id: 'fs-cls-10',
-    items: [
-      { fee_type: 'TUITION', label: 'Monthly Tuition & Coaching Fee', amount: 1800, month: THIS_MONTH, year: THIS_YEAR },
-    ],
-    subtotal: 1800,
-    discount_amount: 0,
-    waiver_reason: null,
-    total_amount: 1800,
-    payment_method: 'NAGAD',
-    transaction_id: 'NGD12345678',
-    paid_at: new Date(THIS_YEAR, THIS_MONTH - 1, 8, 14, 20).toISOString(),
-    collected_by: 'Accounts Desk',
-    note: null,
-    status: 'PAID',
-    created_at: new Date(THIS_YEAR, THIS_MONTH - 1, 8, 14, 20).toISOString(),
-    updated_at: new Date(THIS_YEAR, THIS_MONTH - 1, 8, 14, 20).toISOString(),
-  },
-  // Class 9 (cls-9)
-  {
-    id: 'pay-004',
-    invoice_number: `INV-${THIS_YEAR}-0004`,
-    student_id: '3',
-    student_name: 'Abdur Rahim',
-    roll_number: '01',
-    class_id: 'cls-9',
-    batch_id: null,
-    class_name: 'Class 9',
-    fee_structure_id: 'fs-cls-9',
-    items: [
-      { fee_type: 'TUITION', label: 'Monthly Tuition Fee', amount: 1600, month: THIS_MONTH, year: THIS_YEAR },
-    ],
-    subtotal: 1600,
-    discount_amount: 0,
-    waiver_reason: null,
-    total_amount: 1600,
-    payment_method: 'CASH',
-    transaction_id: null,
-    paid_at: new Date(THIS_YEAR, THIS_MONTH - 1, 6, 9, 45).toISOString(),
-    collected_by: 'Admin Office',
-    note: null,
-    status: 'PAID',
-    created_at: new Date(THIS_YEAR, THIS_MONTH - 1, 6, 9, 45).toISOString(),
-    updated_at: new Date(THIS_YEAR, THIS_MONTH - 1, 6, 9, 45).toISOString(),
-  },
-  // Class 8 (cls-8)
-  {
-    id: 'pay-005',
-    invoice_number: `INV-${THIS_YEAR}-0005`,
-    student_id: '5',
-    student_name: 'Mehedi Hasan',
-    roll_number: '01',
-    class_id: 'cls-8',
-    batch_id: null,
-    class_name: 'Class 8',
-    fee_structure_id: 'fs-cls-8',
-    items: [
-      { fee_type: 'TUITION', label: 'Monthly Tuition Fee', amount: 1300, month: THIS_MONTH, year: THIS_YEAR },
-      { fee_type: 'EXAM', label: 'Monthly Evaluation & Exam Fee', amount: 400, month: THIS_MONTH, year: THIS_YEAR },
-    ],
-    subtotal: 1700,
-    discount_amount: 0,
-    waiver_reason: null,
-    total_amount: 1700,
-    payment_method: 'BKASH',
-    transaction_id: 'BKS77889900',
-    paid_at: new Date(THIS_YEAR, THIS_MONTH - 1, 9, 16, 0).toISOString(),
-    collected_by: 'Online System',
-    note: null,
-    status: 'PAID',
-    created_at: new Date(THIS_YEAR, THIS_MONTH - 1, 9, 16, 0).toISOString(),
-    updated_at: new Date(THIS_YEAR, THIS_MONTH - 1, 9, 16, 0).toISOString(),
-  },
-]
+function generateYearlyMockPayments(): PaymentRecord[] {
+  const records: PaymentRecord[] = []
+  let inv = 1
+
+  const students = [
+    { id: '1', name: 'Rahim Uddin', roll: '01', classId: 'cls-10', className: 'Class 10', fsId: 'fs-cls-10', tuition: 1800 },
+    { id: '2', name: 'Sadia Islam', roll: '02', classId: 'cls-10', className: 'Class 10', fsId: 'fs-cls-10', tuition: 1800 },
+    { id: '3', name: 'Abdur Rahim', roll: '01', classId: 'cls-9', className: 'Class 9', fsId: 'fs-cls-9', tuition: 1600 },
+    { id: '4', name: 'Farzana Akhter', roll: '02', classId: 'cls-9', className: 'Class 9', fsId: 'fs-cls-9', tuition: 1600 },
+    { id: '5', name: 'Mehedi Hasan', roll: '01', classId: 'cls-8', className: 'Class 8', fsId: 'fs-cls-8', tuition: 1300 },
+    { id: '6', name: 'Tanjina Khatun', roll: '02', classId: 'cls-8', className: 'Class 8', fsId: 'fs-cls-8', tuition: 1300 },
+    { id: '7', name: 'Sabbir Ahmed', roll: '01', classId: 'cls-7', className: 'Class 7', fsId: 'fs-cls-7', tuition: 1100 },
+    { id: '8', name: 'Lamia Islam', roll: '01', classId: 'cls-6', className: 'Class 6', fsId: 'fs-cls-6', tuition: 1000 },
+  ]
+
+  const methods = ['BKASH', 'CASH', 'NAGAD', 'BANK'] as const
+
+  for (let m = 1; m <= THIS_MONTH; m++) {
+    for (const st of students) {
+      const items: { fee_type: FeeType; label: string; amount: number; month: number; year: number }[] = [
+        { fee_type: 'TUITION', label: `${st.className} Monthly Tuition`, amount: st.tuition, month: m, year: THIS_YEAR }
+      ]
+      if (m === 1) {
+        items.push({ fee_type: 'ADMISSION', label: 'Session Admission Fee', amount: 2500, month: m, year: THIS_YEAR })
+      } else if (m === 4 || m === 6 || m === 8) {
+        items.push({ fee_type: 'EXAM', label: 'Term Examination & Assessment Fee', amount: 500, month: m, year: THIS_YEAR })
+      }
+
+      const total = items.reduce((s, i) => s + i.amount, 0)
+      const method = methods[(parseInt(st.id, 10) + m) % methods.length]
+      const payDay = 5 + (parseInt(st.id, 10) % 15)
+      const paidDate = new Date(THIS_YEAR, m - 1, payDay, 10 + (m % 5), 15).toISOString()
+
+      records.push({
+        id: `pay-${THIS_YEAR}-${String(inv).padStart(4, '0')}`,
+        invoice_number: `INV-${THIS_YEAR}-${String(inv).padStart(4, '0')}`,
+        student_id: st.id,
+        student_name: st.name,
+        roll_number: st.roll,
+        class_id: st.classId,
+        batch_id: null,
+        class_name: st.className,
+        fee_structure_id: st.fsId,
+        items,
+        subtotal: total,
+        discount_amount: 0,
+        waiver_reason: null,
+        total_amount: total,
+        payment_method: method,
+        transaction_id: method === 'CASH' ? null : `TRX${m}${st.id}98214`,
+        paid_at: paidDate,
+        collected_by: method === 'CASH' ? 'Accounts Desk' : 'Online Gateway',
+        note: null,
+        status: 'PAID',
+        created_at: paidDate,
+        updated_at: paidDate,
+      })
+      inv++
+    }
+  }
+
+  return records
+}
+
+export const MOCK_PAYMENTS: PaymentRecord[] = generateYearlyMockPayments()
 
 export const MOCK_MANUAL_DUES: ManualDue[] = [
   {

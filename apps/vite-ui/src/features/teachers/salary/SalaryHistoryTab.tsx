@@ -87,112 +87,183 @@ export function SalaryHistoryTab({ history }: SalaryHistoryTabProps) {
         </span>
       </div>
 
-      {/* History Table */}
+      {/* History Table & Mobile Cards */}
       <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          {filtered.length === 0 ? (
-            <div className="py-14 text-center text-zinc-400">
-              <Receipt size={36} className="mx-auto mb-2 opacity-30 text-zinc-400" />
-              <p className="text-sm font-semibold text-zinc-700">No Salary Records Found</p>
-            </div>
-          ) : (
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="px-5 py-3">Month / Year</th>
-                  <th className="px-4 py-3">Teacher</th>
-                  <th className="px-4 py-3 text-right">Net Payable</th>
-                  <th className="px-4 py-3 text-right">Paid Amount</th>
-                  <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-right">Disbursal Date</th>
-                  <th className="px-4 py-3 text-center">Voucher</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-50">
-                {filtered.map((r) => {
-                  const net = r.baseSalary + r.bonus - r.deduction
-                  const cfg = STATUS_CFG[r.status]
-                  const StatusIcon = cfg.icon
+        {filtered.length === 0 ? (
+          <div className="py-14 text-center text-zinc-400">
+            <Receipt size={36} className="mx-auto mb-2 opacity-30 text-zinc-400" />
+            <p className="text-sm font-semibold text-zinc-700">No Salary Records Found</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Cards View */}
+            <div className="block sm:hidden divide-y divide-zinc-100">
+              {filtered.map((r) => {
+                const net = r.baseSalary + r.bonus - r.deduction
+                const cfg = STATUS_CFG[r.status]
+                const StatusIcon = cfg.icon
 
-                  return (
-                    <tr key={r.id} className="hover:bg-zinc-50/70 transition-colors">
-                      {/* Month & Year */}
-                      <td className="px-5 py-3.5">
-                        <span className="font-bold text-zinc-900 block">
+                return (
+                  <div key={r.id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
                           {MONTH_NAMES[r.month - 1]} {r.year}
                         </span>
-                        <span className="font-mono text-[10px] text-zinc-400">
-                          ID: {r.id}
-                        </span>
-                      </td>
-
-                      {/* Teacher */}
-                      <td className="px-4 py-3.5">
-                        <p className="font-bold text-zinc-800">{r.teacherName}</p>
+                        <p className="font-bold text-zinc-900 text-sm mt-0.5">{r.teacherName}</p>
                         <p className="text-[11px] text-zinc-500">{r.designation}</p>
-                      </td>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${cfg.bg}`}>
+                        <StatusIcon size={11} />
+                        {cfg.label}
+                      </span>
+                    </div>
 
-                      {/* Net Payable */}
-                      <td className="px-4 py-3.5 text-right font-mono font-semibold text-zinc-700">
-                        {formatCurrency(net)}
-                      </td>
+                    <div className="flex items-center justify-between bg-zinc-50/80 p-2.5 rounded-xl text-xs border border-zinc-100">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-medium">Net Payable</span>
+                        <p className="font-mono font-semibold text-zinc-700">{formatCurrency(net)}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-zinc-400 font-medium">Paid Amount</span>
+                        <p className="font-mono font-bold text-emerald-600 text-sm">{formatCurrency(r.paidAmount)}</p>
+                      </div>
+                    </div>
 
-                      {/* Paid Amount */}
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-sm text-emerald-600">
-                        {formatCurrency(r.paidAmount)}
-                      </td>
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-50 text-[11px]">
+                      <span className="text-zinc-400">Date: {r.paidDate ?? '—'}</span>
+                      {r.paidAmount > 0 && (
+                        <button
+                          onClick={() =>
+                            setSelectedVoucher({
+                              id: `vch-${r.id}`,
+                              type: 'EXPENSE',
+                              category: 'TEACHER_SALARY',
+                              title: `Salary Disbursal - ${r.teacherName}`,
+                              amount: r.paidAmount,
+                              date: r.paidDate ?? `${r.year}-${String(r.month).padStart(2, '0')}-05`,
+                              month: r.month,
+                              year: r.year,
+                              payment_method: r.paymentMethod ?? 'BANK',
+                              invoice_no: `SAL-${r.year}-${String(r.month).padStart(2, '0')}-${r.teacherId}`,
+                              party_name: r.teacherName,
+                              party_role: `Teacher (${r.designation})`,
+                              notes: r.notes,
+                              created_at: new Date().toISOString(),
+                            })
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+                        >
+                          <Receipt size={13} />
+                          Voucher Memo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
 
-                      {/* Status */}
-                      <td className="px-4 py-3.5 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cfg.bg}`}>
-                          <StatusIcon size={11} />
-                          {cfg.label}
-                        </span>
-                      </td>
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-zinc-50 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Month / Year</th>
+                    <th className="px-4 py-3">Teacher</th>
+                    <th className="px-4 py-3 text-right">Net Payable</th>
+                    <th className="px-4 py-3 text-right">Paid Amount</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-right">Disbursal Date</th>
+                    <th className="px-4 py-3 text-center">Voucher</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-50">
+                  {filtered.map((r) => {
+                    const net = r.baseSalary + r.bonus - r.deduction
+                    const cfg = STATUS_CFG[r.status]
+                    const StatusIcon = cfg.icon
 
-                      {/* Date */}
-                      <td className="px-4 py-3.5 text-right text-zinc-600 font-medium">
-                        {r.paidDate ?? '—'}
-                      </td>
+                    return (
+                      <tr key={r.id} className="hover:bg-zinc-50/70 transition-colors">
+                        {/* Month & Year */}
+                        <td className="px-5 py-3.5">
+                          <span className="font-bold text-zinc-900 block">
+                            {MONTH_NAMES[r.month - 1]} {r.year}
+                          </span>
+                          <span className="font-mono text-[10px] text-zinc-400">
+                            ID: {r.id}
+                          </span>
+                        </td>
 
-                      {/* Action */}
-                      <td className="px-4 py-3.5 text-center">
-                        {r.paidAmount > 0 ? (
-                          <button
-                            onClick={() =>
-                              setSelectedVoucher({
-                                id: `vch-${r.id}`,
-                                type: 'EXPENSE',
-                                category: 'TEACHER_SALARY',
-                                title: `Salary Disbursal - ${r.teacherName}`,
-                                amount: r.paidAmount,
-                                date: r.paidDate ?? `${r.year}-${String(r.month).padStart(2, '0')}-05`,
-                                month: r.month,
-                                year: r.year,
-                                payment_method: r.paymentMethod ?? 'BANK',
-                                invoice_no: `SAL-${r.year}-${String(r.month).padStart(2, '0')}-${r.teacherId}`,
-                                party_name: r.teacherName,
-                                party_role: `Teacher (${r.designation})`,
-                                notes: r.notes,
-                                created_at: new Date().toISOString(),
-                              })
-                            }
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                            title="View / Print Salary Voucher"
-                          >
-                            <Receipt size={15} />
-                          </button>
-                        ) : (
-                          <span className="text-zinc-300">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                        {/* Teacher */}
+                        <td className="px-4 py-3.5">
+                          <p className="font-bold text-zinc-800">{r.teacherName}</p>
+                          <p className="text-[11px] text-zinc-500">{r.designation}</p>
+                        </td>
+
+                        {/* Net Payable */}
+                        <td className="px-4 py-3.5 text-right font-mono font-semibold text-zinc-700">
+                          {formatCurrency(net)}
+                        </td>
+
+                        {/* Paid Amount */}
+                        <td className="px-4 py-3.5 text-right font-mono font-bold text-sm text-emerald-600">
+                          {formatCurrency(r.paidAmount)}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cfg.bg}`}>
+                            <StatusIcon size={11} />
+                            {cfg.label}
+                          </span>
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-4 py-3.5 text-right text-zinc-600 font-medium">
+                          {r.paidDate ?? '—'}
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-3.5 text-center">
+                          {r.paidAmount > 0 ? (
+                            <button
+                              onClick={() =>
+                                setSelectedVoucher({
+                                  id: `vch-${r.id}`,
+                                  type: 'EXPENSE',
+                                  category: 'TEACHER_SALARY',
+                                  title: `Salary Disbursal - ${r.teacherName}`,
+                                  amount: r.paidAmount,
+                                  date: r.paidDate ?? `${r.year}-${String(r.month).padStart(2, '0')}-05`,
+                                  month: r.month,
+                                  year: r.year,
+                                  payment_method: r.paymentMethod ?? 'BANK',
+                                  invoice_no: `SAL-${r.year}-${String(r.month).padStart(2, '0')}-${r.teacherId}`,
+                                  party_name: r.teacherName,
+                                  party_role: `Teacher (${r.designation})`,
+                                  notes: r.notes,
+                                  created_at: new Date().toISOString(),
+                                })
+                              }
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                              title="View / Print Salary Voucher"
+                            >
+                              <Receipt size={15} />
+                            </button>
+                          ) : (
+                            <span className="text-zinc-300">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Voucher Modal */}

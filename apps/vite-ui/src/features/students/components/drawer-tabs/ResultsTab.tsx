@@ -24,36 +24,52 @@ export function ResultsTab({ student }: { student: Student }) {
       map.get(r.exam_held_id)!.push(r)
     }
 
-    return Array.from(map.entries()).map(([examId, results]) => {
-      const exam = allExams.find((e) => e.id === examId)
-      const present = results.filter((r) => !r.is_absent && r.marks_obtained !== null)
-      const totalObtained = present.reduce((sum, r) => sum + (r.marks_obtained ?? 0), 0)
-      const schedules = exam?.exam_held_schedules ?? []
-      const totalPossible = schedules.reduce((sum, s) => sum + (s.total_marks ?? exam?.total_marks ?? 100), 0) || (results.length * 100)
-      const percentage = totalPossible > 0 ? Number(((totalObtained / totalPossible) * 100).toFixed(1)) : 0
-      const hasFail = results.some((r) => r.is_absent || r.grade === 'F')
-      const avgGpa = results.length > 0
-        ? hasFail
-          ? 0.0
-          : Number((results.reduce((sum, r) => sum + (r.gpa ?? 0), 0) / results.length).toFixed(2))
-        : 0.0
+    return Array.from(map.entries())
+      .map(([examId, results]) => {
+        const exam = allExams.find((e) => e.id === examId)
+        if (!exam || results.length === 0) return null
 
-      const overallGrade = calculateGrade(totalObtained, totalPossible).grade
+        const present = results.filter((r) => !r.is_absent && r.marks_obtained !== null)
+        const totalObtained = present.reduce((sum, r) => sum + (r.marks_obtained ?? 0), 0)
+        const schedules = exam.exam_held_schedules ?? []
+        const totalPossible = schedules.reduce((sum, s) => sum + (s.total_marks ?? exam.total_marks ?? 100), 0) || (results.length * 100)
+        const percentage = totalPossible > 0 ? Number(((totalObtained / totalPossible) * 100).toFixed(1)) : 0
+        const hasFail = results.some((r) => r.is_absent || r.grade === 'F')
+        const avgGpa = results.length > 0
+          ? hasFail
+            ? 0.0
+            : Number((results.reduce((sum, r) => sum + (r.gpa ?? 0), 0) / results.length).toFixed(2))
+          : 0.0
 
-      return {
-        examId,
-        exam,
-        examName: exam?.name ?? 'Semester Examination',
-        date: exam?.created_at ? new Date(exam.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '2026',
-        totalMarks: totalPossible,
-        obtainedMarks: totalObtained,
-        percentage,
-        gpa: avgGpa,
-        grade: hasFail ? 'F' : overallGrade,
-        status: hasFail ? 'FAILED' : 'PASSED',
-        results,
-      }
-    })
+        const overallGrade = calculateGrade(totalObtained, totalPossible).grade
+
+        return {
+          examId,
+          exam,
+          examName: exam.name,
+          date: exam.created_at ? new Date(exam.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '2026',
+          totalMarks: totalPossible,
+          obtainedMarks: totalObtained,
+          percentage,
+          gpa: avgGpa,
+          grade: hasFail ? 'F' : overallGrade,
+          status: hasFail ? 'FAILED' : 'PASSED',
+          results,
+        }
+      })
+      .filter(Boolean) as {
+        examId: string
+        exam: (typeof allExams)[0]
+        examName: string
+        date: string
+        totalMarks: number
+        obtainedMarks: number
+        percentage: number
+        gpa: number
+        grade: string
+        status: string
+        results: typeof studentResults
+      }[]
   }, [studentResults, allExams])
 
   // Overall student GPA across all exams
@@ -82,7 +98,9 @@ export function ResultsTab({ student }: { student: Student }) {
             <h3 className="text-2xl font-black font-mono">
               {overallStanding.gpa > 0 ? `GPA ${overallStanding.gpa.toFixed(2)}` : 'GPA —'}
             </h3>
-            <span className="text-xs text-indigo-200 font-semibold">({overallStanding.grade} Standing)</span>
+            <span className="text-xs text-indigo-200 font-semibold">
+              {overallStanding.gpa > 0 ? `(${overallStanding.grade} Standing)` : '(No published results)'}
+            </span>
           </div>
           <p className="text-[11px] text-indigo-200 mt-1">
             Enrolled Class: <strong className="text-white">{student.className}</strong> · Roll:{' '}
@@ -94,7 +112,7 @@ export function ResultsTab({ student }: { student: Student }) {
           onClick={() => setReportCardOpen(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-indigo-900 text-xs font-bold hover:bg-indigo-50 transition-all shadow-sm cursor-pointer"
         >
-          <Printer size={13} /> Print Summary
+          <Printer size={13} /> {examResultsGrouped.length > 0 ? 'Print Summary' : 'View Curriculum Syllabus'}
         </button>
       </div>
 
@@ -110,8 +128,11 @@ export function ResultsTab({ student }: { student: Student }) {
         <div className="divide-y divide-zinc-100">
           {examResultsGrouped.length === 0 ? (
             <div className="p-8 text-center text-zinc-500 text-xs">
-              <BookOpen size={28} className="mx-auto mb-2 opacity-40" />
-              No exam results entered for this student yet. Marks entered in the Exam Results module will appear here automatically.
+              <BookOpen size={28} className="mx-auto mb-2 opacity-40 text-indigo-400" />
+              <p className="font-bold text-zinc-700 text-sm">No exam results published yet</p>
+              <p className="text-[11px] text-zinc-400 mt-1 max-w-sm mx-auto">
+                Examinations scheduled and evaluated in the Exam Management module will appear here automatically once marks are published.
+              </p>
             </div>
           ) : (
             examResultsGrouped.map((res, i) => (
@@ -176,6 +197,7 @@ export function ResultsTab({ student }: { student: Student }) {
       <StudentReportCardModal
         open={reportCardOpen}
         student={student}
+        examId={examResultsGrouped[0]?.examId}
         onClose={() => setReportCardOpen(false)}
       />
     </div>

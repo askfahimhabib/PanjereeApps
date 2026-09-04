@@ -364,7 +364,7 @@ export function CalendarPage() {
                 <div
                   key={i}
                   onClick={() => setSelectedDay(day)}
-                  className={`min-h-[105px] p-1.5 cursor-pointer transition-all duration-150 relative flex flex-col justify-between ${
+                  className={`min-h-[56px] sm:min-h-[105px] p-1 sm:p-1.5 cursor-pointer transition-all duration-150 relative flex flex-col justify-between ${
                     isSelected
                       ? 'bg-emerald-50/90 ring-2 ring-emerald-500/50 z-10'
                       : isFriday
@@ -373,9 +373,9 @@ export function CalendarPage() {
                   }`}
                 >
                   {/* Top Bar: Day Number & Holiday Tag */}
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                     <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-transform ${
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold transition-transform ${
                         isToday
                           ? 'bg-[var(--color-primary)] text-white shadow-xs scale-105'
                           : isFriday
@@ -387,15 +387,14 @@ export function CalendarPage() {
                     </div>
 
                     {isFriday && (
-                      <span className="text-[9px] font-semibold text-rose-600 bg-rose-100/70 px-1 py-0.2 rounded leading-none">
+                      <span className="text-[8px] sm:text-[9px] font-semibold text-rose-600 bg-rose-100/70 px-1 py-0.2 rounded leading-none">
                         Off
                       </span>
                     )}
                   </div>
 
-                  {/* Event Badges on the Day */}
-                  <div className="space-y-0.5 flex-1">
-                    {/* Render top 2-3 events with distinct styles */}
+                  {/* Desktop Event Badges */}
+                  <div className="hidden sm:block space-y-0.5 flex-1">
                     {dayEvents.slice(0, 2).map((ev) => {
                       const cfg = TYPE_CFG[ev.type]
                       return (
@@ -417,9 +416,26 @@ export function CalendarPage() {
                     )}
                   </div>
 
-                  {/* Day bottom indicators */}
+                  {/* Mobile Compact Dots Indicator */}
+                  <div className="flex sm:hidden items-center justify-center gap-1 py-0.5 mt-auto">
+                    {dayEvents.slice(0, 3).map((ev, idx) => {
+                      const cfg = TYPE_CFG[ev.type]
+                      return (
+                        <span
+                          key={idx}
+                          className={`w-1.5 h-1.5 rounded-full ${cfg.dotBg}`}
+                          title={ev.title}
+                        />
+                      )
+                    })}
+                    {dayEvents.length > 3 && (
+                      <span className="w-1 h-1 rounded-full bg-zinc-400" />
+                    )}
+                  </div>
+
+                  {/* Desktop Day bottom indicators */}
                   {(examCount > 0 || classCount > 0 || hasHoliday) && (
-                    <div className="flex items-center gap-1 pt-1 mt-auto">
+                    <div className="hidden sm:flex items-center gap-1 pt-1 mt-auto">
                       {hasHoliday && <span className="w-1.5 h-1.5 rounded-full bg-rose-500" title="Holiday" />}
                       {examCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Exam scheduled" />}
                       {classCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" title="Classes scheduled" />}

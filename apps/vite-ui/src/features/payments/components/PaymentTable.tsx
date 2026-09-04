@@ -114,7 +114,119 @@ export function PaymentTable({ records, isLoading, filters, onFiltersChange }: P
 
       {/* Table Surface */}
       <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ── Mobile Card List View (Phones & Small Devices) ── */}
+        <div className="block sm:hidden divide-y divide-zinc-100">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-2.5 animate-pulse">
+                <div className="flex justify-between">
+                  <div className="h-4 bg-zinc-100 rounded w-24" />
+                  <div className="h-4 bg-zinc-100 rounded w-16" />
+                </div>
+                <div className="h-5 bg-zinc-100 rounded w-48" />
+                <div className="h-4 bg-zinc-100 rounded w-32" />
+              </div>
+            ))
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center text-zinc-400 p-4">
+              <Receipt size={36} className="mx-auto mb-2 opacity-30 text-zinc-400" />
+              <p className="font-semibold text-zinc-700 text-sm">No Transactions Found</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Collect student fee to generate receipts</p>
+            </div>
+          ) : (
+            filtered.map(record => {
+              const statusCfg = PAYMENT_STATUS_CONFIG[record.status]
+              const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', {
+                day: '2-digit', month: 'short', year: 'numeric',
+              })
+              const itemSummary = record.items.map(it => it.label).join(', ')
+
+              return (
+                <div
+                  key={record.id}
+                  onClick={() => setPreviewRecord(record)}
+                  className="p-3.5 hover:bg-zinc-50/80 active:bg-zinc-100 transition-colors cursor-pointer space-y-2.5"
+                >
+                  {/* Top Bar: Invoice & Status Pill & Date */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-bold text-xs text-indigo-700 bg-indigo-50 border border-indigo-100/80 px-2 py-0.5 rounded-lg">
+                        {record.invoice_number}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-medium">
+                        {paidDate}
+                      </span>
+                    </div>
+
+                    <span className={`inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border}`}>
+                      {statusCfg.label}
+                    </span>
+                  </div>
+
+                  {/* Middle: Student & Amount */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-zinc-900 text-xs truncate">{record.student_name}</p>
+                      <p className="text-zinc-500 text-[11px] mt-0.5">
+                        Roll {record.roll_number} · {record.class_name ?? '—'}
+                      </p>
+                      {itemSummary && (
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5 max-w-[200px]" title={itemSummary}>
+                          {itemSummary}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-right shrink-0 font-mono">
+                      <p className="text-emerald-700 font-extrabold text-sm">{formatCurrency(record.total_amount)}</p>
+                      {record.discount_amount > 0 && (
+                        <p className="text-[10px] text-rose-500">- {formatCurrency(record.discount_amount)}</p>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 mt-0.5">
+                        <span>{PAYMENT_METHOD_ICONS[record.payment_method]}</span>
+                        <span>{PAYMENT_METHOD_LABELS[record.payment_method]}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Footer Action Buttons */}
+                  <div
+                    className="flex items-center justify-between pt-2 border-t border-zinc-100"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setPreviewRecord(record)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800"
+                    >
+                      <Eye size={12} /> View Details
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => printInvoice(record, 'DUAL_A4')}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                        title="Print Receipt"
+                      >
+                        <Printer size={12} /> Print
+                      </button>
+                      <button
+                        onClick={() => handleDelete(record)}
+                        disabled={deletePayment.isPending}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                        title="Delete Payment"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* ── Desktop Table View (Preserved 100%) ── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-zinc-50/80 text-zinc-500 border-b border-zinc-100 font-semibold uppercase tracking-wider text-[10px]">
               <tr>

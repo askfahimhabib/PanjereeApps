@@ -446,9 +446,9 @@ export function StudentAttendanceTab() {
                   </div>
 
                   {/* Attendance Controls */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 w-full md:w-auto md:shrink-0 justify-between md:justify-end">
                     {/* Status Pill Buttons */}
-                    <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-100 rounded-2xl border border-zinc-200">
+                    <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-100 rounded-2xl border border-zinc-200 flex-1 md:flex-initial">
                       {ALL_STATUSES.map(status => {
                         const cfg = STATUS_CONFIG[status]
                         const isSelected = currentStatus === status
@@ -460,7 +460,7 @@ export function StudentAttendanceTab() {
                               markStudent(student.id, status)
                               setIsSaved(false)
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3 py-2 md:py-1.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer ${
                               isSelected
                                 ? cfg.btnActive
                                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'

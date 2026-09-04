@@ -23,7 +23,9 @@ import { RolesPermissionSettings } from '../features/settings/components/RolesPe
 import { AppearanceSettings } from '../features/settings/components/AppearanceSettings'
 import { DatabaseBackupManager } from '../features/settings/components/DatabaseBackupManager'
 import { useSettingsStore } from '../store/settings'
+import { useAuthStore } from '../store/auth'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { AdminDatabaseResetModal } from '../features/settings/components/AdminDatabaseResetModal'
 
 type SectionId =
   | 'school-info'
@@ -148,8 +150,10 @@ const SECTIONS: SectionConfig[] = [
 ]
 
 export function Settings() {
+  const { user } = useAuthStore()
   const { resetToDefaults } = useSettingsStore()
   const [activeSection, setActiveSection] = useState<SectionId>('school-info')
+  const [adminResetModalOpen, setAdminResetModalOpen] = useState(false)
   const contentPanelRef = useRef<HTMLDivElement>(null)
 
   const currentSection = SECTIONS.find(s => s.id === activeSection) || SECTIONS[0]
@@ -341,31 +345,29 @@ export function Settings() {
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-rose-200/60">
                     <div>
-                      <p className="text-sm font-bold text-zinc-900">Factory Reset & Re-seed Sample Database</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-zinc-900">Master Database Purge & Factory Reset</p>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-200 text-rose-800 tracking-wider">
+                          ADMIN ONLY
+                        </span>
+                      </div>
                       <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
-                        Permanently wipes all local modifications and reloads fresh demo records for all modules.
+                        Permanently wipes all records across all 25 modules for clean school onboarding, or reloads fresh factory demo records.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openConfirm({
-                          title: 'Factory Reset All Data?',
-                          description: 'This will permanently wipe local modifications and re-seed clean institutional data. This action cannot be undone.',
-                          confirmLabel: 'Factory Reset Everything',
-                          variant: 'danger',
-                          action: () => {
-                            Object.keys(localStorage)
-                              .filter(k => k.startsWith('lms_') || k.startsWith('store_'))
-                              .forEach(k => localStorage.removeItem(k))
-                            window.location.reload()
-                          },
-                        })
-                      }
-                      className="shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer shadow-xs"
-                    >
-                      Factory Reset
-                    </button>
+                    {user?.role === 'ADMIN' ? (
+                      <button
+                        type="button"
+                        onClick={() => setAdminResetModalOpen(true)}
+                        className="shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer shadow-md shadow-rose-600/20"
+                      >
+                        Reset / Purge Database...
+                      </button>
+                    ) : (
+                      <span className="text-xs font-semibold text-rose-600 bg-rose-100 px-3 py-1.5 rounded-xl">
+                        Administrator Access Required
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -373,6 +375,12 @@ export function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Admin Master Reset Modal */}
+      <AdminDatabaseResetModal
+        isOpen={adminResetModalOpen}
+        onClose={() => setAdminResetModalOpen(false)}
+      />
 
       {/* Confirmation Dialog Modal */}
       <ConfirmDialog

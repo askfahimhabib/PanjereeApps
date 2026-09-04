@@ -85,7 +85,66 @@ export function AttendanceReportsTab() {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View: Class Attendance Cards */}
+        <div className="block sm:hidden divide-y divide-zinc-100">
+          {classSummaries.map(summary => {
+            const isHigh = summary.averageRate >= 85
+            const isModerate = summary.averageRate >= 75 && summary.averageRate < 85
+
+            return (
+              <div key={summary.classId} className="p-4 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Link
+                    to={`/admin/classes/${summary.classId}`}
+                    className="font-bold text-zinc-900 text-sm hover:text-indigo-600"
+                  >
+                    {summary.className}
+                  </Link>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isHigh
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : isModerate
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {isHigh ? 'Excellent' : isModerate ? 'Acceptable' : 'Attention Needed'}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 font-medium">Avg Attendance</span>
+                    <span className="font-bold font-mono text-zinc-900">{summary.averageRate}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200">
+                    <div
+                      className={`h-full rounded-full ${
+                        isHigh ? 'bg-emerald-500' : isModerate ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${summary.averageRate}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] pt-1 text-zinc-500">
+                  <span>Enrolled: <strong className="font-mono text-zinc-800">{summary.totalStudents}</strong></span>
+                  {summary.atRiskCount > 0 ? (
+                    <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full text-[10px]">
+                      <AlertTriangle size={10} /> {summary.atRiskCount} at risk
+                    </span>
+                  ) : (
+                    <span className="text-emerald-700 font-semibold text-[10px]">✓ 100% Eligible</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop View: Full Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-500 font-bold uppercase tracking-wider text-left">
@@ -201,7 +260,7 @@ export function AttendanceReportsTab() {
               return (
                 <div
                   key={student.studentId}
-                  className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 hover:bg-zinc-50/80 transition-colors"
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 p-4 hover:bg-zinc-50/80 transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-black text-sm flex items-center justify-center shrink-0">
@@ -228,13 +287,13 @@ export function AttendanceReportsTab() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="text-right">
-                      <p className="text-base font-black text-rose-700 font-mono">
+                  <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t border-zinc-100 md:border-0">
+                    <div className="text-left md:text-right">
+                      <p className="text-base font-black text-rose-700 font-mono leading-tight">
                         {student.attendanceRate}%
                       </p>
                       <p className="text-[10px] text-zinc-500 font-medium">
-                        {student.presentDays}/{student.totalSchoolDays} Days Present
+                        {student.presentDays}/{student.totalSchoolDays} Days
                       </p>
                     </div>
 
