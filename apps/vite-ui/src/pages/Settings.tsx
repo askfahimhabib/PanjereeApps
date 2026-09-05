@@ -26,6 +26,7 @@ import { useSettingsStore } from '../store/settings'
 import { useAuthStore } from '../store/auth'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { AdminDatabaseResetModal } from '../features/settings/components/AdminDatabaseResetModal'
+import { ScrollableTabs } from '../components/ui/ScrollableTabs'
 
 type SectionId =
   | 'school-info'
@@ -210,7 +211,7 @@ export function Settings() {
       </div>
 
       {/* ── Horizontal Scrollable Pill Tabs for Mobile/Tablet ── */}
-      <div className="xl:hidden flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      <ScrollableTabs className="xl:hidden w-full pb-2" trackClassName="gap-2">
         {SECTIONS.map(s => {
           const Icon = s.icon
           const isSelected = activeSection === s.id
@@ -219,7 +220,7 @@ export function Settings() {
               key={s.id}
               type="button"
               onClick={() => handleSectionClick(s.id)}
-              className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 isSelected
                   ? 'bg-zinc-900 text-white shadow-xs'
                   : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
@@ -230,7 +231,7 @@ export function Settings() {
             </button>
           )
         })}
-      </div>
+      </ScrollableTabs>
 
       {/* ── Main Layout: Fixed Sticky Sidebar + Scrollable Right Side Content ──── */}
       <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-6 items-start">

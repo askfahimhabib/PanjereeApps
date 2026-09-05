@@ -15,6 +15,7 @@ import { TeacherAttendanceTab } from '@/features/attendance/components/TeacherAt
 import { StudentLeavesTab } from '@/features/attendance/components/StudentLeavesTab'
 import { TeacherLeavesTab } from '@/features/attendance/components/TeacherLeavesTab'
 import { AttendanceReportsTab } from '@/features/attendance/components/AttendanceReportsTab'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 type AttendanceTabType =
   | 'student-attendance'
@@ -164,7 +165,7 @@ export function Attendance() {
       </div>
 
       {/* ── 3. Main Navigation Tab Pills ─────────────────────────────────── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-zinc-200 scrollbar-none">
+      <ScrollableTabs className="w-full border-b border-zinc-200 pb-1" trackClassName="gap-2">
         <button
           type="button"
           onClick={() => handleTabChange('student-attendance')}
@@ -229,7 +230,7 @@ export function Attendance() {
           <FileBarChart2 size={16} />
           <span>Reports &amp; At-Risk Analytics</span>
         </button>
-      </div>
+      </ScrollableTabs>
 
       {/* ── 4. Active Tab Content ────────────────────────────────────────── */}
       <div>

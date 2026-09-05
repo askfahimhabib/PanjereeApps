@@ -18,6 +18,7 @@ import { TransferStudentModal } from '../features/classes/components/modals/Tran
 import { useClassDetail } from '../features/classes/useClassDetail'
 import { subjectStore } from '@/data/stores'
 import type { SectionStudent } from '../features/classes/types'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 const GROUP_THEME: Record<
   string,
@@ -132,10 +133,10 @@ export function GroupDetail() {
       </div>
 
       {/* ── 2. Navigation Tabs (Sections / Students / Subjects) ────────────── */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 pb-1">
+      <ScrollableTabs className="w-full border-b border-zinc-200 pb-1" trackClassName="gap-2">
         <button
           onClick={() => setActiveTab('sections')}
-          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'sections'
               ? 'border-indigo-600 text-indigo-700'
               : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
@@ -147,7 +148,7 @@ export function GroupDetail() {
 
         <button
           onClick={() => setActiveTab('students')}
-          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'students'
               ? 'border-indigo-600 text-indigo-700'
               : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
@@ -159,7 +160,7 @@ export function GroupDetail() {
 
         <button
           onClick={() => setActiveTab('subjects')}
-          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'subjects'
               ? 'border-indigo-600 text-indigo-700'
               : 'border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300'
@@ -168,7 +169,7 @@ export function GroupDetail() {
           <BookOpen size={15} />
           <span>Curriculum Subjects ({groupSubjects.length})</span>
         </button>
-      </div>
+      </ScrollableTabs>
 
       {/* ── 3. Tab Content ────────────────────────────────────────────────── */}
 

@@ -15,6 +15,7 @@ import { syncExamSchedulesToRoutines } from '@/features/examHeld/hooks/useExamHe
 import { classStore, batchStore, teacherStore } from '@/data/stores'
 import { printRoutine } from '@/features/routines/utils/printRoutine'
 import type { Routine, DayOfWeek, CreateRoutineDto, RoutineTargetType } from '@/features/routines/types'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 export function Routines() {
   const [activeStream, setActiveStream] = useState<RoutineTargetType>('CLASS')
@@ -228,11 +229,11 @@ export function Routines() {
       </div>
 
       {/* ── Sub-Selector: Classes or Batches ───────────────────── */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-1">
+      <div className="flex items-center gap-3 overflow-hidden">
         <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex-shrink-0">
           {activeStream === 'CLASS' ? 'Select Class:' : 'Select Batch:'}
         </span>
-        <div className="pill-tab-container flex-nowrap">
+        <ScrollableTabs className="flex-1 min-w-0" trackClassName="pill-tab-container flex-nowrap">
           {activeStream === 'CLASS' ? (
             activeClasses.map((c) => (
               <button
@@ -256,7 +257,7 @@ export function Routines() {
               </button>
             ))
           )}
-        </div>
+        </ScrollableTabs>
       </div>
 
       {/* ── Weekly Routine Grid ─────────────────────────────────── */}

@@ -23,6 +23,7 @@ import {
 } from '../features/subjects/types'
 import { classStore, subjectStore } from '@/data/stores'
 import { MOCK_SUBJECTS } from '@/data/mockData'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 const GROUP_CONFIG: Record<
   ClassGroupType,
@@ -264,10 +265,10 @@ export function Subjects() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <ScrollableTabs className="w-full pb-1" trackClassName="gap-2">
           <button
             onClick={() => updateFilter('classId', 'ALL')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               filters.classId === 'ALL'
                 ? 'bg-violet-600 text-white shadow-sm shadow-violet-500/25'
                 : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200/70'
@@ -283,7 +284,7 @@ export function Subjects() {
               <button
                 key={c.id}
                 onClick={() => updateFilter('classId', c.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                   isSelected
                     ? 'bg-violet-600 text-white shadow-sm shadow-violet-500/25 font-bold'
                     : 'bg-zinc-100/90 text-zinc-700 hover:bg-zinc-200/70'
@@ -304,7 +305,7 @@ export function Subjects() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
       </div>
 
       {/* ── Search, Group Filter & Controls Bar ────────────────── */}

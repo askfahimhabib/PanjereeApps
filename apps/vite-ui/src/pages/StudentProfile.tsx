@@ -23,6 +23,7 @@ import { FeesTab } from '../features/students/components/drawer-tabs/FeesTab'
 import { ResultsTab } from '../features/students/components/drawer-tabs/ResultsTab'
 import { StudentIdCardModal } from '../features/students/components/modals/StudentIdCardModal'
 import { StudentReportCardModal } from '../features/students/components/modals/StudentReportCardModal'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 import { QuickCollectModal } from '@/features/payments/components/QuickCollectModal'
 import { useStudents } from '../features/students/useStudents'
 import { AddStudentModal } from '../features/students/components/AddStudentModal'
@@ -228,7 +229,7 @@ export function StudentProfile() {
         <ProfileKpiGrid items={studentKpis} />
 
         {/* ── Tab Navigation Bar ──────────────────────────── */}
-        <div className="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs flex items-center overflow-x-auto scrollbar-none gap-1">
+        <ScrollableTabs className="w-full" trackClassName="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs gap-1">
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = activeTab === tab.key
@@ -247,7 +248,7 @@ export function StudentProfile() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
 
         {/* ── Tab Content Panels ──────────────────────────── */}
         <div className="bg-white border border-zinc-200/90 rounded-3xl p-4 sm:p-6 shadow-sm">

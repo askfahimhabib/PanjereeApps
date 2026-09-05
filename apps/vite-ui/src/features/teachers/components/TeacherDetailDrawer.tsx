@@ -23,6 +23,7 @@ import { DocumentsTab }       from './drawer-tabs/DocumentsTab'
 import { SystemTab }          from './drawer-tabs/SystemTab'
 import { SalaryHistoryTab }   from './drawer-tabs/SalaryHistoryTab'
 import { ScheduleRoutineTab } from './drawer-tabs/ScheduleRoutineTab'
+import { ScrollableTabs }     from '@/components/ui/ScrollableTabs'
 import { TeacherIdCardModal } from './modals/TeacherIdCardModal'
 import {
   STATUS_LABELS,
@@ -244,8 +245,8 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
             </div>
 
             {/* ── Tab Navigation Bar ─────────────────────────────── */}
-            <div className="shrink-0 border-b border-zinc-200 bg-white px-3 sm:px-4 pt-2">
-              <div className="flex items-stretch gap-0.5 overflow-x-auto scrollbar-none">
+            <div className="shrink-0 border-b border-zinc-200 bg-white px-2 pt-2">
+              <ScrollableTabs className="w-full" trackClassName="gap-1">
                 {TABS.map(tab => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.id
@@ -253,7 +254,7 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative shrink-0 min-w-[62px] ${
+                      className={`min-w-[70px] shrink-0 flex flex-col items-center gap-1 py-2 px-2 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative cursor-pointer whitespace-nowrap ${
                         isActive
                           ? 'text-indigo-700 bg-indigo-50/80 border-b-2 border-indigo-600'
                           : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
@@ -264,7 +265,7 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
                     </button>
                   )
                 })}
-              </div>
+              </ScrollableTabs>
             </div>
 
             {/* ── Active Tab Content ─────────────────────────────── */}

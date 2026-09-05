@@ -23,6 +23,7 @@ import { FeesTab }          from './drawer-tabs/FeesTab'
 import { ResultsTab }       from './drawer-tabs/ResultsTab'
 import { DisciplinaryTab }  from './drawer-tabs/DisciplinaryTab'
 import { CommunicationTab } from './drawer-tabs/CommunicationTab'
+import { ScrollableTabs }   from '@/components/ui/ScrollableTabs'
 import { StudentIdCardModal } from './modals/StudentIdCardModal'
 import { StudentReportCardModal } from './modals/StudentReportCardModal'
 import { QuickCollectModal } from '@/features/payments/components/QuickCollectModal'
@@ -236,8 +237,8 @@ export function StudentDetailDrawer({
             </div>
 
             {/* ── Tab Navigation Bar ─────────────────────────────── */}
-            <div className="shrink-0 border-b border-zinc-200 bg-white px-3 sm:px-5 pt-2">
-              <div className="flex items-stretch gap-1 overflow-x-auto scrollbar-none">
+            <div className="shrink-0 border-b border-zinc-200 bg-white px-2 pt-2">
+              <ScrollableTabs className="w-full" trackClassName="gap-1">
                 {TABS.map(tab => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.key
@@ -245,7 +246,7 @@ export function StudentDetailDrawer({
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex-1 min-w-[62px] shrink-0 flex flex-col items-center gap-1 py-2 px-1.5 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${
+                      className={`min-w-[70px] shrink-0 flex flex-col items-center gap-1 py-2 px-2.5 rounded-t-xl text-[10px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap cursor-pointer ${
                         isActive
                           ? 'text-emerald-700 bg-emerald-50/80 border-b-2 border-emerald-600'
                           : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
@@ -256,7 +257,7 @@ export function StudentDetailDrawer({
                     </button>
                   )
                 })}
-              </div>
+              </ScrollableTabs>
             </div>
 
             {/* ── Active Tab Content ─────────────────────────────── */}

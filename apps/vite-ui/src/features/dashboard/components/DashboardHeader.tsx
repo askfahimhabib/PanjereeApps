@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { DashboardTab } from '../types'
 import { format } from 'date-fns'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 interface DashboardHeaderProps {
   activeTab: DashboardTab
@@ -119,29 +120,31 @@ export function DashboardHeader({
       </div>
 
       {/* ── Perspective Filter Tabs ── */}
-      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1 hide-scrollbar">
-        <div className="flex items-center gap-1.5 p-1 bg-white border border-zinc-200/80 rounded-2xl shadow-xs">
-          {tabs.map(tab => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? 'bg-zinc-900 text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70'
-                }`}
-              >
-                <Icon size={14} className={isActive ? 'text-emerald-400' : 'text-zinc-400'} />
-                <span>{tab.label}</span>
-              </button>
-            )
-          })}
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <ScrollableTabs className="max-w-full">
+          <div className="flex items-center gap-1.5 p-1 bg-white border border-zinc-200/80 rounded-2xl shadow-xs">
+            {tabs.map(tab => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-zinc-900 text-white shadow-xs'
+                      : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70'
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? 'text-emerald-400' : 'text-zinc-400'} />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </ScrollableTabs>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-zinc-500">
+        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-zinc-500 shrink-0">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Real-time Live Sync</span>
         </div>

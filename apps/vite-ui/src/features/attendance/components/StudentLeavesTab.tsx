@@ -16,6 +16,7 @@ import {
 import { leaveStore } from '@/data/stores'
 import type { LeaveRequest, LeaveStatus } from '@/features/leaves/useLeaves'
 import { ApplyLeaveModal } from './ApplyLeaveModal'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 const STATUS_CFG: Record<
   LeaveStatus,
@@ -78,7 +79,7 @@ export function StudentLeavesTab() {
       {/* ── 1. Top Action & Filter Bar ──────────────────────────────────── */}
       <div className="bg-white rounded-3xl border border-zinc-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-zinc-200">
+        <ScrollableTabs className="max-w-full" trackClassName="gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-zinc-200">
           {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map(s => {
             const isSelected = tab === s
             const count =
@@ -95,7 +96,7 @@ export function StudentLeavesTab() {
                 key={s}
                 type="button"
                 onClick={() => setTab(s)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   isSelected
                     ? 'bg-white text-zinc-900 shadow-xs'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
@@ -112,7 +113,7 @@ export function StudentLeavesTab() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
 
         {/* Search & Apply Button */}
         <div className="flex items-center gap-3 flex-wrap">

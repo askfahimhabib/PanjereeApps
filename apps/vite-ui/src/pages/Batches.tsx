@@ -7,6 +7,7 @@ import type { Batch, BatchStatus, TargetExam } from '../features/batches/types'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 export function Batches() {
   const {
@@ -69,14 +70,14 @@ export function Batches() {
             className="input-field w-full pl-9.5 pr-4"
           />
         </div>
-        <div className="pill-tab-container">
+        <ScrollableTabs className="max-w-full" trackClassName="pill-tab-container">
           {(['ALL', 'UPCOMING', 'ONGOING', 'COMPLETED'] as const).map(s => (
             <button key={s} onClick={() => setFilterStatus(s as BatchStatus | 'ALL')}
               className={filterStatus === s ? 'pill-tab-active' : 'pill-tab-inactive'}>
               {s === 'ALL' ? 'All' : STATUS_CONFIG[s as BatchStatus].label}
             </button>
           ))}
-        </div>
+        </ScrollableTabs>
         <select value={filterExam} onChange={e => setFilterExam(e.target.value as TargetExam | 'ALL')}
           className="input-field">
           <option value="ALL">All Exams</option>

@@ -78,6 +78,12 @@
   display: none;
 }
 
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* ── Page Transition ────────────────────────────────────── */
 @keyframes page-fade-in {
   from {

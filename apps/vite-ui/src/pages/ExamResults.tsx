@@ -25,6 +25,7 @@ import { ExcelImportExportModal } from '../features/examHeld/components/ExcelImp
 import { printClassMarksheet } from '../features/examHeld/utils/printClassMarksheet'
 import { printBulkReportCards } from '../features/examHeld/utils/printBulkReportCards'
 import { printBatchAdmitCards } from '../features/examHeld/utils/printBatchAdmitCards'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 type ActiveViewTab = 'TABULATION' | 'ANALYTICS'
 
@@ -286,11 +287,11 @@ export function ExamResultsPage() {
 
       {/* ── Tab Switcher: Tabulation Sheet vs Analytics vs Report Cards ──── */}
       {selectedExam && (
-        <div className="flex items-center justify-between border-b border-zinc-200">
-          <div className="flex gap-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200 gap-2">
+          <ScrollableTabs className="max-w-full" trackClassName="gap-1">
             <button
               onClick={() => handleSelectTab('TABULATION')}
-              className={`flex items-center gap-2 pb-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'TABULATION'
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-zinc-500 hover:text-zinc-800'
@@ -302,7 +303,7 @@ export function ExamResultsPage() {
 
             <button
               onClick={() => handleSelectTab('ANALYTICS')}
-              className={`flex items-center gap-2 pb-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'ANALYTICS'
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-zinc-500 hover:text-zinc-800'
@@ -311,9 +312,9 @@ export function ExamResultsPage() {
               <Trophy size={15} className="text-amber-500" />
               <span>Merit Ranking & Analytics</span>
             </button>
-          </div>
+          </ScrollableTabs>
 
-          <div className="text-xs text-zinc-500 pb-2 hidden sm:block">
+          <div className="text-xs text-zinc-500 pb-2 hidden sm:block shrink-0">
             Enrolled: <strong className="text-zinc-800">{totalEnrolled}</strong> · Pass Rate:{' '}
             <strong className="text-emerald-700">{passRate}%</strong>
           </div>

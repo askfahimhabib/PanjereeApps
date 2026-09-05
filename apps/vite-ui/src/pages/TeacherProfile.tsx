@@ -27,6 +27,7 @@ import { AcademicTab }        from '../features/teachers/components/drawer-tabs/
 import { AssignmentTab }      from '../features/teachers/components/drawer-tabs/AssignmentTab'
 import { TrainingTab }        from '../features/teachers/components/drawer-tabs/TrainingTab'
 import { DocumentsTab }       from '../features/teachers/components/drawer-tabs/DocumentsTab'
+import { ScrollableTabs }     from '@/components/ui/ScrollableTabs'
 import { SystemTab }          from '../features/teachers/components/drawer-tabs/SystemTab'
 import { SalaryHistoryTab }   from '../features/teachers/components/drawer-tabs/SalaryHistoryTab'
 import { ScheduleRoutineTab } from '../features/teachers/components/drawer-tabs/ScheduleRoutineTab'
@@ -224,7 +225,7 @@ export function TeacherProfile() {
         <ProfileKpiGrid items={teacherKpis} />
 
         {/* ── Tab Navigation Bar ──────────────────────────── */}
-        <div className="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs flex flex-wrap gap-1">
+        <ScrollableTabs className="w-full" trackClassName="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs gap-1">
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -232,7 +233,7 @@ export function TeacherProfile() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
@@ -243,7 +244,7 @@ export function TeacherProfile() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
 
         {/* ── Tab Content Panels ──────────────────────────── */}
         <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-sm">

@@ -14,6 +14,7 @@ import { ExamDateList } from '@/features/routines/components/ExamDateList'
 import { printRoutine } from '@/features/routines/utils/printRoutine'
 import type { DayOfWeek } from '@/features/routines/types'
 import { WEEKDAYS, DAY_LABELS } from '@/features/routines/types'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 // Mock student personas for previewing roles
 interface StudentPersona {
@@ -272,12 +273,12 @@ export function StudentRoutine() {
 
       {/* ── Routine Stream View Switcher ─────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-4 border-b border-zinc-200/80 pb-4">
-        <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-2xl flex-wrap">
+        <ScrollableTabs className="max-w-full" trackClassName="gap-2 bg-zinc-100 p-1 rounded-2xl">
           {persona.role === 'DUAL' && (
             <button
               type="button"
               onClick={() => setActiveTab('combined')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'combined'
                   ? 'bg-white text-indigo-600 shadow-xs'
                   : 'text-zinc-600 hover:text-zinc-900'
@@ -292,7 +293,7 @@ export function StudentRoutine() {
             <button
               type="button"
               onClick={() => setActiveTab('class')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'class'
                   ? 'bg-white text-indigo-600 shadow-xs'
                   : 'text-zinc-600 hover:text-zinc-900'
@@ -307,7 +308,7 @@ export function StudentRoutine() {
             <button
               type="button"
               onClick={() => setActiveTab('batch')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'batch'
                   ? 'bg-white text-indigo-600 shadow-xs'
                   : 'text-zinc-600 hover:text-zinc-900'
@@ -322,17 +323,17 @@ export function StudentRoutine() {
             <button
               type="button"
               onClick={() => setActiveTab('exams')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'exams'
                   ? 'bg-white text-indigo-600 shadow-xs'
                   : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
-              <FileText size={14} />
-              <span>Terminal Exams ({terminalExamSlots.length})</span>
+              <FileText size={14} className="text-rose-500" />
+              <span>Exam Schedule ({terminalExamSlots.length})</span>
             </button>
           )}
-        </div>
+        </ScrollableTabs>
 
         {/* Legend */}
         <div className="flex items-center gap-3 text-xs font-medium text-zinc-500 flex-wrap">

@@ -27,6 +27,7 @@ import {
 import { useAuthStore } from '../store/auth'
 import { useProfileStore } from '../store/profile'
 import { studentStore, teacherStore } from '@/data/stores'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 // Dynamic Profile Engine
 import {
@@ -325,7 +326,7 @@ export function OneStopProfile() {
         <ProfileKpiGrid items={studentKpis} />
 
         {/* Tab Navigation Bar */}
-        <div className="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs flex items-center overflow-x-auto scrollbar-none gap-1">
+        <ScrollableTabs className="w-full" trackClassName="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs gap-1">
           {studentTabs.map(tab => {
             const Icon = tab.icon
             const isActive = studentTab === tab.id
@@ -344,7 +345,7 @@ export function OneStopProfile() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
 
         {/* Tab Content Panels */}
         <div className="bg-white border border-zinc-200/90 rounded-3xl p-4 sm:p-6 shadow-sm">
@@ -543,7 +544,7 @@ export function OneStopProfile() {
         <ProfileKpiGrid items={teacherKpis} />
 
         {/* Tab Navigation Bar */}
-        <div className="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs flex items-center overflow-x-auto scrollbar-none gap-1">
+        <ScrollableTabs className="w-full" trackClassName="bg-white border border-zinc-200/90 rounded-2xl p-1.5 shadow-xs gap-1">
           {teacherTabs.map(tab => {
             const Icon = tab.icon
             const isActive = teacherTab === tab.id
@@ -562,7 +563,7 @@ export function OneStopProfile() {
               </button>
             )
           })}
-        </div>
+        </ScrollableTabs>
 
         {/* Tab Content Panels */}
         <div className="bg-white border border-zinc-200/90 rounded-3xl p-4 sm:p-6 shadow-sm">

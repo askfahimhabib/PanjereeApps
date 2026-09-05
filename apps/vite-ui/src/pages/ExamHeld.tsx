@@ -7,6 +7,7 @@ import { ExamHeldModal } from '@/features/examHeld/components/ExamHeldModal'
 import { SubjectSchedulePicker } from '@/features/examHeld/components/SubjectSchedulePicker'
 import type { ExamHeld, CreateExamHeldDto, CreateScheduleDto } from '@/features/examHeld/types'
 import { EXAM_STATUS_CONFIG } from '@/features/examHeld/types'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 type FilterStatus = 'ALL' | ExamHeld['status']
 
@@ -82,7 +83,7 @@ export function ExamHeldPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="pill-tab-container w-fit">
+      <ScrollableTabs className="w-fit max-w-full" trackClassName="pill-tab-container w-fit">
         {filterOptions.map((f) => (
           <button
             key={f}
@@ -92,7 +93,7 @@ export function ExamHeldPage() {
             {f === 'ALL' ? `All (${exams.length})` : `${EXAM_STATUS_CONFIG[f].label} (${exams.filter(e => e.status === f).length})`}
           </button>
         ))}
-      </div>
+      </ScrollableTabs>
 
       {/* Content */}
       {isLoading ? (

@@ -9,11 +9,11 @@ import {
   LayoutDashboard, Users, GraduationCap, LogOut, BookOpen,
   CalendarDays, ClipboardList, ClipboardCheck, Bell, Wallet,
   Settings, Trophy, FileBarChart2, Menu, X, ChevronRight,
-  GraduationCap as AlumniIcon, BookCopy, Layers, DollarSign, Calendar,
-  Scale, Receipt
+  ChevronLeft, GraduationCap as AlumniIcon, BookCopy, Layers,
+  DollarSign, Calendar, Scale, Receipt
 } from 'lucide-react'
 
-// ── Page Title Map ─────────────────────────────────────────────────────────────
+// ── Page Title & Breadcrumb Map ───────────────────────────────────────────────
 const PAGE_META: Record<string, { title: string; breadcrumb?: string[] }> = {
   '/':                 { title: 'Dashboard' },
   '/students':         { title: 'Students',    breadcrumb: ['Manage', 'Students'] },
@@ -46,36 +46,92 @@ type NavItem = {
   icon: React.ElementType
 }
 
-// ── NavItemLink ────────────────────────────────────────────────────────────────
-function NavItemLink({ to, label, icon: Icon }: NavItem) {
+// ── Desktop Sidebar Nav Item ───────────────────────────────────────────────────
+function DesktopNavItemLink({ to, label, icon: Icon, isCollapsed }: NavItem & { isCollapsed: boolean }) {
   return (
     <NavLink
       to={to}
       end={to === '/'}
+      title={isCollapsed ? label : undefined}
       className={({ isActive }) =>
-        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-medium ${
+        `group relative flex items-center ${
+          isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5'
+        } rounded-xl transition-all duration-200 font-medium ${
           isActive
-            ? 'nav-active-indicator bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] shadow-sm'
-            : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50/80'
+            ? 'bg-emerald-500/15 text-emerald-300 font-semibold shadow-xs'
+            : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
         }`
       }
     >
-      <Icon size={17} strokeWidth={2} />
-      <span className="text-[13px]">{label}</span>
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              className={`absolute ${
+                isCollapsed ? 'left-1 w-1 h-6 rounded-full' : 'left-0 w-1 h-5 rounded-r-md'
+              } bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]`}
+            />
+          )}
+          <Icon
+            size={18}
+            strokeWidth={isActive ? 2.2 : 1.8}
+            className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-emerald-400' : ''}`}
+          />
+          {!isCollapsed && <span className="text-[13px] truncate">{label}</span>}
+          {isCollapsed && (
+            <div className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 bg-zinc-900/95 backdrop-blur-md border border-zinc-800 text-white text-xs font-medium rounded-lg shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              {label}
+            </div>
+          )}
+        </>
+      )}
     </NavLink>
   )
 }
 
-function SectionLabel({ label }: { label: string }) {
+// ── Mobile Drawer Nav Item ─────────────────────────────────────────────────────
+function MobileDrawerNavItemLink({
+  to,
+  label,
+  icon: Icon,
+  onNavigate,
+}: NavItem & { onNavigate: () => void }) {
   return (
-    <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 mt-4">
+    <NavLink
+      to={to}
+      end={to === '/'}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all font-medium ${
+          isActive
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-xs'
+            : 'text-zinc-300 hover:text-white hover:bg-white/5'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon size={18} className={`shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-400'}`} />
+          <span className="text-[13px]">{label}</span>
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+function SectionLabel({ label, isCollapsed }: { label: string; isCollapsed?: boolean }) {
+  if (isCollapsed) {
+    return <div className="my-2 border-t border-emerald-950/40" />
+  }
+  return (
+    <p className="px-3 text-[10px] font-bold text-emerald-500/70 uppercase tracking-wider mb-1 mt-4">
       {label}
     </p>
   )
 }
 
 function Divider() {
-  return <div className="my-2 border-t border-zinc-100" />
+  return <div className="my-2 border-t border-emerald-950/40" />
 }
 
 // ── Main Layout ────────────────────────────────────────────────────────────────
@@ -85,9 +141,31 @@ export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // Desktop Collapsed state (stored in localStorage)
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('lms_sidebar_collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Mobile Drawer state
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showNotices, setShowNotices] = useState(false)
   const noticeRef = useRef<HTMLDivElement>(null)
+
+  const toggleCollapsed = () => {
+    setIsCollapsed(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem('lms_sidebar_collapsed', String(next))
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
 
   // Close notice dropdown on outside click
   useEffect(() => {
@@ -116,9 +194,13 @@ export function MainLayout() {
     return all.slice(0, 4)
   }, [])
 
-  const [readNotices, setReadNotices] = useState<string[]>(() =>
-    JSON.parse(localStorage.getItem('readNotices') || '[]')
-  )
+  const [readNotices, setReadNotices] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('readNotices') || '[]')
+    } catch {
+      return []
+    }
+  })
 
   const markAsRead = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
@@ -132,115 +214,121 @@ export function MainLayout() {
   const unreadCount = recentNotices.filter(n => !readNotices.includes(n.id)).length
 
   const initials = user?.fullName
-    .split(' ')
+    ?.split(' ')
     .map((n: string) => n[0])
     .slice(0, 2)
     .join('')
     .toUpperCase() ?? 'A'
 
+  // Determine whether "More" button on mobile bottom bar is active
+  const isPrimaryMobileRoute = ['/', '/students', '/teachers', '/classes'].includes(location.pathname)
+  const isMoreActive = !isPrimaryMobileRoute
+
   return (
     <div className="min-h-screen flex bg-[var(--color-dark-bg)]">
 
-      {/* ── Mobile Overlay ───────────────────────────────── */}
+      {/* ─────────────────────────────────────────────────────────────────
+          MOBILE DRAWER / SLIDE-SHEET (Visible when sidebarOpen is true)
+      ───────────────────────────────────────────────────────────────── */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* ── Sidebar (desktop: sticky, mobile: drawer) ────── */}
       <aside
         className={`
-          fixed lg:sticky top-0 z-50 lg:z-auto
-          w-64 h-screen bg-[var(--color-sidebar-bg)]
-          flex flex-col overflow-hidden shrink-0
-          border-r border-zinc-100
-          shadow-xl lg:shadow-none
-          transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          fixed top-0 bottom-0 left-0 z-50 lg:hidden
+          w-[84vw] max-w-[320px] bg-[#0c1e19] text-white
+          flex flex-col shadow-2xl transition-transform duration-300 ease-in-out
+          border-r border-[#15342c]
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        {/* Mobile close button */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden absolute top-3 right-3 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors z-10"
-        >
-          <X size={16} />
-        </button>
-
-        {/* Logo */}
-        <div className="px-5 py-5 shrink-0 flex items-center gap-3 border-b border-zinc-100">
-          <div className="bg-[var(--color-primary)] text-white p-2 rounded-xl shadow-md shadow-green-200/60 shrink-0">
-            <BookOpen size={18} />
+        {/* Drawer Header (Properly spaced, close button cleanly aligned on right) */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10 bg-[#091a16] shrink-0">
+          <div className="flex items-center gap-3 min-w-0 pr-2">
+            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2.5 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
+              <BookOpen size={18} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-[13px] font-bold text-white leading-tight truncate">
+                {settings.schoolName || 'Panjeree LMS'}
+              </h2>
+              <p className="text-[10px] text-emerald-400/80 mt-0.5 truncate">
+                {settings.tagline || 'Institutional ERP'}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-[14px] font-bold text-zinc-900 leading-tight truncate">
-              {settings.schoolName || 'Panjeree LMS'}
-            </h1>
-            <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
-              {settings.tagline || 'Institutional ERP'}
-            </p>
-          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+            aria-label="Close drawer"
+          >
+            <X size={17} />
+          </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 overflow-y-auto py-3 space-y-0.5 scrollbar-thin">
-          <SectionLabel label="Menu" />
-          <NavItemLink to="/"         label="Dashboard" icon={LayoutDashboard} />
-          <NavItemLink to="/students" label="Students"  icon={Users} />
-          <NavItemLink to="/teachers" label="Teachers"  icon={GraduationCap} />
-          <NavItemLink to="/classes"  label="Classes"   icon={BookOpen} />
-          <NavItemLink to="/alumni"   label="Alumni"    icon={AlumniIcon} />
+        {/* Drawer Scrollable Navigation */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 hide-scrollbar">
+          <SectionLabel label="Main Menu" />
+          <MobileDrawerNavItemLink to="/" label="Dashboard" icon={LayoutDashboard} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/students" label="Students" icon={Users} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/teachers" label="Teachers" icon={GraduationCap} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/classes" label="Classes" icon={BookOpen} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/alumni" label="Alumni" icon={AlumniIcon} onNavigate={() => setSidebarOpen(false)} />
 
           <Divider />
           <SectionLabel label="Academic" />
-          <NavItemLink to="/subjects"    label="Subjects"   icon={BookCopy} />
-          <NavItemLink to="/batches"     label="Batches"    icon={Layers} />
-          <NavItemLink to="/routines"    label="Routines"   icon={CalendarDays} />
-          <NavItemLink to="/calendar"    label="Calendar"   icon={Calendar} />
-          <NavItemLink to="/attendance"  label="Attendance & Leaves" icon={ClipboardCheck} />
-          <NavItemLink to="/exam-held"   label="Exams"      icon={ClipboardList} />
-          <NavItemLink to="/exam-results" label="Results"   icon={Trophy} />
+          <MobileDrawerNavItemLink to="/subjects" label="Subjects" icon={BookCopy} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/batches" label="Batches" icon={Layers} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/routines" label="Routines" icon={CalendarDays} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/calendar" label="Calendar" icon={Calendar} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/attendance" label="Attendance & Leaves" icon={ClipboardCheck} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/exam-held" label="Exams" icon={ClipboardList} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/exam-results" label="Results" icon={Trophy} onNavigate={() => setSidebarOpen(false)} />
 
           <Divider />
           <SectionLabel label="Finance" />
-          <NavItemLink to="/finance"          label="Overview"          icon={Scale} />
-          <NavItemLink to="/payments"         label="Payments & Fees"   icon={Wallet} />
-          <NavItemLink to="/salary"           label="Teacher Salary"    icon={DollarSign} />
-          <NavItemLink to="/finance/expenses" label="Expenses"          icon={Receipt} />
+          <MobileDrawerNavItemLink to="/finance" label="Overview" icon={Scale} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/payments" label="Payments & Fees" icon={Wallet} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/salary" label="Teacher Salary" icon={DollarSign} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/finance/expenses" label="Expenses" icon={Receipt} onNavigate={() => setSidebarOpen(false)} />
 
           <Divider />
-          <SectionLabel label="Communication" />
-          <NavItemLink to="/notices" label="Notices" icon={Bell} />
+          <SectionLabel label="Communication & Reports" />
+          <MobileDrawerNavItemLink to="/notices" label="Notices" icon={Bell} onNavigate={() => setSidebarOpen(false)} />
+          <MobileDrawerNavItemLink to="/reports" label="Reports" icon={FileBarChart2} onNavigate={() => setSidebarOpen(false)} />
 
           <Divider />
-          <SectionLabel label="Reports" />
-          <NavItemLink to="/reports" label="Reports" icon={FileBarChart2} />
-        </nav>
+          <SectionLabel label="System" />
+          <MobileDrawerNavItemLink to="/settings" label="Settings" icon={Settings} onNavigate={() => setSidebarOpen(false)} />
+        </div>
 
-        {/* Bottom: User + Settings */}
-        <div className="shrink-0 px-3 pb-4 pt-3 border-t border-zinc-100 space-y-1">
-          <NavItemLink to="/settings" label="Settings" icon={Settings} />
-
-          {/* User row */}
+        {/* Drawer User & Logout Footer */}
+        <div className="p-3 border-t border-white/10 bg-[#091a16] space-y-2 shrink-0">
           <button
-            onClick={() => navigate('/profile')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition-all group cursor-pointer"
+            onClick={() => {
+              setSidebarOpen(false)
+              navigate('/profile')
+            }}
+            className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-left"
           >
-            <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm shadow-emerald-900/50">
               {initials}
             </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-semibold text-zinc-900 truncate">{user?.fullName}</p>
-              <p className="text-[11px] text-zinc-400 truncate capitalize">{user?.role?.toLowerCase().replace(/_/g, ' ')}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-white truncate">{user?.fullName || 'Administrator'}</p>
+              <p className="text-[11px] text-emerald-400/80 truncate capitalize">
+                {user?.role?.toLowerCase().replace(/_/g, ' ') || 'Admin'}
+              </p>
             </div>
-            <ChevronRight size={13} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <ChevronRight size={14} className="text-zinc-400" />
           </button>
-
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 justify-center px-4 py-2 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 justify-center py-2 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
           >
             <LogOut size={14} />
             Sign Out
@@ -248,16 +336,144 @@ export function MainLayout() {
         </div>
       </aside>
 
-      {/* ── Main Content ─────────────────────────────────── */}
+      {/* ─────────────────────────────────────────────────────────────────
+          DESKTOP SIDEBAR (Collapsible Rail & Deep Emerald Brand Theme)
+      ───────────────────────────────────────────────────────────────── */}
+      <aside
+        className={`
+          hidden lg:flex flex-col sticky top-0 h-screen
+          bg-[#0c1e19] text-white border-r border-[#15342c]
+          transition-[width] duration-300 ease-in-out shrink-0 z-30
+          ${isCollapsed ? 'w-[72px]' : 'w-64'}
+        `}
+      >
+        {/* Brand Header */}
+        <div
+          className={`h-16 px-4 shrink-0 flex items-center ${
+            isCollapsed ? 'justify-center' : 'justify-between'
+          } border-b border-white/10 bg-[#091a16]`}
+        >
+          <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
+              <BookOpen size={18} />
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <h1 className="text-[13px] font-bold text-white leading-tight truncate">
+                  {settings.schoolName || 'Panjeree LMS'}
+                </h1>
+                <p className="text-[10px] text-emerald-400/80 mt-0.5 truncate">
+                  {settings.tagline || 'Institutional ERP'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Collapse Toggle */}
+          <button
+            onClick={toggleCollapsed}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+          >
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+
+        {/* Desktop Nav Links */}
+        <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5 hide-scrollbar">
+          <SectionLabel label="Menu" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/"         label="Dashboard" icon={LayoutDashboard} isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/students" label="Students"  icon={Users}           isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/teachers" label="Teachers"  icon={GraduationCap}   isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/classes"  label="Classes"   icon={BookOpen}        isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/alumni"   label="Alumni"    icon={AlumniIcon}      isCollapsed={isCollapsed} />
+
+          <SectionLabel label="Academic" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/subjects"     label="Subjects"            icon={BookCopy}       isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/batches"      label="Batches"             icon={Layers}         isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/routines"     label="Routines"            icon={CalendarDays}   isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/calendar"     label="Calendar"            icon={Calendar}       isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/attendance"   label="Attendance & Leaves" icon={ClipboardCheck} isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/exam-held"    label="Exams"               icon={ClipboardList}  isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/exam-results" label="Results"             icon={Trophy}         isCollapsed={isCollapsed} />
+
+          <SectionLabel label="Finance" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/finance"          label="Overview"        icon={Scale}      isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/payments"         label="Payments & Fees" icon={Wallet}     isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/salary"           label="Teacher Salary"  icon={DollarSign} isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/finance/expenses" label="Expenses"        icon={Receipt}    isCollapsed={isCollapsed} />
+
+          <SectionLabel label="Communication" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/notices" label="Notices" icon={Bell} isCollapsed={isCollapsed} />
+
+          <SectionLabel label="Reports" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/reports" label="Reports" icon={FileBarChart2} isCollapsed={isCollapsed} />
+        </nav>
+
+        {/* Desktop Bottom: Settings + User */}
+        <div className="shrink-0 p-3 border-t border-white/10 bg-[#091a16] space-y-1">
+          <DesktopNavItemLink to="/settings" label="Settings" icon={Settings} isCollapsed={isCollapsed} />
+
+          {/* User row */}
+          {!isCollapsed ? (
+            <div className="pt-2 border-t border-white/5 space-y-1.5">
+              <button
+                onClick={() => navigate('/profile')}
+                className="w-full flex items-center gap-3 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-left group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm shadow-emerald-950/50">
+                  {initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-white truncate">{user?.fullName || 'Administrator'}</p>
+                  <p className="text-[10px] text-emerald-400/80 truncate capitalize">
+                    {user?.role?.toLowerCase().replace(/_/g, ' ') || 'Admin'}
+                  </p>
+                </div>
+                <ChevronRight size={13} className="text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </button>
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-2 justify-center py-1.5 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+              >
+                <LogOut size={13} />
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2 flex flex-col items-center gap-2">
+              <button
+                onClick={() => navigate('/profile')}
+                title={user?.fullName || 'Profile'}
+                className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:ring-2 hover:ring-emerald-400 transition-all"
+              >
+                {initials}
+              </button>
+              <button
+                onClick={logout}
+                title="Sign Out"
+                className="p-2 rounded-xl text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ─────────────────────────────────────────────────────────────────
+          MAIN CONTENT AREA
+      ───────────────────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 bg-[var(--color-dark-bg)]">
 
         {/* ── Top Header ─────────────────────────────────── */}
-        <header className="h-16 flex items-center justify-between px-3.5 sm:px-6 lg:px-8 shrink-0 bg-white border-b border-zinc-100 shadow-sm">
+        <header className="h-16 flex items-center justify-between px-3.5 sm:px-6 lg:px-8 shrink-0 bg-white border-b border-zinc-200/80 shadow-xs z-20">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            {/* Mobile hamburger */}
+            {/* Mobile drawer trigger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors shrink-0"
+              className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-600 hover:bg-zinc-100 transition-colors shrink-0 cursor-pointer"
+              aria-label="Open menu"
             >
               <Menu size={20} />
             </button>
@@ -268,8 +484,14 @@ export function MainLayout() {
                 <div className="hidden sm:flex items-center gap-1 mb-0.5">
                   {currentPage.breadcrumb.map((crumb, i) => (
                     <span key={i} className="flex items-center gap-1">
-                      {i > 0 && <ChevronRight size={10} className="text-zinc-300" />}
-                      <span className={`text-[11px] font-medium ${i === currentPage.breadcrumb!.length - 1 ? 'text-[var(--color-primary)]' : 'text-zinc-400'}`}>
+                      {i > 0 && <ChevronRight size={10} className="text-zinc-400" />}
+                      <span
+                        className={`text-[11px] font-medium ${
+                          i === currentPage.breadcrumb!.length - 1
+                            ? 'text-emerald-600 font-semibold'
+                            : 'text-zinc-400'
+                        }`}
+                      >
                         {crumb}
                       </span>
                     </span>
@@ -282,14 +504,14 @@ export function MainLayout() {
             </div>
           </div>
 
-          {/* Right side */}
+          {/* Right side controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
             {/* Notification Bell */}
             <div className="relative" ref={noticeRef}>
               <button
                 onClick={() => setShowNotices(!showNotices)}
-                className="w-9 h-9 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-500 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] hover:border-[var(--color-primary)]/20 transition-all relative"
+                className="w-9 h-9 rounded-xl bg-zinc-50 border border-zinc-200/80 flex items-center justify-center text-zinc-600 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all relative cursor-pointer"
                 aria-label="Notifications"
               >
                 <Bell size={17} />
@@ -298,18 +520,18 @@ export function MainLayout() {
                 )}
               </button>
 
-              {/* Dropdown */}
+              {/* Notification Dropdown */}
               {showNotices && (
                 <div className="absolute top-full right-0 mt-2 w-[calc(100vw-24px)] max-w-sm sm:w-80 bg-white rounded-2xl shadow-xl border border-zinc-100 overflow-hidden z-50">
                   <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
                     <h3 className="font-bold text-zinc-900 text-sm">Notifications</h3>
                     {unreadCount > 0 && (
-                      <span className="text-[11px] font-semibold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                         {unreadCount} New
                       </span>
                     )}
                   </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-zinc-50">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-zinc-50 hide-scrollbar">
                     {recentNotices.length > 0 ? (
                       recentNotices.map(notice => {
                         const isRead = readNotices.includes(notice.id)
@@ -333,7 +555,7 @@ export function MainLayout() {
                             {!isRead && (
                               <button
                                 onClick={(e) => markAsRead(notice.id, e)}
-                                className="shrink-0 text-zinc-300 hover:text-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-all self-center p-1"
+                                className="shrink-0 text-zinc-300 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all self-center p-1"
                                 title="Mark as read"
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -355,7 +577,7 @@ export function MainLayout() {
                   <div className="p-2 border-t border-zinc-100 bg-zinc-50/50">
                     <button
                       onClick={() => { setShowNotices(false); navigate('/notices') }}
-                      className="w-full py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors text-center rounded-lg hover:bg-zinc-100"
+                      className="w-full py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors text-center rounded-lg hover:bg-zinc-100 cursor-pointer"
                     >
                       View All Notices →
                     </button>
@@ -364,28 +586,125 @@ export function MainLayout() {
               )}
             </div>
 
-            {/* User avatar (header only — no sidebar duplication) */}
+            {/* User avatar */}
             <button
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l sm:border-zinc-100 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l sm:border-zinc-200/80 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs shrink-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs">
                 {initials}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-[13px] font-semibold text-zinc-900 leading-none">{user?.fullName}</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5 capitalize">{user?.role?.toLowerCase().replace(/_/g, ' ')}</p>
+                <p className="text-[13px] font-semibold text-zinc-900 leading-none">{user?.fullName || 'Administrator'}</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5 capitalize">
+                  {user?.role?.toLowerCase().replace(/_/g, ' ') || 'Admin'}
+                </p>
               </div>
             </button>
           </div>
         </header>
 
-        {/* ── Page Content ─────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-full">
+        {/* ── Page Content (with bottom padding pb-24 on mobile so bottom bar never covers content) ── */}
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-full pb-24 lg:pb-6 hide-scrollbar">
           <div className="page-enter max-w-full">
             <Outlet />
           </div>
         </div>
+
+        {/* ─────────────────────────────────────────────────────────────────
+            MOBILE STICKY BOTTOM NAVIGATION BAR (`lg:hidden`)
+        ───────────────────────────────────────────────────────────────── */}
+        <nav className="fixed bottom-0 inset-x-0 h-16 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 z-40 lg:hidden flex items-center justify-around px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
+          {/* 1. Dashboard */}
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+                isActive ? 'text-emerald-600 font-semibold' : 'text-zinc-500 hover:text-zinc-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-emerald-50 text-emerald-600' : ''}`}>
+                  <LayoutDashboard size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+                </div>
+                <span className="text-[10px] mt-0.5">Dashboard</span>
+              </>
+            )}
+          </NavLink>
+
+          {/* 2. Students */}
+          <NavLink
+            to="/students"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+                isActive ? 'text-emerald-600 font-semibold' : 'text-zinc-500 hover:text-zinc-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-emerald-50 text-emerald-600' : ''}`}>
+                  <Users size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+                </div>
+                <span className="text-[10px] mt-0.5">Students</span>
+              </>
+            )}
+          </NavLink>
+
+          {/* 3. Teachers */}
+          <NavLink
+            to="/teachers"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+                isActive ? 'text-emerald-600 font-semibold' : 'text-zinc-500 hover:text-zinc-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-emerald-50 text-emerald-600' : ''}`}>
+                  <GraduationCap size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+                </div>
+                <span className="text-[10px] mt-0.5">Teachers</span>
+              </>
+            )}
+          </NavLink>
+
+          {/* 4. Classes */}
+          <NavLink
+            to="/classes"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+                isActive ? 'text-emerald-600 font-semibold' : 'text-zinc-500 hover:text-zinc-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-emerald-50 text-emerald-600' : ''}`}>
+                  <BookOpen size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+                </div>
+                <span className="text-[10px] mt-0.5">Classes</span>
+              </>
+            )}
+          </NavLink>
+
+          {/* 5. More (Opens the Drawer) */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${
+              isMoreActive ? 'text-emerald-600 font-semibold' : 'text-zinc-500 hover:text-zinc-800'
+            }`}
+          >
+            <div className={`p-1 rounded-xl transition-all ${isMoreActive ? 'bg-emerald-50 text-emerald-600' : ''}`}>
+              <Menu size={20} strokeWidth={isMoreActive ? 2.3 : 1.8} />
+            </div>
+            <span className="text-[10px] mt-0.5">More</span>
+          </button>
+        </nav>
       </main>
     </div>
   )

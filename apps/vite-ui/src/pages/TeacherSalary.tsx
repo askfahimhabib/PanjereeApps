@@ -24,6 +24,7 @@ import {
 } from '@/features/teachers/salary/useTeacherSalary'
 import { SalarySetupTab } from '@/features/teachers/salary/SalarySetupTab'
 import { SalaryHistoryTab } from '@/features/teachers/salary/SalaryHistoryTab'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 import { MONTH_NAMES, formatCurrency } from '@/features/payments/types'
 import type { FinancePaymentMethod } from '@/features/finance/types'
 
@@ -94,26 +95,28 @@ export function TeacherSalary() {
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────── */}
-      <div className="pill-tab-container w-fit">
-        {TABS.map((tab) => {
-          const Icon = tab.icon
-          const isActive = activeTab === tab.key
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/80'
-                  : 'text-zinc-500 hover:text-zinc-800'
-              }`}
-            >
-              <Icon size={14} />
-              {tab.label}
-            </button>
-          )
-        })}
-      </div>
+      <ScrollableTabs className="w-fit max-w-full">
+        <div className="pill-tab-container w-fit">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/80'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                <Icon size={14} />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+      </ScrollableTabs>
 
       {/* ── Tab 1: Monthly Disbursal ──────────────────────────── */}
       {activeTab === 'monthly' && (

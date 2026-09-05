@@ -28,6 +28,7 @@ import { PrintableRollSheetModal } from '../features/classes/components/modals/P
 import { useSectionDetail } from '../features/classes/useSectionDetail'
 import type { SectionStudent } from '../features/classes/types'
 import { classStore, groupStore } from '@/data/stores'
+import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
 
 type SectionTab = 'STUDENTS' | 'EXAMS' | 'ATTENDANCE' | 'ROUTINE' | 'FEES' | 'SUBJECTS'
 
@@ -155,81 +156,79 @@ export function SectionDetail() {
       </div>
 
       {/* ── Section Command Tabs ─────────────────────────────────────────── */}
-      <div className="border-b border-zinc-200 flex items-center justify-between overflow-x-auto">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setActiveTab('STUDENTS')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'STUDENTS'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Users size={15} />
-            <span>Students & Rolls ({students.length})</span>
-          </button>
+      <ScrollableTabs className="w-full border-b border-zinc-200" trackClassName="gap-1">
+        <button
+          onClick={() => setActiveTab('STUDENTS')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'STUDENTS'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <Users size={15} />
+          <span>Students &amp; Rolls ({students.length})</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('EXAMS')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'EXAMS'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Trophy size={15} className="text-amber-500" />
-            <span>Exams & Grade Serial</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('EXAMS')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'EXAMS'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <Trophy size={15} className="text-amber-500" />
+          <span>Exams &amp; Grade Serial</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('ATTENDANCE')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'ATTENDANCE'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <CalendarDays size={15} className="text-emerald-500" />
-            <span>Attendance & Regularity</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('ATTENDANCE')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'ATTENDANCE'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <CalendarDays size={15} className="text-emerald-500" />
+          <span>Attendance &amp; Regularity</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('ROUTINE')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'ROUTINE'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Clock size={15} className="text-purple-500" />
-            <span>Class Routine</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('ROUTINE')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'ROUTINE'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <Clock size={15} className="text-purple-500" />
+          <span>Class Routine</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('FEES')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'FEES'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <CreditCard size={15} className="text-rose-500" />
-            <span>Fees & Dues</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('FEES')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'FEES'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <CreditCard size={15} className="text-amber-600" />
+          <span>Monthly Fees &amp; Dues</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('SUBJECTS')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'SUBJECTS'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <BookOpen size={15} className="text-blue-500" />
-            <span>Subjects & Faculty</span>
-          </button>
-        </div>
-      </div>
+        <button
+          onClick={() => setActiveTab('SUBJECTS')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'SUBJECTS'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <BookOpen size={15} className="text-blue-500" />
+          <span>Subject Teachers</span>
+        </button>
+      </ScrollableTabs>
 
       {/* ── Main Tab Content ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 flex-1 min-h-0">
