@@ -3,6 +3,7 @@ import { X, Check, UserPlus, ArrowRight, ArrowLeft } from 'lucide-react'
 import type { TeacherFormData } from '../../types'
 import { Step1_BasicInfo } from './Step1_BasicInfo'
 import { Step2_Employment } from './Step2_Employment'
+import { toast } from '@/store/toast'
 
 interface Props {
   isOpen: boolean
@@ -54,7 +55,7 @@ export function AddTeacherModal({
   function handleNext() {
     const error = validateStep(currentStep, formData)
     if (error) {
-      alert(error)
+      toast.error(error)
       return
     }
     onNext()
@@ -63,7 +64,7 @@ export function AddTeacherModal({
   function handleSave(addAnother: boolean = false) {
     const err = validateStep(2, formData)
     if (err) {
-      alert(err)
+      toast.error(err)
       return
     }
     onSubmit(addAnother)

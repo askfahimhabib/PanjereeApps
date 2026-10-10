@@ -15,6 +15,7 @@ import {
   Edit,
 } from 'lucide-react'
 import type { Teacher } from '../types'
+import { toast } from '@/store/toast'
 import { BasicInfoTab }       from './drawer-tabs/BasicInfoTab'
 import { EmploymentTab }      from './drawer-tabs/EmploymentTab'
 import { AcademicTab }        from './drawer-tabs/AcademicTab'
@@ -82,7 +83,7 @@ export function TeacherDetailDrawer({ teacher, isOpen, onClose, onEdit }: Props)
   const handleWhatsApp = () => {
     const contactNumber = teacher?.phone || teacher?.whatsapp
     if (!contactNumber) {
-      alert('No contact phone available for teacher.')
+      toast.warning('শিক্ষকের কোনো ফোন বা হোয়াটসঅ্যাপ নম্বর পাওয়া যায়নি।')
       return
     }
     const cleanNumber = contactNumber.replace(/[^0-9]/g, '')

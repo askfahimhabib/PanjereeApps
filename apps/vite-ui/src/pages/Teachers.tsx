@@ -6,6 +6,7 @@ import { TeacherFilters } from '../features/teachers/components/TeacherFilters'
 import { TeacherTable } from '../features/teachers/components/TeacherTable'
 import { AddTeacherModal } from '../features/teachers/components/AddTeacherModal'
 import { DESIGNATION_LABELS, DEPARTMENT_LABELS } from '../features/teachers/types'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 export function Teachers() {
   const navigate = useNavigate()
@@ -34,6 +35,7 @@ export function Teachers() {
   } = useTeachers()
 
   const handlePrintDirectory = () => {
+    const inst = getInstitutionInfo()
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
 
@@ -53,7 +55,7 @@ export function Teachers() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Faculty Directory - Estudy International Model Academy</title>
+          <title>Faculty Directory - ${inst.name}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 24px; color: #111827; }
             h1 { font-size: 20px; margin-bottom: 4px; font-weight: 800; }
@@ -68,7 +70,7 @@ export function Teachers() {
         <body>
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <h1>Estudy International Model Academy</h1>
+              <h1>${inst.name}</h1>
               <p>Official Teaching Faculty & Staff Directory • Total: ${teachers.length} Members</p>
             </div>
             <button onclick="window.print()" style="padding: 8px 16px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:12px;">

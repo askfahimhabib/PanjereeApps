@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../hooks/useExpenses'
 import type { ExpenseRecord, FinancePaymentMethod } from '../types'
+import { toast } from '@/store/toast'
 
 interface AddExpenseModalProps {
   open: boolean
@@ -64,7 +65,7 @@ export function AddExpenseModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !amount || Number(amount) <= 0 || !categoryId) {
-      alert('Please fill in title, amount, and category.')
+      toast.warning('ব্যয়ের বিবরণ, পরিমাণ এবং ক্যাটাগরি পূরণ করুন।')
       return
     }
 
@@ -84,7 +85,10 @@ export function AddExpenseModal({
           },
         },
         {
-          onSuccess: () => onClose(),
+          onSuccess: () => {
+            toast.success('ব্যয়ের রেকর্ড সফলভাবে আপডেট করা হয়েছে।')
+            onClose()
+          },
         }
       )
     } else {
@@ -100,7 +104,10 @@ export function AddExpenseModal({
           notes,
         },
         {
-          onSuccess: () => onClose(),
+          onSuccess: () => {
+            toast.success('নতুন ব্যয় সফলভাবে যুক্ত করা হয়েছে।')
+            onClose()
+          },
         }
       )
     }

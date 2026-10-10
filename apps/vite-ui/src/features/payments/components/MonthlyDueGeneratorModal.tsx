@@ -12,6 +12,7 @@ import { useFeeStructures } from '../hooks/useFeeStructures'
 import { useGenerateMonthlyBilling, useMonthlyBillingRuns } from '../hooks/useBillingAndWaivers'
 import { MONTH_NAMES, formatCurrency } from '../types'
 import { createStore } from '@/lib/localStore'
+import { toast } from '@/store/toast'
 import type { Student } from '@/features/students/types'
 import type { ClassItem } from '@/features/classes/types'
 
@@ -71,12 +72,12 @@ export function MonthlyDueGeneratorModal({ open, onClose }: MonthlyDueGeneratorM
       },
       {
         onSuccess: (run) => {
-          setResultMessage(
-            `Successfully generated ${run.generated_count} fee dues totaling ${formatCurrency(run.total_billed_amount)} for ${targetStudents[0]?.className || 'Class'} (${MONTH_NAMES[month - 1]} ${year})!`
-          )
+          const msg = `Successfully generated ${run.generated_count} fee dues totaling ${formatCurrency(run.total_billed_amount)} for ${targetStudents[0]?.className || 'Class'} (${MONTH_NAMES[month - 1]} ${year})!`
+          setResultMessage(msg)
+          toast.success(msg)
         },
         onError: (err: unknown) => {
-          alert(err instanceof Error ? err.message : 'Failed to generate billing.')
+          toast.error(err instanceof Error ? err.message : 'বকেয়া বিলিং তৈরি করা সম্ভব হয়নি।')
         },
       }
     )

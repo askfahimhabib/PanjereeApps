@@ -1,10 +1,7 @@
-import { useState, useMemo } from 'react'
-import { createStore } from '@/lib/localStore'
+import { useState, useMemo, useEffect } from 'react'
+import { studentStore } from '@/data/stores'
 import type { Student } from '@/features/students/types'
 import type { Batch } from './types'
-
-// Shared student store (same key as useStudents)
-const studentStore = createStore<Student>('students')
 
 export function useBatchStudents(batch: Batch) {
   const [students, setStudents] = useState<Student[]>(() =>
@@ -14,6 +11,11 @@ export function useBatchStudents(batch: Batch) {
   const [isPickerOpen, setIsPickerOpen] = useState(false)
 
   const refresh = () => setStudents(studentStore.getWhere(s => s.batchId === batch.id))
+
+  useEffect(() => {
+    const unsub = studentStore.subscribe(refresh)
+    return () => unsub()
+  }, [batch.id])
 
   // Students currently in this batch, filtered by search
   const filtered = useMemo(() =>

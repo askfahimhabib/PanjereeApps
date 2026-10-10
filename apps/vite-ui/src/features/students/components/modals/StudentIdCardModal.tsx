@@ -3,26 +3,12 @@ import { createPortal } from 'react-dom'
 import { Printer, X, School, QrCode, Phone, ShieldCheck, Sparkles } from 'lucide-react'
 import type { Student } from '../../types'
 import { getInstitutionInfo } from '@/lib/institutionInfo'
+import { getEffectiveStudentAvatar } from '@/lib/studentAvatar'
 
 interface Props {
   open: boolean
   student: Student | null
   onClose: () => void
-}
-
-function getAvatarColor(id: string) {
-  const colors = [
-    'from-emerald-600 to-teal-500',
-    'from-indigo-600 to-blue-500',
-    'from-purple-600 to-pink-500',
-    'from-amber-600 to-orange-500',
-    'from-cyan-600 to-blue-600',
-  ]
-  return colors[id.charCodeAt(id.length - 1) % colors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
 export function StudentIdCardModal({ open, student, onClose }: Props) {
@@ -84,8 +70,8 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
             <h2>${inst.name}</h2>
             <p>${inst.address} • EIIN: ${inst.eiin}</p>
           </div>
-          <div class="avatar-box">
-            ${getInitials(student.fullNameEn)}
+          <div class="avatar-box" style="padding: 0; overflow: hidden; background: #fff;">
+            <img src="${getEffectiveStudentAvatar(student)}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
           </div>
           <div class="name">${student.fullNameEn}</div>
           <div style="text-align: center;">
@@ -210,8 +196,12 @@ export function StudentIdCardModal({ open, student, onClose }: Props) {
                 </div>
 
                 <div className="p-4 text-center">
-                  <div className={`w-20 h-20 rounded-full mx-auto bg-gradient-to-br ${getAvatarColor(student.id)} flex items-center justify-center text-white text-2xl font-black shadow-md border-4 border-white -mt-2`}>
-                    {getInitials(student.fullNameEn)}
+                  <div className="w-20 h-20 rounded-full mx-auto bg-white p-1 flex items-center justify-center shadow-md border-4 border-white -mt-2 overflow-hidden">
+                    <img
+                      src={getEffectiveStudentAvatar(student)}
+                      alt={student.fullNameEn}
+                      className="w-full h-full object-cover rounded-full"
+                    />
                   </div>
                   <h3 className="font-extrabold text-zinc-900 text-sm mt-2.5 truncate px-2">{student.fullNameEn}</h3>
                   <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">

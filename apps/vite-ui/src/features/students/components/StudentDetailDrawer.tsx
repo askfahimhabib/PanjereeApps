@@ -16,6 +16,9 @@ import {
 } from 'lucide-react'
 import type { Student } from '../types'
 import { STATUS_LABELS, STATUS_COLORS } from '../types'
+import { getEffectiveStudentAvatar } from '@/lib/studentAvatar'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
+import { toast } from '@/store/toast'
 
 import { ProfileTab }       from './drawer-tabs/ProfileTab'
 import { AttendanceTab }    from './drawer-tabs/AttendanceTab'
@@ -49,21 +52,6 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'logs',         label: 'Logs',         icon: History },
 ]
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function getAvatarColor(id: string) {
-  const colors = [
-    'from-emerald-600 to-teal-500',
-    'from-indigo-600 to-blue-500',
-    'from-purple-600 to-pink-500',
-    'from-amber-600 to-orange-500',
-    'from-cyan-600 to-blue-600',
-  ]
-  return colors[id.charCodeAt(id.length - 1) % colors.length]
-}
-
 export function StudentDetailDrawer({
   student,
   isOpen,
@@ -86,11 +74,12 @@ export function StudentDetailDrawer({
 
   const handleWhatsApp = () => {
     if (!guardianPhone) {
-      alert('No guardian phone number available.')
+      toast.warning('অভিভাবকের কোনো ফোন নম্বর পাওয়া যায়নি।')
       return
     }
+    const inst = getInstitutionInfo()
     const cleanNumber = guardianPhone.replace(/[^0-9]/g, '')
-    const url = `https://wa.me/${cleanNumber.startsWith('88') ? cleanNumber : `88${cleanNumber}`}?text=Assalamu%20Alaikum,%20regarding%20student%20${encodeURIComponent(student?.fullNameEn ?? '')}%20from%20Estudy%20Academy.`
+    const url = `https://wa.me/${cleanNumber.startsWith('88') ? cleanNumber : `88${cleanNumber}`}?text=Assalamu%20Alaikum,%20regarding%20student%20${encodeURIComponent(student?.fullNameEn ?? '')}%20from%20${encodeURIComponent(inst.name)}.`
     window.open(url, '_blank')
   }
 
@@ -141,11 +130,13 @@ export function StudentDetailDrawer({
               <div className="flex items-start gap-4">
                 {/* Avatar */}
                 <div
-                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getAvatarColor(
-                    student.id
-                  )} flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-md border-2 border-white`}
+                  className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shrink-0 shadow-md border-2 border-white overflow-hidden"
                 >
-                  {getInitials(student.fullNameEn)}
+                  <img
+                    src={getEffectiveStudentAvatar(student)}
+                    alt={student.fullNameEn}
+                    className="w-full h-full object-cover rounded-xl"
+                  />
                 </div>
 
                 {/* Info Block */}

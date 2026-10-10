@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react'
 import { createStore } from '@/lib/localStore'
+import { toast } from '@/store/toast'
 import type { Student } from '@/features/students/types'
 import type {
   PaymentMethod,
@@ -240,7 +241,7 @@ export function QuickCollectModal({
     e.preventDefault()
     if (!selectedStudent) return
     if (items.length === 0) {
-      alert('Please add at least one fee item.')
+      toast.warning('কমপক্ষে একটি ফি আইটেম যুক্ত করুন।')
       return
     }
 
@@ -270,10 +271,11 @@ export function QuickCollectModal({
     collectFee.mutate(payload, {
       onSuccess: (saved) => {
         setSuccessPayment(saved)
+        toast.success('ফি সফলভাবে গ্রহণ করা হয়েছে!')
         onSuccess?.(saved)
       },
       onError: (err: unknown) => {
-        alert(err instanceof Error ? err.message : 'Payment collection failed.')
+        toast.error(err instanceof Error ? err.message : 'ফি গ্রহণ ব্যর্থ হয়েছে।')
       }
     })
   }
@@ -283,6 +285,7 @@ export function QuickCollectModal({
     const text = generateReceiptSmsText(successPayment)
     navigator.clipboard.writeText(text)
     setCopiedSms(true)
+    toast.success('রসিদের বার্তা ক্লিপবোর্ডে কপি করা হয়েছে!')
     setTimeout(() => setCopiedSms(false), 2500)
   }
 

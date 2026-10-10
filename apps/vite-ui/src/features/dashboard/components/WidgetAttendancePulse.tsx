@@ -124,8 +124,24 @@ export function WidgetAttendancePulse({
         </div>
       </div>
 
+      {/* Student Leave Applications Prompt */}
+      {(kpis.pendingStudentLeaveCount ?? 0) > 0 && (
+        <Link
+          to="/attendance?tab=student-leaves"
+          className="flex items-center justify-between p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-200/80 dark:border-purple-800/60 text-purple-900 dark:text-purple-300 transition-colors text-xs font-semibold mt-3"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400 animate-pulse" />
+            <span>{kpis.pendingStudentLeaveCount} Student Leave Request(s)</span>
+          </div>
+          <span className="text-[11px] text-purple-700 dark:text-purple-300 underline flex items-center gap-0.5 font-bold">
+            Review <ArrowRight size={11} />
+          </span>
+        </Link>
+      )}
+
       {/* Action Buttons */}
-      <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center gap-2">
+      <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-slate-800 flex items-center gap-2">
         <Link
           to="/attendance"
           className="flex-1 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold text-center transition-colors cursor-pointer"

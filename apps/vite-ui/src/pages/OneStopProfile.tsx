@@ -35,6 +35,7 @@ import {
   getTeacherFacultyMetrics,
   getAdminInstitutionMetrics,
 } from '@/features/profile/utils/userProfileData'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 // Reusable Components
 import { ProfileHeroBanner } from '@/features/profile/components/ProfileHeroBanner'
@@ -77,6 +78,7 @@ export function OneStopProfile() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuthStore()
   const adminProfile = useProfileStore()
+  const inst = getInstitutionInfo()
 
   // All Available Students & Teachers for selector
   const allStudents = useMemo(() => studentStore.getAll(), [])
@@ -372,7 +374,7 @@ export function OneStopProfile() {
                   <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-4 text-center">
                     <div className="flex items-center justify-center gap-1.5 mb-0.5">
                       <School size={16} />
-                      <h4 className="text-xs font-black uppercase tracking-wider">Estudy Model Academy</h4>
+                      <h4 className="text-xs font-black uppercase tracking-wider">{inst.name.toUpperCase()}</h4>
                     </div>
                     <p className="text-[9px] text-emerald-200 uppercase tracking-widest font-semibold">Official Student Identity Card</p>
                   </div>
@@ -415,7 +417,7 @@ export function OneStopProfile() {
 
                   <div className="bg-zinc-100 px-4 py-2 text-[10px] text-zinc-500 flex items-center justify-between border-t border-zinc-200">
                     <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-600" /> Verified Record</span>
-                    <span className="font-mono">VALID 2024-2025</span>
+                    <span className="font-mono">VALID {inst.session}</span>
                   </div>
                 </div>
 

@@ -91,6 +91,7 @@ export function Students() {
       <AddStudentModal
         isOpen={isModalOpen}
         isEdit={!!editingStudentId}
+        editingStudentId={editingStudentId}
         onClose={closeModal}
         currentStep={currentStep}
         formData={formData}

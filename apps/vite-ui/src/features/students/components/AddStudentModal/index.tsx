@@ -4,10 +4,13 @@ import type { StudentFormData } from '../../types'
 import { sectionStore } from '@/data/stores'
 import { Step1_BasicAcademic } from './Step1_BasicAcademic'
 import { Step2_ContactParent } from './Step2_ContactParent'
+import { checkEnrollmentConflicts } from '../../utils/enrollmentValidation'
+import { toast } from '@/store/toast'
 
 interface Props {
   isOpen: boolean
   isEdit?: boolean
+  editingStudentId?: string | null
   onClose: () => void
   currentStep: number
   formData: StudentFormData
@@ -22,7 +25,7 @@ const STEPS = [
   { num: 2, label: 'Guardian & Address', short: 'Guardian' },
 ]
 
-function validateStep(step: number, data: StudentFormData): string | null {
+function validateStep(step: number, data: StudentFormData, editingStudentId?: string | null): string | null {
   if (step === 1) {
     if (!data.fullNameEn.trim()) return 'Full Name (English) is required'
     if (!data.mobile.trim()) return 'Student mobile number is required'
@@ -34,6 +37,11 @@ function validateStep(step: number, data: StudentFormData): string | null {
       }
     } else if (data.type === 'EXAM_BATCH') {
       if (!data.batchId) return 'Exam Batch is required'
+    }
+
+    const conflict = checkEnrollmentConflicts(data, editingStudentId)
+    if (conflict.hasConflict) {
+      return conflict.message || 'Duplicate student conflict detected'
     }
   }
   if (step === 2) {
@@ -51,6 +59,7 @@ function validateStep(step: number, data: StudentFormData): string | null {
 export function AddStudentModal({
   isOpen,
   isEdit = false,
+  editingStudentId = null,
   onClose,
   currentStep,
   formData,
@@ -62,18 +71,23 @@ export function AddStudentModal({
   if (!isOpen) return null
 
   function handleNext() {
-    const error = validateStep(currentStep, formData)
+    const error = validateStep(currentStep, formData, editingStudentId)
     if (error) {
-      alert(error)
+      toast.error(error)
       return
     }
     onNext()
   }
 
   function handleSave(addAnother: boolean = false) {
-    const err = validateStep(2, formData)
-    if (err) {
-      alert(err)
+    const err1 = validateStep(1, formData, editingStudentId)
+    if (err1) {
+      toast.error(err1)
+      return
+    }
+    const err2 = validateStep(2, formData, editingStudentId)
+    if (err2) {
+      toast.error(err2)
       return
     }
     onSubmit(addAnother)
@@ -153,7 +167,13 @@ export function AddStudentModal({
 
         {/* ── Scrollable Body ─────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {currentStep === 1 && <Step1_BasicAcademic data={formData} onChange={onChange} />}
+          {currentStep === 1 && (
+            <Step1_BasicAcademic
+              data={formData}
+              onChange={onChange}
+              editingStudentId={editingStudentId}
+            />
+          )}
           {currentStep === 2 && <Step2_ContactParent data={formData} onChange={onChange} />}
         </div>
 

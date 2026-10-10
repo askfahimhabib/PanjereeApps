@@ -14,6 +14,7 @@ import {
 import type { DashboardTab } from '../types'
 import { format } from 'date-fns'
 import { ScrollableTabs } from '@/components/ui/ScrollableTabs'
+import { useSettingsStore } from '@/store/settings'
 
 interface DashboardHeaderProps {
   activeTab: DashboardTab
@@ -30,6 +31,7 @@ export function DashboardHeader({
   onOpenAddExpense,
   onOpenCreateNotice,
 }: DashboardHeaderProps) {
+  const currentSession = useSettingsStore((s) => s.currentSession)
   const [timeStr, setTimeStr] = useState(() => format(new Date(), 'hh:mm:ss a'))
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export function DashboardHeader({
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-200 text-[11px] font-semibold border border-amber-300/30">
                 <Sparkles size={11} />
-                Session 2024-2025
+                Session {currentSession || '2026'}
               </span>
             </div>
 

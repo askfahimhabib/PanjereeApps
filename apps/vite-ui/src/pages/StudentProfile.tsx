@@ -30,6 +30,8 @@ import { AddStudentModal } from '../features/students/components/AddStudentModal
 import { ProfileHeroBanner } from '@/features/profile/components/ProfileHeroBanner'
 import { ProfileKpiGrid, type ProfileKpiItem } from '@/features/profile/components/ProfileKpiGrid'
 import { getStudentFinancialMetrics } from '@/features/profile/utils/userProfileData'
+import { getEffectiveStudentAvatar } from '@/lib/studentAvatar'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 type TabKey = 'profile' | 'results' | 'attendance' | 'fees' | 'idcard'
 
@@ -51,6 +53,7 @@ function getInitials(name?: string, fallback = 'ST'): string {
 export function StudentProfile() {
   const { studentId } = useParams<{ studentId: string }>()
   const navigate = useNavigate()
+  const inst = getInstitutionInfo()
   const [activeTab, setActiveTab] = useState<TabKey>('profile')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -173,7 +176,7 @@ export function StudentProfile() {
           fullName={student.fullNameEn}
           banglaName={student.fullNameBn}
           subtitle={`${academicLabel} · Session: ${student.session || '2024'}`}
-          avatarUrl={student.profilePhoto}
+          avatarUrl={getEffectiveStudentAvatar(student)}
           initials={getInitials(student.fullNameEn, 'ST')}
           roleBadgeText={`Student · ${student.className || 'Class 10'}`}
           roleColor="bg-emerald-50 text-emerald-800 border-emerald-200"
@@ -265,7 +268,7 @@ export function StudentProfile() {
                   <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-4 text-center">
                     <div className="flex items-center justify-center gap-1.5 mb-0.5">
                       <School size={16} />
-                      <h4 className="text-xs font-black uppercase tracking-wider">Estudy Model Academy</h4>
+                      <h4 className="text-xs font-black uppercase tracking-wider">{inst.name.toUpperCase()}</h4>
                     </div>
                     <p className="text-[9px] text-emerald-200 uppercase tracking-widest font-semibold">Official Student Identity Card</p>
                   </div>
@@ -309,7 +312,7 @@ export function StudentProfile() {
 
                   <div className="bg-zinc-100 px-4 py-2 text-[10px] text-zinc-500 flex items-center justify-between border-t border-zinc-200">
                     <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-600" /> Verified Record</span>
-                    <span className="font-mono">VALID 2024-2025</span>
+                    <span className="font-mono">VALID {inst.session}</span>
                   </div>
                 </div>
 
@@ -352,6 +355,7 @@ export function StudentProfile() {
       <AddStudentModal
         isOpen={isModalOpen}
         isEdit={!!editingStudentId}
+        editingStudentId={editingStudentId}
         onClose={closeModal}
         onSubmit={handleEditSubmit}
         formData={formData}

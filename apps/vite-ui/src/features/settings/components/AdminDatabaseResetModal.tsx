@@ -12,6 +12,7 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import { purgeAllDatabase, factoryResetDatabase } from '@/data/stores'
+import { toast } from '@/store/toast'
 
 interface Props {
   isOpen: boolean
@@ -47,7 +48,7 @@ export function AdminDatabaseResetModal({ isOpen, onClose }: Props) {
         window.location.reload()
       }, 1500)
     } catch (err) {
-      alert(`Reset failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      toast.error(`রিসেট ব্যর্থ হয়েছে: ${err instanceof Error ? err.message : 'অপ্রত্যাশিত সমস্যা'}`)
       setIsProcessing(false)
     }
   }

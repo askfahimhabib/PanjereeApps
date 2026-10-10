@@ -9,6 +9,7 @@ import {
   formatCurrency,
 } from '../types'
 import { printInvoice } from '../utils/printInvoice'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 interface Props {
   open: boolean
@@ -19,6 +20,7 @@ interface Props {
 export function InvoicePrintModal({ open, record, onClose }: Props) {
   if (!open || !record) return null
 
+  const inst = getInstitutionInfo()
   const paidDate = new Date(record.paid_at).toLocaleDateString('en-BD', {
     day: '2-digit', month: 'long', year: 'numeric',
   })
@@ -46,7 +48,7 @@ export function InvoicePrintModal({ open, record, onClose }: Props) {
 
             {/* Header */}
             <div className="bg-white text-white px-6 py-5 text-center">
-              <h4 className="text-lg font-black tracking-wider">PANJEREE COACHING CENTER</h4>
+              <h4 className="text-lg font-black tracking-wider">{inst.name.toUpperCase()}</h4>
               <p className="text-[10px] text-zinc-600 mt-1">Official Fee Receipt</p>
             </div>
 
@@ -129,7 +131,7 @@ export function InvoicePrintModal({ open, record, onClose }: Props) {
             </div>
 
             <div className="text-center pb-3">
-              <p className="text-[9px] text-zinc-800 tracking-widest">PANJEREE COACHING CENTER · OFFICIAL RECEIPT</p>
+              <p className="text-[9px] text-zinc-800 tracking-widest">{inst.name.toUpperCase()} · OFFICIAL RECEIPT</p>
             </div>
           </div>
         </div>

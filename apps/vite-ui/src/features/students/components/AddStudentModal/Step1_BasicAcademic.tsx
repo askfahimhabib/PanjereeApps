@@ -2,16 +2,18 @@ import { useMemo } from 'react'
 import type { StudentFormData, StudentGroup, StudentShift, StudentVersion, Gender, BloodGroup, TargetExam } from '../../types'
 import { classStore, sectionStore, batchStore } from '@/data/stores'
 import { GraduationCap, BookOpen } from 'lucide-react'
+import { checkEnrollmentConflicts, getNextAvailableRoll } from '../../utils/enrollmentValidation'
 
 interface Props {
   data: StudentFormData
   onChange: (partial: Partial<StudentFormData>) => void
+  editingStudentId?: string | null
 }
 
 const inputCls = 'w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2 px-3 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-colors'
 const labelCls = 'block text-xs font-bold text-zinc-700 mb-1'
 
-export function Step1_BasicAcademic({ data, onChange }: Props) {
+export function Step1_BasicAcademic({ data, onChange, editingStudentId }: Props) {
   const classes = useMemo(() => classStore.getAll().filter(c => c.isActive ?? true), [])
   const batches = useMemo(() => batchStore.getAll().filter(b => b.status === 'ONGOING' || !b.status), [])
 
@@ -20,6 +22,14 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
     if (!data.classId) return []
     return sectionStore.getWhere(s => s.classId === data.classId)
   }, [data.classId])
+
+  const conflict = useMemo(() => checkEnrollmentConflicts(data, editingStudentId), [data, editingStudentId])
+  const suggestedRoll = useMemo(() => {
+    if (data.type === 'REGULAR' && data.classId) {
+      return getNextAvailableRoll(data.classId, data.sectionId, data.session, editingStudentId)
+    }
+    return ''
+  }, [data.type, data.classId, data.sectionId, data.session, editingStudentId])
 
   const needsGroup = selectedClass ? selectedClass.numericName >= 9 || selectedClass.hasGroups : false
 
@@ -110,9 +120,14 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
               placeholder="017XX-XXXXXX"
               value={data.mobile}
               onChange={e => onChange({ mobile: e.target.value })}
-              className={inputCls}
+              className={`${inputCls} ${conflict.field === 'mobile' ? 'border-red-400 bg-red-50/40 text-red-900 focus:border-red-500 focus:ring-red-500/20' : ''}`}
               required
             />
+            {conflict.field === 'mobile' && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-1.5 leading-snug">
+                ⚠️ {conflict.message}
+              </p>
+            )}
           </div>
 
           <div>
@@ -211,11 +226,20 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
               <label className={labelCls}>Roll Number</label>
               <input
                 type="text"
-                placeholder="Auto-generated if empty"
+                placeholder={suggestedRoll ? `Auto: ${suggestedRoll}` : 'Auto-generated if empty'}
                 value={data.rollNumber}
                 onChange={e => onChange({ rollNumber: e.target.value })}
-                className={inputCls}
+                className={`${inputCls} ${conflict.field === 'rollNumber' ? 'border-red-400 bg-red-50/40 text-red-900 focus:border-red-500 focus:ring-red-500/20' : ''}`}
               />
+              {conflict.field === 'rollNumber' ? (
+                <p className="mt-1 text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-1.5 leading-snug">
+                  ⚠️ {conflict.message}
+                </p>
+              ) : suggestedRoll && !data.rollNumber ? (
+                <p className="mt-1 text-[11px] font-medium text-indigo-600">
+                  পরবর্তী উপলব্ধ রোল: #{suggestedRoll}
+                </p>
+              ) : null}
             </div>
 
             {needsGroup && (
@@ -326,8 +350,8 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
           </div>
         )}
 
-        {/* Academic Session */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-zinc-200/50">
+        {/* Academic Session & Admission Details */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-zinc-200/50">
           <div>
             <label className={labelCls}>Academic Session</label>
             <input
@@ -347,6 +371,22 @@ export function Step1_BasicAcademic({ data, onChange }: Props) {
               onChange={e => onChange({ admissionDate: e.target.value })}
               className={inputCls}
             />
+          </div>
+
+          <div>
+            <label className={labelCls}>Admission / Form No.</label>
+            <input
+              type="text"
+              placeholder="e.g. ADM-2026-001"
+              value={data.admissionNumber}
+              onChange={e => onChange({ admissionNumber: e.target.value })}
+              className={`${inputCls} ${conflict.field === 'admissionNumber' ? 'border-red-400 bg-red-50/40 text-red-900 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+            />
+            {conflict.field === 'admissionNumber' && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-1.5 leading-snug">
+                ⚠️ {conflict.message}
+              </p>
+            )}
           </div>
         </div>
       </div>

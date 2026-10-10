@@ -73,9 +73,9 @@ export function WidgetFacultyStatus({
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
               <Clock size={12} className="text-amber-500" />
-              <span>Pending Leave Approvals ({pendingLeaves.length})</span>
+              <span>Faculty Leave Approvals ({pendingLeaves.length})</span>
             </span>
-            <Link to="/leaves" className="text-[11px] font-semibold text-emerald-600 hover:underline">
+            <Link to="/attendance?tab=teacher-leaves" className="text-[11px] font-semibold text-emerald-600 hover:underline">
               Leave Manager
             </Link>
           </div>

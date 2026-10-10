@@ -45,8 +45,16 @@ export const SEED_EXAM_RESULTS: ExamResult[] = [
   { id: 'res-22-001', exam_held_id: 'exam-001', student_id: '22', student_name: 'Mizanur Rahman', roll_number: '05', subject_id: 's-001', subject_name: 'Bangla 1st', marks_obtained: 64, is_absent: false, grade: 'A-', gpa: 3.5, created_at: '2026-09-13T14:00:00Z', updated_at: '2026-09-13T14:00:00Z' },
 ]
 
-if (examResultStore.getAll().length === 0) {
+const EXAM_RESULT_SEED_VERSION = 'v1_results_published'
+
+if (
+  typeof window !== 'undefined' &&
+  (localStorage.getItem('lms_exam_res_version') !== EXAM_RESULT_SEED_VERSION ||
+    examResultStore.getAll().length < 20)
+) {
+  examResultStore.clear()
   examResultStore.seed(SEED_EXAM_RESULTS)
+  localStorage.setItem('lms_exam_res_version', EXAM_RESULT_SEED_VERSION)
 }
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────

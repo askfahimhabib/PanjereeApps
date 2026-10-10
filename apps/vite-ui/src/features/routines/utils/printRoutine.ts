@@ -2,6 +2,7 @@ import type { Routine } from '../types'
 import { DAY_LABELS, WEEKDAYS } from '../types'
 import { groupByDay } from '../hooks/useRoutine'
 import { getInstitutionInfo } from '@/lib/institutionInfo'
+import { toast } from '@/store/toast'
 
 interface PrintRoutineOptions {
   title: string               // e.g. "Class 10 - Academic Routine" or "SSC Model Test 2026 Routine"
@@ -23,7 +24,7 @@ export function printRoutine({
 
   const printWindow = window.open('', '_blank', 'width=1100,height=850')
   if (!printWindow) {
-    alert('Please allow popups to print the routine schedule.')
+    toast.warning('রুটিন প্রিন্ট করার জন্য অনুগ্রহ করে ব্রাউজার পপআপ এলাও (Allow Popups) করুন।')
     return
   }
 

@@ -117,6 +117,8 @@ export const noticeStore               = storeFactory<Notice>('notices')
 export const expenseStore              = storeFactory<ExpenseRecord>('finance_expenses')
 export const expenseCategoryStore      = storeFactory<ExpenseCategoryItem>('finance_expense_categories')
 export const financeTransactionStore   = storeFactory<FinanceTransaction>('finance_transactions')
+import { examResultStore }             from '@/features/examHeld/hooks/useExamResults'
+export { examResultStore }
 
 // ─────────────────────────────────────────────────────────────
 //  Seed  (runs once per store if empty, unless database is purged)
@@ -159,6 +161,20 @@ if (!isPurged) {
     teacherAttendanceStore.seed(MOCK_TEACHER_ATTENDANCE_RECORDS)
     localStorage.setItem('lms_att_version', ATTENDANCE_SEED_VERSION)
   }
+  const DATA_INTEGRITY_VERSION = 'data_integrity_v2'
+  if (typeof window !== 'undefined' && localStorage.getItem('lms_data_integrity_version') !== DATA_INTEGRITY_VERSION) {
+    // Heal any legacy data with updated batch mappings and student waivers
+    studentStore.clear()
+    studentStore.seed(MOCK_STUDENTS)
+    batchStore.clear()
+    batchStore.seed(MOCK_BATCHES)
+    routineStore.clear()
+    routineStore.seed(MOCK_ROUTINES)
+    studentWaiverStore.clear()
+    studentWaiverStore.seed(MOCK_STUDENT_WAIVERS)
+    localStorage.setItem('lms_data_integrity_version', DATA_INTEGRITY_VERSION)
+  }
+
   expenseCategoryStore.seed(DEFAULT_EXPENSE_CATEGORIES)
   expenseStore.seed(MOCK_EXPENSES)
   financeTransactionStore.seed(MOCK_FINANCE_TRANSACTIONS)
@@ -200,6 +216,7 @@ const ALL_STORE_INSTANCES = [
   expenseStore,
   expenseCategoryStore,
   financeTransactionStore,
+  examResultStore,
 ]
 
 /**

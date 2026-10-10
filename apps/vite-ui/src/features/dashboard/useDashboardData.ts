@@ -107,6 +107,9 @@ export function useDashboardData() {
     const allLeaves = leaveStore.getAll()
 
     const pendingLeaves = allLeaves.filter(l => l.status === 'PENDING')
+    const pendingTeacherLeaves = pendingLeaves.filter(l => l.applicantType === 'TEACHER')
+    const pendingStudentLeaves = pendingLeaves.filter(l => l.applicantType === 'STUDENT')
+
     const approvedLeavesToday = allLeaves.filter(l => {
       if (l.status !== 'APPROVED') return false
       return l.fromDate <= todayStr && l.toDate >= todayStr
@@ -367,7 +370,8 @@ export function useDashboardData() {
       totalTeachers: activeTeachers.length,
       teachersOnDutyToday,
       teachersOnLeaveToday,
-      pendingLeaveCount: pendingLeaves.length,
+      pendingLeaveCount: pendingTeacherLeaves.length,
+      pendingStudentLeaveCount: pendingStudentLeaves.length,
       todayAttendanceRate,
       todayPresentCount,
       todayAbsentCount,
@@ -406,7 +410,8 @@ export function useDashboardData() {
       alerts,
       activeTeachers,
       approvedLeavesToday,
-      pendingLeaves,
+      pendingLeaves: pendingTeacherLeaves,
+      pendingStudentLeaves,
       currentDayOfWeek,
     }
   }, [tick, todayStr, currentMonth, currentYear, currentDayOfWeek])

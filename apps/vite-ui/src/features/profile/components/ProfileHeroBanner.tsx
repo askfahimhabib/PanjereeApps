@@ -8,6 +8,7 @@ import {
   MoreVertical,
   CheckCircle2,
 } from 'lucide-react'
+import { getInstitutionInfo } from '@/lib/institutionInfo'
 
 export interface ProfileHeroBannerProps {
   // Identity
@@ -63,14 +64,17 @@ export function ProfileHeroBanner({
   roleColor = 'bg-indigo-500/10 text-indigo-700 border-indigo-200',
   statusText = 'Active',
   statusVariant = 'success',
-  sessionText = 'Session 2026',
-  institutionText = 'Estudy International Model Academy',
+  sessionText,
+  institutionText,
   metaChips = [],
   contacts,
   primaryAction,
   secondaryActions = [],
   dangerAction,
 }: ProfileHeroBannerProps) {
+  const inst = getInstitutionInfo()
+  const effectiveInstitution = institutionText || inst.name
+  const effectiveSession = sessionText || `Session ${inst.session}`
   const [menuOpen, setMenuOpen] = React.useState(false)
 
   const handleWhatsApp = (number?: string) => {
@@ -96,13 +100,13 @@ export function ProfileHeroBanner({
               <Sparkles size={14} className="text-amber-300" />
             </span>
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-300">
-              {institutionText}
+              {effectiveInstitution}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono font-bold bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-zinc-200">
-              {sessionText}
+              {effectiveSession}
             </span>
           </div>
         </div>

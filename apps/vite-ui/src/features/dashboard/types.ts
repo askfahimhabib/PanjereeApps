@@ -17,6 +17,7 @@ export interface DashboardKpis {
   teachersOnDutyToday: number
   teachersOnLeaveToday: number
   pendingLeaveCount: number
+  pendingStudentLeaveCount?: number
 
   // Attendance
   todayAttendanceRate: number | null

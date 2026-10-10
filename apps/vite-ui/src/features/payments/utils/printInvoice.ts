@@ -1,6 +1,7 @@
 import type { PaymentRecord, ReceiptPrintMode } from '../types'
 import { PAYMENT_METHOD_LABELS, MONTH_NAMES, formatCurrency } from '../types'
 import { getInstitutionInfo } from '@/lib/institutionInfo'
+import { toast } from '@/store/toast'
 
 /**
  * Generates SMS / WhatsApp payment receipt confirmation text.
@@ -304,7 +305,7 @@ export function printInvoice(record: PaymentRecord, _mode: ReceiptPrintMode = 'D
 
   const win = window.open('', '_blank', 'width=880,height=920')
   if (!win) {
-    alert('Please allow popups for this application to open the printable invoice.')
+    toast.warning('ইনভয়েস প্রিন্ট করার জন্য অনুগ্রহ করে ব্রাউজার পপআপ এলাও (Allow Popups) করুন।')
     return
   }
   win.document.open()

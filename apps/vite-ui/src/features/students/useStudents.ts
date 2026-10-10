@@ -3,6 +3,8 @@ import { studentStore as store, classStore, sectionStore, batchStore } from '@/d
 import type { Student, StudentType, StudentStatus, StudentFormData } from './types'
 import { initialFormData } from './types'
 import { deriveStudentFeeStatus } from '@/features/payments/utils/feeStatus'
+import { checkEnrollmentConflicts, getNextAvailableRoll } from './utils/enrollmentValidation'
+import { toast } from '@/store/toast'
 
 const PAGE_SIZE = 10
 
@@ -199,6 +201,13 @@ export function useStudents(initialIsAlumni: boolean = false) {
 
   // ── Submit ─────────────────────────────────────────────────
   function submitStudent(addAnother: boolean = false) {
+    // 1. Strict duplicate enrollment & unique roll validation
+    const conflict = checkEnrollmentConflicts(formData, editingStudentId)
+    if (conflict.hasConflict) {
+      toast.error(conflict.message, { title: 'ভর্তি তথ্য সংক্রান্ত ত্রুটি' })
+      return false
+    }
+
     const now = new Date().toISOString()
 
     // Resolve class & batch names
@@ -259,6 +268,7 @@ export function useStudents(initialIsAlumni: boolean = false) {
         address:  formData.presentAddress.trim(),
       } : undefined,
 
+      rollNumber:       formData.rollNumber ? formData.rollNumber.trim() : undefined,
       username:         formData.fullNameEn.toLowerCase().replace(/\s+/g, '') + (formData.rollNumber || '1'),
       loginStatus:      'ACTIVE',
     }
@@ -266,23 +276,19 @@ export function useStudents(initialIsAlumni: boolean = false) {
     if (editingStudentId) {
       const updated = store.update(editingStudentId, studentData)
       setStudents(prev => prev.map(s => s.id === editingStudentId ? updated : s))
+      toast.success('শিক্ষার্থীর তথ্য সফলভাবে আপডেট করা হয়েছে।')
       closeModal()
+      return true
     } else {
       const allStudents = store.getAll()
       const newId = `std-${Date.now()}`
       const year = new Date().getFullYear()
 
-      // Calculate roll
-      let finalRoll = formData.rollNumber.trim()
+      // Calculate roll safely with collision avoidance
+      let finalRoll = (formData.rollNumber || '').trim()
       if (!finalRoll) {
         if (formData.type === 'REGULAR') {
-          const rollScope = allStudents.filter(s =>
-            s.type === 'REGULAR' &&
-            s.classId === formData.classId &&
-            (formData.sectionId ? s.sectionId === formData.sectionId : true) &&
-            s.session === formData.session
-          )
-          finalRoll = String(rollScope.length + 1).padStart(2, '0')
+          finalRoll = getNextAvailableRoll(formData.classId, formData.sectionId, formData.session, null)
         } else {
           const batchScope = allStudents.filter(s =>
             s.type === 'EXAM_BATCH' &&
@@ -316,6 +322,7 @@ export function useStudents(initialIsAlumni: boolean = false) {
 
       store.insert(newStudent)
       setStudents(prev => [newStudent, ...prev])
+      toast.success('নতুন শিক্ষার্থী সফলভাবে ভর্তি করা হয়েছে।')
 
       if (addAnother) {
         // Fast next student: keep Class/Section/Batch, increment roll, clear personal
@@ -349,6 +356,7 @@ export function useStudents(initialIsAlumni: boolean = false) {
   function deleteStudent(id: string) {
     store.remove(id)
     setStudents(prev => prev.filter(s => s.id !== id))
+    toast.success('শিক্ষার্থীর রেকর্ড সফলভাবে মুছে ফেলা হয়েছে।')
     if (selectedStudent?.id === id) closeDrawer()
   }
 

@@ -10,8 +10,9 @@ import {
   CalendarDays, ClipboardList, ClipboardCheck, Bell, Wallet,
   Settings, Trophy, FileBarChart2, Menu, X, ChevronRight,
   ChevronLeft, GraduationCap as AlumniIcon, BookCopy, Layers,
-  DollarSign, Calendar, Scale, Receipt
+  DollarSign, Calendar, Scale, Receipt, Sun, Moon
 } from 'lucide-react'
+import { useTheme } from '../lib/theme'
 
 // ── Page Title & Breadcrumb Map ───────────────────────────────────────────────
 const PAGE_META: Record<string, { title: string; breadcrumb?: string[] }> = {
@@ -140,6 +141,7 @@ export function MainLayout() {
   const settings = useSettingsStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const { isDark, toggleTheme } = useTheme()
 
   // Desktop Collapsed state (stored in localStorage)
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -249,9 +251,13 @@ export function MainLayout() {
         {/* Drawer Header (Properly spaced, close button cleanly aligned on right) */}
         <div className="p-4 flex items-center justify-between border-b border-white/10 bg-[#091a16] shrink-0">
           <div className="flex items-center gap-3 min-w-0 pr-2">
-            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2.5 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
-              <BookOpen size={18} />
-            </div>
+            {settings.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="w-9 h-9 rounded-xl object-contain shrink-0 bg-white/10 p-0.5" />
+            ) : (
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2.5 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
+                <BookOpen size={18} />
+              </div>
+            )}
             <div className="min-w-0">
               <h2 className="text-[13px] font-bold text-white leading-tight truncate">
                 {settings.schoolName || 'Panjeree LMS'}
@@ -300,6 +306,10 @@ export function MainLayout() {
           <SectionLabel label="Communication & Reports" />
           <MobileDrawerNavItemLink to="/notices" label="Notices" icon={Bell} onNavigate={() => setSidebarOpen(false)} />
           <MobileDrawerNavItemLink to="/reports" label="Reports" icon={FileBarChart2} onNavigate={() => setSidebarOpen(false)} />
+
+          <Divider />
+          <SectionLabel label="Portals" />
+          <MobileDrawerNavItemLink to="/student/dashboard" label="Student Portal" icon={GraduationCap} onNavigate={() => setSidebarOpen(false)} />
 
           <Divider />
           <SectionLabel label="System" />
@@ -354,9 +364,13 @@ export function MainLayout() {
           } border-b border-white/10 bg-[#091a16]`}
         >
           <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
-              <BookOpen size={18} />
-            </div>
+            {settings.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain shrink-0 bg-white/10 p-0.5" />
+            ) : (
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2 rounded-xl shadow-md shadow-emerald-950/40 shrink-0">
+                <BookOpen size={18} />
+              </div>
+            )}
             {!isCollapsed && (
               <div className="min-w-0">
                 <h1 className="text-[13px] font-bold text-white leading-tight truncate">
@@ -408,6 +422,9 @@ export function MainLayout() {
 
           <SectionLabel label="Reports" isCollapsed={isCollapsed} />
           <DesktopNavItemLink to="/reports" label="Reports" icon={FileBarChart2} isCollapsed={isCollapsed} />
+
+          <SectionLabel label="Portals" isCollapsed={isCollapsed} />
+          <DesktopNavItemLink to="/student/dashboard" label="Student Portal" icon={GraduationCap} isCollapsed={isCollapsed} />
         </nav>
 
         {/* Desktop Bottom: Settings + User */}
@@ -464,15 +481,15 @@ export function MainLayout() {
       {/* ─────────────────────────────────────────────────────────────────
           MAIN CONTENT AREA
       ───────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 bg-[var(--color-dark-bg)]">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 bg-[var(--color-dark-bg)] dark:bg-[#090d16] transition-colors">
 
         {/* ── Top Header ─────────────────────────────────── */}
-        <header className="h-16 flex items-center justify-between px-3.5 sm:px-6 lg:px-8 shrink-0 bg-white border-b border-zinc-200/80 shadow-xs z-20">
+        <header className="h-16 flex items-center justify-between px-3.5 sm:px-6 lg:px-8 shrink-0 bg-white dark:bg-[#0f172a] border-b border-zinc-200/80 dark:border-slate-800/80 shadow-xs z-20 transition-colors">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Mobile drawer trigger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-600 hover:bg-zinc-100 transition-colors shrink-0 cursor-pointer"
+              className="lg:hidden p-2 -ml-1 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
               aria-label="Open menu"
             >
               <Menu size={20} />
@@ -484,12 +501,12 @@ export function MainLayout() {
                 <div className="hidden sm:flex items-center gap-1 mb-0.5">
                   {currentPage.breadcrumb.map((crumb, i) => (
                     <span key={i} className="flex items-center gap-1">
-                      {i > 0 && <ChevronRight size={10} className="text-zinc-400" />}
+                      {i > 0 && <ChevronRight size={10} className="text-zinc-400 dark:text-zinc-500" />}
                       <span
                         className={`text-[11px] font-medium ${
                           i === currentPage.breadcrumb!.length - 1
-                            ? 'text-emerald-600 font-semibold'
-                            : 'text-zinc-400'
+                            ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                            : 'text-zinc-400 dark:text-zinc-500'
                         }`}
                       >
                         {crumb}
@@ -498,7 +515,7 @@ export function MainLayout() {
                   ))}
                 </div>
               )}
-              <h2 className="text-base sm:text-lg font-bold text-zinc-900 leading-tight truncate">
+              <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white leading-tight truncate">
                 {currentPage.title}
               </h2>
             </div>
@@ -507,55 +524,80 @@ export function MainLayout() {
           {/* Right side controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
+            {/* Quick Switch to Student Portal */}
+            <button
+              onClick={() => navigate('/student/dashboard')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 transition-all text-xs font-semibold cursor-pointer"
+              title="Open Student Portal"
+            >
+              <GraduationCap size={15} className="text-emerald-600 dark:text-emerald-400" />
+              <span className="hidden sm:inline">Student Portal</span>
+            </button>
+
+            {/* Dark / Light Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-xl border border-zinc-200/80 dark:border-slate-800 bg-white dark:bg-slate-800 text-zinc-600 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:border-amber-400/40 transition-all shadow-xs cursor-pointer"
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle dark/light theme"
+            >
+              {isDark ? (
+                <Sun size={16} className="text-amber-400 animate-in spin-in-180 duration-200" />
+              ) : (
+                <Moon size={16} className="text-zinc-600 animate-in spin-in-180 duration-200" />
+              )}
+            </button>
+
             {/* Notification Bell */}
             <div className="relative" ref={noticeRef}>
               <button
                 onClick={() => setShowNotices(!showNotices)}
-                className="w-9 h-9 rounded-xl bg-zinc-50 border border-zinc-200/80 flex items-center justify-center text-zinc-600 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all relative cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-slate-800 border border-zinc-200/80 dark:border-slate-700 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-200 transition-all relative cursor-pointer"
                 aria-label="Notifications"
               >
                 <Bell size={17} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
                 )}
               </button>
 
               {/* Notification Dropdown */}
               {showNotices && (
-                <div className="absolute top-full right-0 mt-2 w-[calc(100vw-24px)] max-w-sm sm:w-80 bg-white rounded-2xl shadow-xl border border-zinc-100 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
-                    <h3 className="font-bold text-zinc-900 text-sm">Notifications</h3>
+                <div className="absolute top-full right-0 mt-2 w-[calc(100vw-24px)] max-w-sm sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-slate-800 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-zinc-100 dark:border-slate-800 flex items-center justify-between">
+                    <h3 className="font-bold text-zinc-900 dark:text-white text-sm">Notifications</h3>
                     {unreadCount > 0 && (
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
                         {unreadCount} New
                       </span>
                     )}
                   </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-zinc-50 hide-scrollbar">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-zinc-50 dark:divide-slate-800/60 hide-scrollbar">
                     {recentNotices.length > 0 ? (
                       recentNotices.map(notice => {
                         const isRead = readNotices.includes(notice.id)
                         return (
                           <div
                             key={notice.id}
-                            className={`p-4 hover:bg-zinc-50 transition-colors cursor-pointer flex gap-3 group ${isRead ? 'opacity-50' : ''}`}
+                            className={`p-4 hover:bg-zinc-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex gap-3 group ${isRead ? 'opacity-50' : ''}`}
                             onClick={() => { markAsRead(notice.id); setShowNotices(false); navigate('/notices') }}
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between mb-1 gap-2">
-                                <span className={`text-[13px] font-semibold line-clamp-1 ${isRead ? 'text-zinc-500' : 'text-zinc-900'}`}>
+                                <span className={`text-[13px] font-semibold line-clamp-1 ${isRead ? 'text-zinc-500 dark:text-zinc-400' : 'text-zinc-900 dark:text-white'}`}>
                                   {notice.title}
                                 </span>
-                                <span className="text-[10px] text-zinc-400 shrink-0 mt-0.5">
+                                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5">
                                   {formatDistanceToNow(parseISO(notice.publishedAt), { addSuffix: true })}
                                 </span>
                               </div>
-                              <p className="text-xs text-zinc-500 line-clamp-2">{notice.body}</p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{notice.body}</p>
                             </div>
                             {!isRead && (
                               <button
                                 onClick={(e) => markAsRead(notice.id, e)}
-                                className="shrink-0 text-zinc-300 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all self-center p-1"
+                                className="shrink-0 text-zinc-300 dark:text-zinc-600 hover:text-emerald-600 dark:hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition-all self-center p-1"
                                 title="Mark as read"
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -569,15 +611,15 @@ export function MainLayout() {
                       })
                     ) : (
                       <div className="p-6 text-center">
-                        <Bell size={28} className="mx-auto mb-2 text-zinc-200" />
-                        <p className="text-sm text-zinc-400">No new notifications</p>
+                        <Bell size={28} className="mx-auto mb-2 text-zinc-200 dark:text-zinc-700" />
+                        <p className="text-sm text-zinc-400 dark:text-zinc-500">No new notifications</p>
                       </div>
                     )}
                   </div>
-                  <div className="p-2 border-t border-zinc-100 bg-zinc-50/50">
+                  <div className="p-2 border-t border-zinc-100 dark:border-slate-800 bg-zinc-50/50 dark:bg-slate-800/40">
                     <button
                       onClick={() => { setShowNotices(false); navigate('/notices') }}
-                      className="w-full py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors text-center rounded-lg hover:bg-zinc-100 cursor-pointer"
+                      className="w-full py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors text-center rounded-lg hover:bg-zinc-100 dark:hover:bg-slate-700 cursor-pointer"
                     >
                       View All Notices →
                     </button>
@@ -589,14 +631,14 @@ export function MainLayout() {
             {/* User avatar */}
             <button
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l sm:border-zinc-200/80 hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l sm:border-zinc-200/80 dark:sm:border-slate-800 hover:opacity-80 transition-opacity cursor-pointer"
             >
               <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs">
                 {initials}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-[13px] font-semibold text-zinc-900 leading-none">{user?.fullName || 'Administrator'}</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5 capitalize">
+                <p className="text-[13px] font-semibold text-zinc-900 dark:text-white leading-none">{user?.fullName || 'Administrator'}</p>
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5 capitalize">
                   {user?.role?.toLowerCase().replace(/_/g, ' ') || 'Admin'}
                 </p>
               </div>

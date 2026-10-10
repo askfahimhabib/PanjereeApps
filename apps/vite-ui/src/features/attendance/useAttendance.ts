@@ -367,7 +367,7 @@ export function buildSummary(
 
   const markedCount = counts.PRESENT + counts.ABSENT + counts.LATE + counts.LEAVE
   const unmarked = Math.max(0, totalStudents - markedCount)
-  const rate = totalStudents > 0 ? Math.round(((counts.PRESENT + counts.LATE) / totalStudents) * 100) : 0
+  const rate = totalStudents > 0 ? Math.round(((counts.PRESENT + counts.LATE * 0.5) / totalStudents) * 100) : 0
 
   return {
     total: totalStudents,
@@ -398,7 +398,7 @@ export function useAttendanceReports() {
         const lateDays = records.filter(r => r.status === 'LATE').length || 2
         const leaveDays = records.filter(r => r.status === 'LEAVE').length || 1
 
-        const rate = Math.round((presentDays / totalDays) * 100)
+        const rate = totalDays > 0 ? Math.round(((presentDays + lateDays * 0.5) / totalDays) * 100) : 100
 
         return {
           studentId: s.id,
@@ -429,7 +429,7 @@ export function useAttendanceReports() {
           ? Math.round(
               classStudents.reduce((acc, st) => {
                 const recs = attendanceStore.getWhere(r => r.studentId === st.id)
-                return acc + (recs.length > 0 ? (recs.filter(r => r.status === 'PRESENT').length / recs.length) * 100 : 88)
+                return acc + (recs.length > 0 ? ((recs.filter(r => r.status === 'PRESENT').length + recs.filter(r => r.status === 'LATE').length * 0.5) / recs.length) * 100 : 88)
               }, 0) / classStudents.length
             )
           : 90

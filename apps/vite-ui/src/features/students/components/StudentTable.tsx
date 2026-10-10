@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Student } from '../types'
 import { STATUS_LABELS, STATUS_COLORS } from '../types'
 import { deriveStudentFeeStatus } from '@/features/payments/utils/feeStatus'
+import { getEffectiveStudentAvatar } from '@/lib/studentAvatar'
 
 interface Props {
   students: Student[]
@@ -14,20 +15,6 @@ interface Props {
   onView: (student: Student) => void
   onDelete: (id: string) => void
   onCertificate?: (student: Student) => void
-}
-
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function getAvatarColor(id: string) {
-  const colors = [
-    'bg-indigo-600', 'bg-purple-600', 'bg-emerald-600',
-    'bg-blue-600', 'bg-rose-600', 'bg-amber-600',
-    'bg-teal-600', 'bg-cyan-600',
-  ]
-  const index = id.charCodeAt(id.length - 1) % colors.length
-  return colors[index]
 }
 
 export function StudentTable({
@@ -85,17 +72,13 @@ export function StudentTable({
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`w-10 h-10 rounded-xl ${getAvatarColor(student.id)} flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs`}
+                    className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-xs border border-slate-200 dark:border-slate-800 flex items-center justify-center p-0.5 bg-slate-100 dark:bg-slate-800"
                   >
-                    {student.profilePhoto ? (
-                      <img
-                        src={student.profilePhoto}
-                        alt={student.fullNameEn}
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    ) : (
-                      getInitials(student.fullNameEn)
-                    )}
+                    <img
+                      src={getEffectiveStudentAvatar(student)}
+                      alt={student.fullNameEn}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -269,17 +252,13 @@ export function StudentTable({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-9 h-9 rounded-xl ${getAvatarColor(student.id)} flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs`}
+                        className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-xs border border-slate-200 dark:border-slate-800 flex items-center justify-center p-0.5 bg-slate-100 dark:bg-slate-800"
                       >
-                        {student.profilePhoto ? (
-                          <img
-                            src={student.profilePhoto}
-                            alt={student.fullNameEn}
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        ) : (
-                          getInitials(student.fullNameEn)
-                        )}
+                        <img
+                          src={getEffectiveStudentAvatar(student)}
+                          alt={student.fullNameEn}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
                       </div>
                       <div className="min-w-0">
                         <button

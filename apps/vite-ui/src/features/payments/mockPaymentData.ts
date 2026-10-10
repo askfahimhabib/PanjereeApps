@@ -91,8 +91,8 @@ export const MOCK_FEE_STRUCTURES: FeeStructure[] = [
 export const MOCK_STUDENT_WAIVERS: StudentWaiver[] = [
   {
     id: 'sw-1',
-    student_id: 'std-8-01',
-    student_name: 'Rahim Ahmed',
+    student_id: '6',
+    student_name: 'Mim Jannat',
     roll_number: '01',
     class_name: 'Class 8',
     waiver_type: 'PERCENTAGE',
@@ -104,8 +104,8 @@ export const MOCK_STUDENT_WAIVERS: StudentWaiver[] = [
   },
   {
     id: 'sw-2',
-    student_id: 'std-8-04',
-    student_name: 'Tanvir Hossain',
+    student_id: '30',
+    student_name: 'Tasnim Ahmed',
     roll_number: '04',
     class_name: 'Class 8',
     waiver_type: 'FIXED',
@@ -117,9 +117,9 @@ export const MOCK_STUDENT_WAIVERS: StudentWaiver[] = [
   },
   {
     id: 'sw-3',
-    student_id: 'std-8-07',
-    student_name: 'Sadia Sultana',
-    roll_number: '07',
+    student_id: '16',
+    student_name: 'Ayesha Siddiqua',
+    roll_number: '02',
     class_name: 'Class 8',
     waiver_type: 'PERCENTAGE',
     value: 100,
